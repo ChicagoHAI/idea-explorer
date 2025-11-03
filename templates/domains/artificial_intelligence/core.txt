@@ -1,0 +1,391 @@
+# Artificial Intelligence Research Domain Guidance
+
+This template provides specialized guidance for AI/LLM research, including prompt engineering, agent evaluation, benchmark design, and AI system experimentation.
+
+## Domain Overview
+
+AI research in this context focuses on:
+- Large Language Model (LLM) capabilities and evaluation
+- Prompt engineering and instruction optimization
+- AI agent design and performance
+- Benchmark creation and validation
+- AI system behavior analysis
+- Model comparison studies
+- Reasoning and generation evaluation
+
+## Key Methodological Principles
+
+### 1. Experimental Rigor
+
+**Ablation Studies**
+- Test each component of your approach systematically
+- For prompts: test each instruction/example independently
+- For systems: isolate variables (e.g., model vs. prompt vs. context)
+- Document what changes and what stays constant
+
+**Comparative Framework**
+- Compare approaches on identical test sets
+- Use same evaluation metrics across conditions
+- Control for confounding variables (temperature, random seed, etc.)
+- Enable apples-to-apples comparisons
+
+**Replication & Reproducibility**
+- Set random seeds for all stochastic processes
+- Document exact model versions and API endpoints
+- Record temperature, top_p, and all sampling parameters
+- Provide exact prompts in appendix or supplementary materials
+- Consider API versioning changes over time
+
+### 2. Evaluation Methodology
+
+**Multi-Metric Evaluation**
+Use diverse metrics appropriate to your task:
+- **Accuracy**: For classification, QA with single correct answers
+- **F1/Precision/Recall**: For information extraction, retrieval
+- **BLEU/ROUGE**: For generation tasks (use cautiously, known limitations)
+- **Semantic similarity**: Embedding-based metrics for meaning preservation
+- **Task-specific**: Custom metrics aligned with research goals
+
+**Established Benchmarks**
+Leverage existing benchmarks when applicable:
+- **Reasoning**: MATH, GSM8K, ARC, HellaSwag
+- **Coding**: HumanEval, MBPP, CodeContests
+- **Knowledge**: MMLU, TriviaQA, Natural Questions
+- **Instruction Following**: MT-Bench, AlpacaEval
+- **Safety**: TruthfulQA, BBQ (bias)
+
+**Human Evaluation**
+When automated metrics insufficient:
+- Use multiple annotators (3-5 recommended)
+- Provide clear rubrics and examples
+- Calculate inter-annotator agreement (Cohen's kappa, Fleiss' kappa)
+- Consider expert vs. crowd-sourced evaluation trade-offs
+- Blind evaluators to experimental conditions when possible
+
+**Statistical Rigor**
+- Report confidence intervals or error bars, not just point estimates
+- Use appropriate statistical tests (t-tests, bootstrap, permutation tests)
+- Correct for multiple comparisons when relevant (Bonferroni, FDR)
+- Report effect sizes, not just p-values
+- Consider sample size adequacy (power analysis)
+
+### 3. Prompt Engineering Best Practices
+
+**Systematic Design**
+- Start with clear task definition and examples
+- Iterate based on error analysis, not just aggregate metrics
+- Test prompt variants systematically (A/B testing)
+- Document prompt evolution and rationale
+
+**Components to Test**
+- **Instructions**: Clarity, specificity, length
+- **Few-shot examples**: Number, diversity, ordering
+- **Output format**: JSON, structured text, free-form
+- **Chain-of-thought**: Explicit reasoning steps
+- **Role/persona**: System messages and framing
+
+**Failure Analysis**
+- Categorize errors by type (factual, reasoning, formatting, etc.)
+- Sample failing cases across performance spectrum
+- Test edge cases and adversarial inputs
+- Document limitations explicitly
+
+### 4. AI Agent & System Evaluation
+
+**Task Decomposition**
+- Define clear success criteria for each subtask
+- Measure intermediate steps, not just final outcomes
+- Track failure modes at each stage
+
+**Behavioral Analysis**
+- Log all agent actions and decisions
+- Analyze decision patterns and strategies
+- Compare planned vs. actual behavior
+- Identify systematic biases or failure modes
+
+**Robustness Testing**
+- Test with diverse inputs (edge cases, adversarial, out-of-distribution)
+- Vary input format, phrasing, language
+- Check consistency across multiple runs (temperature > 0)
+- Test at different scales (few examples → many examples)
+
+### 5. Benchmark Design Principles
+
+**Quality Criteria**
+- **Validity**: Measures what it claims to measure
+- **Reliability**: Consistent results across runs/annotators
+- **Discriminability**: Separates strong from weak performance
+- **Coverage**: Representative of real-world distribution
+- **Difficulty**: Not too easy (ceiling effect) or too hard (floor effect)
+
+**Construction Guidelines**
+- Use diverse, representative examples
+- Avoid data contamination (check against training sets)
+- Include difficulty spectrum (easy → hard)
+- Provide clear ground truth and annotation guidelines
+- Version control and document changes
+
+**Validation Steps**
+- Pilot with baseline models
+- Check for dataset artifacts or shortcuts
+- Validate with human performance baselines
+- Test for bias and fairness issues
+- Monitor for data leakage
+
+## Implementation Guidelines
+
+### 1. API Integration & Cost Management
+
+**Setup**
+```python
+import openai
+import anthropic
+import os
+from tenacity import retry, wait_exponential, stop_after_attempt
+
+# Load API keys from environment
+openai.api_key = os.getenv("OPENAI_API_KEY")
+anthropic_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+# Rate limiting and retry logic
+@retry(wait=wait_exponential(min=1, max=60), stop=stop_after_attempt(5))
+def call_api_with_retry(prompt, model="gpt-4"):
+    """Robust API calling with exponential backoff."""
+    # Implementation here
+    pass
+```
+
+**Cost Tracking**
+- Estimate costs before running full experiments
+- Track token usage (input + output)
+- Use cheaper models for development/debugging
+- Cache responses when possible to avoid redundant calls
+
+### 2. Data Organization
+
+**Input Data**
+```
+datasets/
+├── raw/
+│   ├── benchmark_v1.json          # Original benchmark
+│   ├── custom_test_set.jsonl      # Custom evaluation set
+│   └── prompts/
+│       ├── baseline_prompt.txt
+│       └── optimized_prompt_v3.txt
+├── processed/
+│   └── formatted_for_api.json     # API-ready format
+└── README.md                       # Dataset documentation
+```
+
+**Results Structure**
+```
+results/
+├── model_outputs/
+│   ├── gpt4_responses.json        # Raw model outputs
+│   ├── claude_responses.json
+│   └── metadata.json              # Model versions, timestamps
+├── evaluations/
+│   ├── automated_scores.json      # Metric scores
+│   ├── human_annotations.csv      # Human eval results
+│   └── error_analysis.md          # Categorized failures
+└── visualizations/
+    ├── performance_comparison.png
+    └── error_breakdown.png
+```
+
+### 3. Reproducibility Checklist
+
+**Required Documentation**
+- [ ] Exact model versions and API endpoints used
+- [ ] All hyperparameters (temperature, top_p, max_tokens, etc.)
+- [ ] Random seeds for all stochastic processes
+- [ ] Prompts (full text, including system messages)
+- [ ] Evaluation code and metrics implementation
+- [ ] Dataset versions and preprocessing steps
+- [ ] API call timestamps and rate limits encountered
+
+**Code & Data Release**
+- [ ] Evaluation scripts with clear documentation
+- [ ] Test data (if not proprietary)
+- [ ] Prompt templates and variations tested
+- [ ] Requirements.txt or environment.yml
+- [ ] README with setup and reproduction instructions
+
+### 4. Common Pitfalls to Avoid
+
+❌ **Data Contamination**
+- Don't use examples that may be in training data
+- Check against known training sets (e.g., avoid popular datasets verbatim)
+- Create new test cases or use very recent data
+
+❌ **Cherry-Picking**
+- Report all experiments, not just successful ones
+- Include negative results and ablations
+- Be transparent about hyperparameter tuning
+
+❌ **Overfitting to Benchmarks**
+- Test on multiple benchmarks, not just one
+- Include out-of-domain evaluation
+- Validate with real-world use cases when possible
+
+❌ **Insufficient Sample Size**
+- Don't draw conclusions from <50 examples
+- Use statistical tests to validate significance
+- Report confidence intervals
+
+❌ **Ignoring Variance**
+- Run multiple times with different seeds (especially at temperature > 0)
+- Report standard deviations, not just means
+- Check for consistency across runs
+
+❌ **Prompt Leakage**
+- Don't include test answers in prompts or context
+- Avoid leading questions that give away the answer
+- Check for unintended hints in few-shot examples
+
+## Analysis & Reporting
+
+### 1. Error Analysis
+
+**Categorization**
+Create error taxonomy specific to your task:
+- Factual errors vs. reasoning errors
+- Format/parsing failures vs. content failures
+- Systematic patterns vs. random errors
+
+**Qualitative Analysis**
+- Sample and manually inspect errors across spectrum
+- Identify root causes (data quality, prompt ambiguity, model limitation)
+- Document representative examples
+
+### 2. Visualization
+
+**Recommended Plots**
+- Performance by difficulty level
+- Error rate by category
+- Model comparison (bar charts, radar plots)
+- Performance vs. cost/latency trade-offs
+- Learning curves (few-shot: 0, 1, 3, 5... examples)
+
+### 3. Results Presentation
+
+**Tables**
+- Clear headers with metric definitions
+- Bold best results, underline second-best
+- Include baselines (random, majority, simple heuristic)
+- Report confidence intervals or std dev
+
+**Discussion**
+- Interpret results in context of hypotheses
+- Discuss limitations and failure modes
+- Address threats to validity
+- Suggest future work based on findings
+
+## Domain-Specific Considerations
+
+### Prompt Engineering Research
+- Test on diverse tasks, not just one
+- Compare against baseline prompts (zero-shot, few-shot, chain-of-thought)
+- Measure generalization across models
+- Consider prompt length vs. performance trade-offs
+
+### AI Agent Evaluation
+- Define clear success metrics for agent tasks
+- Log intermediate states and decisions
+- Compare against human performance when feasible
+- Test tool usage accuracy and efficiency
+
+### Benchmark Creation
+- Pilot with baseline models first
+- Check for annotation quality and consistency
+- Test for unintended biases or shortcuts
+- Validate with diverse model families
+
+### LLM Capabilities Studies
+- Control for confounds (model size, training data, etc.)
+- Test across model families, not just one provider
+- Consider emergent abilities at different scales
+- Document API behavior changes over time
+
+## Resource Requirements
+
+**Typical Compute Needs**
+- No GPU required (using APIs)
+- CPU: Standard laptop/workstation sufficient
+- RAM: 8-16GB for data processing
+- Storage: Varies by dataset size (typically <10GB)
+
+**Budget Considerations**
+- API costs: $10-$1000 depending on scale
+- Cheaper models for development: GPT-3.5, Claude Instant
+- Production runs: GPT-4, Claude Opus/Sonnet
+- Consider token limits and rate limits in planning
+
+**Time Estimates**
+- Prompt development: 1-3 days
+- Small-scale experiment: Hours to 1 day
+- Full benchmark run: 1-7 days (depending on size and rate limits)
+- Analysis and writing: 3-7 days
+
+## Example Research Workflows
+
+### Workflow 1: Prompt Optimization Study
+1. Define task and success metrics
+2. Create diverse test set (100+ examples)
+3. Design baseline prompt
+4. Run baseline, analyze errors
+5. Iterate: modify prompt based on error analysis
+6. Test variants systematically
+7. Final evaluation on held-out set
+8. Statistical comparison of variants
+
+### Workflow 2: Benchmark Evaluation
+1. Collect/create benchmark dataset
+2. Implement evaluation harness
+3. Run multiple models on benchmark
+4. Compute metrics and statistical tests
+5. Error analysis and categorization
+6. Visualization and comparison
+7. Write up findings with limitations
+
+### Workflow 3: AI Agent Study
+1. Define agent task and environment
+2. Implement agent with logging
+3. Design test scenarios (easy → hard)
+4. Run agent on scenarios
+5. Analyze decision logs and failure modes
+6. Compare against baselines or ablations
+7. Report success rates and error patterns
+
+## Quality Checklist
+
+Before completing research:
+- [ ] Tested on multiple test sets (not just one)
+- [ ] Reported confidence intervals or significance tests
+- [ ] Included ablation studies
+- [ ] Compared against reasonable baselines
+- [ ] Documented all hyperparameters and prompts
+- [ ] Performed error analysis with examples
+- [ ] Checked for data contamination
+- [ ] Made code/data available (if possible)
+- [ ] Discussed limitations explicitly
+- [ ] Validated reproducibility (re-ran key experiments)
+
+## Additional Resources
+
+**Key Papers to Review**
+- Evaluation methodologies: "Adding Error Bars to Evals"
+- Prompt engineering: "Chain-of-Thought Prompting" papers
+- Benchmarking: Papers introducing MMLU, HumanEval, etc.
+- Agent evaluation: Recent papers on autonomous agents
+
+**Useful Tools**
+- OpenAI Evals: https://github.com/openai/evals
+- Anthropic prompt engineering guide
+- HuggingFace datasets library
+- LangChain for agent orchestration
+- Weights & Biases for experiment tracking
+
+---
+
+**Remember**: Good AI research balances ambitious hypotheses with rigorous evaluation. Be transparent about limitations, report negative results, and design experiments that advance scientific understanding, not just achieve benchmark numbers.

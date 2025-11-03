@@ -1,0 +1,156 @@
+# Example Research Idea: Chain-of-Thought Prompting Evaluation
+#
+# This example demonstrates AI/LLM research using the Idea Explorer system.
+# Focus: Systematic evaluation of prompt engineering techniques
+
+idea:
+  title: "Evaluating Chain-of-Thought Prompting Effectiveness Across Mathematical Reasoning Tasks"
+
+  domain: artificial_intelligence
+
+  hypothesis: |
+    Chain-of-thought (CoT) prompting improves LLM performance on multi-step
+    mathematical reasoning tasks by 15-30% compared to direct prompting,
+    with larger gains on harder problems. The effect should be consistent
+    across different model families (GPT-4, Claude, Gemini) but vary by
+    problem complexity.
+
+  background:
+    description: |
+      Chain-of-thought prompting has emerged as a powerful technique for
+      improving LLM reasoning capabilities. By instructing models to show
+      their step-by-step reasoning, accuracy on complex tasks improves
+      substantially.
+
+      However, systematic evaluation across problem difficulties and model
+      families is limited. This research aims to quantify CoT effectiveness
+      with statistical rigor across diverse mathematical reasoning tasks.
+
+    papers:
+      - url: "https://arxiv.org/abs/2201.11903"
+        description: "Original Chain-of-Thought paper by Wei et al. (2022)"
+      - url: "https://arxiv.org/abs/2205.11916"
+        description: "Least-to-Most prompting extension of CoT"
+
+    datasets:
+      - name: "GSM8K"
+        source: "https://github.com/openai/grade-school-math"
+        description: "Grade school math word problems (8.5K problems)"
+        size: "8,500 problems"
+
+      - name: "MATH Dataset"
+        source: "https://github.com/hendrycks/math"
+        description: "Competition mathematics problems with difficulty ratings"
+        size: "12,500 problems"
+
+  methodology:
+    approach: "Controlled experimental comparison with ablation studies"
+
+    steps:
+      - "Select stratified sample from GSM8K (200 problems) and MATH (150 problems)"
+      - "Design prompt variants: (1) Direct, (2) CoT, (3) CoT with examples"
+      - "Implement evaluation harness for multiple models (GPT-4, Claude-3, Gemini-Pro)"
+      - "Run each (model, prompt, problem) combination with fixed seed"
+      - "Parse outputs and evaluate correctness against ground truth"
+      - "Perform statistical analysis: paired t-tests, effect sizes"
+      - "Error analysis: categorize failures by type and difficulty"
+      - "Visualize results: performance by difficulty, prompt type, model"
+
+    baselines:
+      - "Direct prompting (no reasoning steps)"
+      - "Few-shot prompting (without CoT)"
+      - "Random baseline (for sanity check)"
+
+    metrics:
+      - "Accuracy (exact match with ground truth)"
+      - "Accuracy by difficulty level (easy/medium/hard)"
+      - "Statistical significance (p-values, confidence intervals)"
+      - "Effect size (Cohen's d)"
+      - "Error rate by error type (calculation, reasoning, parsing)"
+      - "Cost per problem (API tokens used)"
+      - "Latency (time to generate response)"
+
+  constraints:
+    compute: cpu_only  # Using APIs, no GPU needed
+    time_limit: 7200   # 2 hours (rate limiting consideration)
+    memory: "8GB"
+    budget: "$50"      # Estimated API costs
+    dependencies:
+      - "openai>=1.0.0"
+      - "anthropic>=0.18.0"
+      - "google-generativeai>=0.3.0"
+      - "numpy"
+      - "pandas"
+      - "scipy"
+      - "matplotlib"
+      - "seaborn"
+      - "tenacity"  # For retry logic
+      - "tqdm"      # Progress bars
+
+  expected_outputs:
+    - type: metrics
+      format: json
+      fields:
+        - model
+        - prompt_type
+        - accuracy
+        - accuracy_by_difficulty
+        - mean_tokens
+        - total_cost
+        - effect_size
+        - p_value
+      description: "Comprehensive metrics for each (model, prompt) combination"
+
+    - type: visualization
+      format: png
+      description: |
+        Plots including:
+        1. Accuracy comparison (grouped bar chart: model × prompt type)
+        2. Performance by difficulty (line plot with error bars)
+        3. Cost-performance trade-off (scatter plot)
+        4. Error type distribution (stacked bar chart)
+        5. Model response length distribution
+
+    - type: data
+      format: jsonl
+      description: "Raw model outputs with metadata for reproducibility"
+
+    - type: report
+      format: markdown
+      description: |
+        Analysis including:
+        - Executive summary of findings
+        - Statistical test results with interpretation
+        - Error analysis with representative examples
+        - Limitations and threats to validity
+        - Recommendations for practitioners
+
+  evaluation_criteria:
+    - "CoT prompting shows statistically significant improvement (p < 0.05)"
+    - "Effect size calculated and reported with confidence intervals"
+    - "Results replicated across at least 2 model families"
+    - "Ablation study isolates CoT effect from few-shot examples"
+    - "Error analysis includes at least 20 failure cases manually reviewed"
+    - "Reproducibility: all prompts documented, seeds fixed, API versions recorded"
+    - "Cost tracking: actual API costs reported and within budget"
+    - "Code runs without errors and handles API rate limits gracefully"
+
+  metadata:
+    author: "ai_researcher"
+    tags:
+      - "prompt-engineering"
+      - "chain-of-thought"
+      - "mathematical-reasoning"
+      - "llm-evaluation"
+      - "benchmark"
+    priority: high
+    estimated_duration: "2 hours"
+    notes: |
+      This experiment tests a key hypothesis about CoT prompting effectiveness.
+      Results will inform best practices for mathematical reasoning tasks.
+
+      Important considerations:
+      - Rate limits: implement exponential backoff
+      - API versioning: models may change, document exact versions
+      - Randomness: use temperature=0 for reproducibility, or run multiple times
+      - Cost management: estimate costs before full run, use cheaper models for testing

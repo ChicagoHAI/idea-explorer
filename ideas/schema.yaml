@@ -42,6 +42,7 @@ properties:
           - nlp
           - computer_vision
           - reinforcement_learning
+          - artificial_intelligence
         description: "Primary research domain"
 
       hypothesis:

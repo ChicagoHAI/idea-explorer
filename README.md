@@ -6,6 +6,23 @@ Idea Explorer is a generalized autonomous research framework that takes structur
 
 ## Quick Start
 
+### Option A: Fetch from IdeaHub
+
+```bash
+# 0. Setup (one-time)
+uv sync  # Install dependencies with uv
+cp .env.example .env
+# Edit .env and add your GITHUB_TOKEN and OPENAI_API_KEY
+
+# 1. Fetch an idea from IdeaHub and auto-submit
+python src/cli/fetch_from_ideahub.py https://hypogenic.ai/ideahub/idea/HGVv4Z0ALWVHZ9YsstWT --submit
+
+# 2. Run the research
+python src/core/runner.py <idea_id>
+```
+
+### Option B: Create Your Own Idea
+
 ```bash
 # 0. Setup (one-time)
 uv sync  # Install dependencies with uv
@@ -32,6 +49,7 @@ python src/core/runner.py <idea_id>
 ```
 
 **New Features:**
+- **IdeaHub Integration**: Fetch and convert research ideas from IdeaHub automatically
 - **Workspace-first workflow**: GitHub repo created on submission, ready for your resources
 - **User resources**: Add datasets, documents, and code before running experiments
 - **uv package manager**: Fast, modern Python dependency management
@@ -252,6 +270,7 @@ runner.evaluate_research(
 
 ## Supported Domains
 
+- **Artificial Intelligence**: LLM evaluation, prompt engineering, AI agents, benchmarking
 - **Machine Learning**: Training, evaluation, hyperparameter tuning
 - **Data Science**: EDA, statistical analysis, visualization
 - **Systems**: Performance benchmarking, optimization
@@ -263,7 +282,19 @@ runner.evaluate_research(
 
 ## Examples
 
-### Example 1: ML Experiment
+### Example 1: AI/LLM Research
+
+```yaml
+idea:
+  title: "Evaluating Chain-of-Thought Prompting on Mathematical Reasoning"
+  domain: artificial_intelligence
+  hypothesis: "CoT prompting improves accuracy by 15-30% on multi-step math problems"
+  # ... rest of specification
+```
+
+See `ideas/examples/ai_chain_of_thought_evaluation.yaml` for complete example.
+
+### Example 2: ML Experiment
 
 ```yaml
 idea:
@@ -273,7 +304,7 @@ idea:
   # ... rest of specification
 ```
 
-### Example 2: Data Science Analysis
+### Example 3: Data Science Analysis
 
 ```yaml
 idea:
@@ -283,7 +314,7 @@ idea:
   # ... rest of specification
 ```
 
-### Example 3: Systems Benchmark
+### Example 4: Systems Benchmark
 
 ```yaml
 idea:
@@ -451,6 +482,7 @@ Contributions welcome! Areas of interest:
 ## Documentation
 
 - **[docs/WORKFLOW.md](docs/WORKFLOW.md)**: Complete workflow guide with examples
+- **[docs/IDEAHUB_INTEGRATION.md](docs/IDEAHUB_INTEGRATION.md)**: IdeaHub integration guide
 - **[DESIGN.md](DESIGN.md)**: Comprehensive design document
 - **[GITHUB_INTEGRATION.md](GITHUB_INTEGRATION.md)**: GitHub integration setup and usage
 - **[ideas/schema.yaml](ideas/schema.yaml)**: Full specification schema

@@ -1,0 +1,174 @@
+# Example Research Idea: AI Agent Tool Use Evaluation
+#
+# This example demonstrates AI agent research with tool-calling capabilities
+
+idea:
+  title: "Benchmarking LLM Agents on Multi-Step Tool Use for Data Analysis Tasks"
+
+  domain: artificial_intelligence
+
+  hypothesis: |
+    LLM agents with access to Python execution tools can successfully complete
+    80%+ of realistic data analysis tasks that require 3-5 tool calls, but
+    performance degrades significantly (to <50%) when tasks require 7+ sequential
+    steps due to compounding error rates and context management failures.
+
+  background:
+    description: |
+      Recent LLMs can use tools (function calling, code execution) to accomplish
+      complex tasks beyond pure text generation. However, systematic evaluation
+      of multi-step tool orchestration is limited.
+
+      This research creates a benchmark of realistic data analysis tasks requiring
+      multiple tool uses (file reading, data processing, visualization) and
+      evaluates agent success rates, failure modes, and performance scaling
+      with task complexity.
+
+    papers:
+      - url: "https://arxiv.org/abs/2302.04761"
+        description: "Toolformer: Language Models Can Teach Themselves to Use Tools"
+      - url: "https://arxiv.org/abs/2305.16291"
+        description: "Gorilla: Large Language Model Connected with Massive APIs"
+
+    datasets:
+      - name: "Realistic Data Analysis Scenarios"
+        source: "Custom-created from Kaggle notebooks and Stack Overflow questions"
+        description: "50 tasks requiring data loading, cleaning, analysis, visualization"
+        size: "50 tasks × 3 difficulty levels = 150 total"
+
+  methodology:
+    approach: "Benchmark creation and systematic agent evaluation"
+
+    steps:
+      - "Design task taxonomy: easy (2-3 steps), medium (4-6 steps), hard (7+ steps)"
+      - "Create 50 realistic data analysis scenarios with gold standard solutions"
+      - "Implement evaluation environment: sandboxed Python execution, file I/O"
+      - "Design agent prompts: system message, tool descriptions, examples"
+      - "Run agents (GPT-4, Claude-3-Opus, Gemini-1.5-Pro) on all tasks"
+      - "Evaluate outputs: correctness, efficiency, error recovery"
+      - "Log all tool calls, intermediate states, and decisions"
+      - "Analyze failure modes: error propagation, hallucination, context loss"
+      - "Create visualizations of success rates and error patterns"
+
+    baselines:
+      - "Zero-shot (no examples of tool use)"
+      - "Few-shot (3 examples of successful tool orchestration)"
+      - "Human baseline (time and accuracy from human data analysts)"
+
+    metrics:
+      - "Task success rate (exact match or functionally equivalent)"
+      - "Partial credit (completed subtasks correctly)"
+      - "Tool call accuracy (correct tool selection and parameters)"
+      - "Efficiency (number of tool calls vs. optimal solution)"
+      - "Error recovery rate (successful retry after failure)"
+      - "Time to completion"
+      - "Cost (API tokens used)"
+
+  constraints:
+    compute: cpu_only
+    time_limit: 10800  # 3 hours
+    memory: "16GB"
+    budget: "$150"
+    dependencies:
+      - "openai>=1.0.0"
+      - "anthropic>=0.18.0"
+      - "google-generativeai>=0.3.0"
+      - "numpy"
+      - "pandas"
+      - "matplotlib"
+      - "seaborn"
+      - "scikit-learn"
+      - "jupyter"
+      - "docker"  # For sandboxed execution
+      - "tenacity"
+      - "tqdm"
+
+  expected_outputs:
+    - type: benchmark
+      format: json
+      description: |
+        Complete benchmark dataset with:
+        - Task descriptions and requirements
+        - Input data files
+        - Gold standard solutions
+        - Difficulty ratings
+        - Human baseline performance
+
+    - type: metrics
+      format: json
+      fields:
+        - model
+        - difficulty
+        - success_rate
+        - partial_success_rate
+        - avg_tool_calls
+        - error_recovery_rate
+        - cost_per_task
+      description: "Performance metrics by model and difficulty"
+
+    - type: data
+      format: jsonl
+      description: |
+        Complete execution logs:
+        - Agent reasoning traces
+        - Tool calls (function, arguments, outputs)
+        - Intermediate states
+        - Error messages
+        - Final results
+
+    - type: visualization
+      format: png
+      description: |
+        Analysis plots:
+        1. Success rate by task complexity (line plot)
+        2. Error type distribution (pie charts)
+        3. Tool usage patterns (heatmap)
+        4. Performance vs cost trade-off
+        5. Human vs agent comparison
+
+    - type: error_analysis
+      format: markdown
+      description: |
+        Qualitative analysis:
+        - Failure mode taxonomy
+        - Representative examples (5-10 per category)
+        - Root cause analysis
+        - Recommendations for improvement
+
+  evaluation_criteria:
+    - "Benchmark contains 50 diverse, realistic tasks with verified solutions"
+    - "At least 2 models evaluated with complete results"
+    - "Success rate drops significantly with task complexity (hypothesis test)"
+    - "Error analysis identifies and categorizes at least 5 distinct failure modes"
+    - "Execution environment is sandboxed and secure (no arbitrary code execution)"
+    - "All agent traces logged for reproducibility"
+    - "Human baseline established for at least 20 tasks"
+    - "Results include statistical significance tests"
+    - "Code, benchmark data, and results are documented and runnable"
+
+  metadata:
+    author: "agent_researcher"
+    tags:
+      - "ai-agents"
+      - "tool-use"
+      - "function-calling"
+      - "benchmark"
+      - "data-analysis"
+      - "evaluation"
+    priority: high
+    estimated_duration: "3 hours"
+    notes: |
+      This research creates a reusable benchmark for evaluating AI agents
+      on realistic data analysis tasks.
+
+      Key design decisions:
+      - Sandboxed execution for safety
+      - Diverse task types (cleaning, analysis, visualization)
+      - Multiple difficulty levels to test scaling
+      - Comprehensive logging for error analysis
+
+      Safety considerations:
+      - Use Docker or similar for code execution isolation
+      - Limit resource usage (memory, time, network)
+      - Validate all file I/O operations
+      - Monitor for malicious behavior patterns
