@@ -1,0 +1,598 @@
+═══════════════════════════════════════════════════════════════════════════════
+                  MACHINE LEARNING SPECIFIC GUIDELINES
+═══════════════════════════════════════════════════════════════════════════════
+
+These guidelines supplement the base researcher template with ML-specific
+best practices. Follow these in addition to the general methodology.
+
+─────────────────────────────────────────────────────────────────────────────
+DATASET HANDLING
+─────────────────────────────────────────────────────────────────────────────
+
+1. Data Splitting Strategy
+
+   CLASSIFICATION (Balanced Classes):
+   ```python
+   from sklearn.model_selection import train_test_split
+
+   # 70-15-15 split
+   train, temp = train_test_split(data, test_size=0.3, random_state=42)
+   val, test = train_test_split(temp, test_size=0.5, random_state=42)
+   ```
+
+   CLASSIFICATION (Imbalanced Classes):
+   ```python
+   # Use stratified split to maintain class distribution
+   train, temp = train_test_split(data, test_size=0.3,
+                                   stratify=data['label'],
+                                   random_state=42)
+   val, test = train_test_split(temp, test_size=0.5,
+                                  stratify=temp['label'],
+                                  random_state=42)
+   ```
+
+   TIME SERIES:
+   ```python
+   # Use temporal split (train on past, test on future)
+   # DO NOT use random split for time series!
+   train_end_idx = int(len(data) * 0.7)
+   val_end_idx = int(len(data) * 0.85)
+
+   train = data[:train_end_idx]
+   val = data[train_end_idx:val_end_idx]
+   test = data[val_end_idx:]
+   ```
+
+   IMPORTANT:
+   ✓ NEVER use test set for hyperparameter tuning
+   ✓ NEVER peek at test set until final evaluation
+   ✓ NEVER make decisions based on test set performance
+
+2. Data Quality Checks
+
+   Run these checks systematically:
+
+   ```python
+   import pandas as pd
+   import numpy as np
+
+   def data_quality_report(df):
+       """Comprehensive data quality analysis"""
+
+       print(f"Shape: {df.shape}")
+       print(f"Memory: {df.memory_usage(deep=True).sum() / 1024**2:.2f} MB")
+       print(f"\nDuplicates: {df.duplicated().sum()}")
+
+       # Missing values
+       missing = df.isnull().sum()
+       if missing.any():
+           print("\nMissing Values:")
+           print(missing[missing > 0])
+
+       # Data types
+       print("\nData Types:")
+       print(df.dtypes.value_counts())
+
+       # Numerical columns - check for outliers
+       numerical_cols = df.select_dtypes(include=[np.number]).columns
+       for col in numerical_cols:
+           Q1 = df[col].quantile(0.25)
+           Q3 = df[col].quantile(0.75)
+           IQR = Q3 - Q1
+           outliers = ((df[col] < Q1 - 1.5*IQR) |
+                      (df[col] > Q3 + 1.5*IQR)).sum()
+           if outliers > 0:
+               print(f"\n{col}: {outliers} outliers ({outliers/len(df)*100:.1f}%)")
+
+       return df
+
+   # Use it
+   train = data_quality_report(train)
+   ```
+
+3. Handling Class Imbalance
+
+   If minority class < 20% of data:
+
+   OPTION A - Resampling:
+   ```python
+   from imblearn.over_sampling import SMOTE
+   from imblearn.under_sampling import RandomUnderSampler
+   from imblearn.pipeline import Pipeline
+
+   # Combine over and under sampling
+   over = SMOTE(sampling_strategy=0.5)  # Oversample to 50% of majority
+   under = RandomUnderSampler(sampling_strategy=0.8)  # Undersample to 80%
+   pipeline = Pipeline([('over', over), ('under', under)])
+
+   X_resampled, y_resampled = pipeline.fit_resample(X_train, y_train)
+   ```
+
+   OPTION B - Class Weights:
+   ```python
+   from sklearn.utils.class_weight import compute_class_weight
+
+   class_weights = compute_class_weight('balanced',
+                                         classes=np.unique(y_train),
+                                         y=y_train)
+   # Pass to model (e.g., sklearn, PyTorch, etc.)
+   ```
+
+   OPTION C - Appropriate Metrics:
+   - DON'T use accuracy for imbalanced data
+   - DO use: F1-score, AUC-ROC, AUC-PR, precision/recall
+
+4. Data Leakage Prevention
+
+   COMMON LEAKAGE SOURCES:
+   ✗ Normalizing before splitting (leaks test distribution to train)
+   ✗ Feature selection using full dataset
+   ✗ Time series: using future data to predict past
+   ✗ Duplicates across train/test split
+   ✗ Information from test set in preprocessing
+
+   CORRECT APPROACH:
+   ```python
+   # Fit scaler on train only, then transform all sets
+   from sklearn.preprocessing import StandardScaler
+
+   scaler = StandardScaler()
+   X_train_scaled = scaler.fit_transform(X_train)  # Fit on train
+   X_val_scaled = scaler.transform(X_val)          # Only transform
+   X_test_scaled = scaler.transform(X_test)        # Only transform
+   ```
+
+─────────────────────────────────────────────────────────────────────────────
+MODEL DEVELOPMENT
+─────────────────────────────────────────────────────────────────────────────
+
+1. Always Start with Baselines
+
+   Implement these baselines FIRST to validate your pipeline:
+
+   CLASSIFICATION:
+   ```python
+   from sklearn.linear_model import LogisticRegression
+   from sklearn.dummy import DummyClassifier
+
+   # Baseline 1: Random guess
+   dummy = DummyClassifier(strategy='stratified', random_state=42)
+   dummy.fit(X_train, y_train)
+   baseline_acc = dummy.score(X_test, y_test)
+   print(f"Random baseline: {baseline_acc:.3f}")
+
+   # Baseline 2: Simple model
+   lr = LogisticRegression(random_state=42, max_iter=1000)
+   lr.fit(X_train, y_train)
+   lr_acc = lr.score(X_test, y_test)
+   print(f"Logistic Regression: {lr_acc:.3f}")
+   ```
+
+   REGRESSION:
+   ```python
+   from sklearn.dummy import DummyRegressor
+
+   # Baseline: Predict mean
+   dummy = DummyRegressor(strategy='mean')
+   dummy.fit(X_train, y_train)
+   baseline_mse = mean_squared_error(y_test, dummy.predict(X_test))
+   print(f"Baseline MSE (predict mean): {baseline_mse:.3f}")
+   ```
+
+   Your proposed method MUST beat these baselines!
+
+2. Model Selection Guidelines
+
+   DATASET SIZE:
+   - < 1K samples: Simple models (linear, small trees)
+   - 1K-10K: Gradient boosting, shallow neural nets
+   - 10K-100K: Deep neural nets possible
+   - > 100K: Deep learning, large models
+
+   FEATURE TYPES:
+   - Tabular: Gradient boosting (XGBoost, LightGBM) often best
+   - Images: CNNs
+   - Text: Transformers (BERT, GPT)
+   - Time series: RNNs, Transformers, or temporal CNNs
+
+3. Training Protocol
+
+   ```python
+   import torch
+   import torch.nn as nn
+   from torch.utils.data import DataLoader
+
+   # Set reproducibility
+   torch.manual_seed(42)
+   torch.cuda.manual_seed_all(42)
+   torch.backends.cudnn.deterministic = True
+
+   # Training loop with early stopping
+   best_val_loss = float('inf')
+   patience = 10
+   patience_counter = 0
+
+   train_losses, val_losses = [], []
+
+   for epoch in range(num_epochs):
+       # Training
+       model.train()
+       train_loss = 0
+       for batch in train_loader:
+           optimizer.zero_grad()
+           outputs = model(batch['input'])
+           loss = criterion(outputs, batch['target'])
+           loss.backward()
+           optimizer.step()
+           train_loss += loss.item()
+
+       train_loss /= len(train_loader)
+       train_losses.append(train_loss)
+
+       # Validation
+       model.eval()
+       val_loss = 0
+       with torch.no_grad():
+           for batch in val_loader:
+               outputs = model(batch['input'])
+               loss = criterion(outputs, batch['target'])
+               val_loss += loss.item()
+
+       val_loss /= len(val_loader)
+       val_losses.append(val_loss)
+
+       print(f"Epoch {epoch}: Train={train_loss:.4f}, Val={val_loss:.4f}")
+
+       # Early stopping
+       if val_loss < best_val_loss:
+           best_val_loss = val_loss
+           torch.save(model.state_dict(), 'best_model.pt')
+           patience_counter = 0
+       else:
+           patience_counter += 1
+           if patience_counter >= patience:
+               print(f"Early stopping at epoch {epoch}")
+               break
+
+   # Load best model for final evaluation
+   model.load_state_dict(torch.load('best_model.pt'))
+   ```
+
+4. Hyperparameter Tuning
+
+   OPTION A - Grid Search (small search space):
+   ```python
+   from sklearn.model_selection import GridSearchCV
+
+   param_grid = {
+       'max_depth': [3, 5, 7],
+       'learning_rate': [0.01, 0.1],
+       'n_estimators': [100, 200]
+   }
+
+   grid = GridSearchCV(model, param_grid, cv=5,
+                       scoring='f1_weighted', n_jobs=-1)
+   grid.fit(X_train, y_train)
+   best_params = grid.best_params_
+   ```
+
+   OPTION B - Random Search (large search space):
+   ```python
+   from sklearn.model_selection import RandomizedSearchCV
+   from scipy.stats import uniform, randint
+
+   param_dist = {
+       'max_depth': randint(3, 10),
+       'learning_rate': uniform(0.01, 0.3),
+       'n_estimators': randint(50, 500)
+   }
+
+   random_search = RandomizedSearchCV(model, param_dist,
+                                       n_iter=20, cv=5,
+                                       scoring='f1_weighted',
+                                       random_state=42)
+   random_search.fit(X_train, y_train)
+   ```
+
+   OPTION C - Bayesian Optimization (expensive models):
+   ```python
+   from skopt import BayesSearchCV
+
+   search_spaces = {
+       'max_depth': (3, 10),
+       'learning_rate': (0.01, 0.3, 'log-uniform'),
+       'n_estimators': (50, 500)
+   }
+
+   bayes_search = BayesSearchCV(model, search_spaces,
+                                 n_iter=30, cv=5,
+                                 random_state=42)
+   bayes_search.fit(X_train, y_train)
+   ```
+
+   IMPORTANT:
+   ✓ Always tune on validation set, never test set
+   ✓ Document the search space and why you chose it
+   ✓ Report final hyperparameters used
+
+5. Overfitting Prevention
+
+   SIGNS OF OVERFITTING:
+   - Training accuracy >> Validation accuracy
+   - Training loss decreases but validation loss increases
+   - Model performs well on seen data, poorly on new data
+
+   SOLUTIONS:
+   ```python
+   # 1. Regularization
+   from sklearn.linear_model import Ridge, Lasso
+
+   model = Ridge(alpha=1.0)  # L2 regularization
+   model = Lasso(alpha=1.0)  # L1 regularization
+
+   # 2. Dropout (Neural Networks)
+   model = nn.Sequential(
+       nn.Linear(input_size, hidden_size),
+       nn.ReLU(),
+       nn.Dropout(0.5),  # Drop 50% of neurons
+       nn.Linear(hidden_size, output_size)
+   )
+
+   # 3. Early stopping (see training loop above)
+
+   # 4. Data augmentation (images, text)
+   # 5. Reduce model complexity
+   # 6. Get more training data
+   ```
+
+─────────────────────────────────────────────────────────────────────────────
+EVALUATION
+─────────────────────────────────────────────────────────────────────────────
+
+1. Metrics Selection
+
+   CLASSIFICATION:
+
+   Binary Classification:
+   ```python
+   from sklearn.metrics import (accuracy_score, precision_score,
+                                 recall_score, f1_score, roc_auc_score,
+                                 confusion_matrix, classification_report)
+
+   # Basic metrics
+   y_pred = model.predict(X_test)
+   y_prob = model.predict_proba(X_test)[:, 1]  # Probability of positive class
+
+   metrics = {
+       'accuracy': accuracy_score(y_test, y_pred),
+       'precision': precision_score(y_test, y_pred),
+       'recall': recall_score(y_test, y_pred),
+       'f1': f1_score(y_test, y_pred),
+       'auc_roc': roc_auc_score(y_test, y_prob)
+   }
+
+   # Confusion matrix
+   cm = confusion_matrix(y_test, y_pred)
+   print(f"\nConfusion Matrix:\n{cm}")
+
+   # Full report
+   print(classification_report(y_test, y_pred))
+   ```
+
+   Multi-class Classification:
+   ```python
+   # Use macro/weighted averaging
+   metrics = {
+       'accuracy': accuracy_score(y_test, y_pred),
+       'f1_macro': f1_score(y_test, y_pred, average='macro'),
+       'f1_weighted': f1_score(y_test, y_pred, average='weighted')
+   }
+   ```
+
+   REGRESSION:
+   ```python
+   from sklearn.metrics import (mean_squared_error, mean_absolute_error,
+                                 r2_score, mean_absolute_percentage_error)
+
+   y_pred = model.predict(X_test)
+
+   metrics = {
+       'mse': mean_squared_error(y_test, y_pred),
+       'rmse': mean_squared_error(y_test, y_pred, squared=False),
+       'mae': mean_absolute_error(y_test, y_pred),
+       'r2': r2_score(y_test, y_pred),
+       'mape': mean_absolute_percentage_error(y_test, y_pred)
+   }
+
+   # Residual plot
+   residuals = y_test - y_pred
+   plt.scatter(y_pred, residuals)
+   plt.axhline(y=0, color='r', linestyle='--')
+   plt.xlabel('Predicted Values')
+   plt.ylabel('Residuals')
+   plt.title('Residual Plot')
+   ```
+
+2. Statistical Testing
+
+   Compare two models:
+   ```python
+   from scipy.stats import ttest_rel
+   import numpy as np
+
+   # Run both models multiple times with different seeds
+   seeds = [42, 123, 456, 789, 1011]
+   model_a_scores = []
+   model_b_scores = []
+
+   for seed in seeds:
+       # Train and evaluate Model A
+       set_seed(seed)
+       score_a = train_and_evaluate(model_a, X_train, y_train, X_test, y_test)
+       model_a_scores.append(score_a)
+
+       # Train and evaluate Model B
+       set_seed(seed)
+       score_b = train_and_evaluate(model_b, X_train, y_train, X_test, y_test)
+       model_b_scores.append(score_b)
+
+   # Paired t-test
+   t_stat, p_value = ttest_rel(model_a_scores, model_b_scores)
+
+   print(f"Model A: {np.mean(model_a_scores):.3f} ± {np.std(model_a_scores):.3f}")
+   print(f"Model B: {np.mean(model_b_scores):.3f} ± {np.std(model_b_scores):.3f}")
+   print(f"P-value: {p_value:.4f}")
+
+   if p_value < 0.05:
+       print("Difference is statistically significant")
+   else:
+       print("No significant difference")
+   ```
+
+3. Error Analysis
+
+   ```python
+   # Identify misclassified examples
+   misclassified_idx = np.where(y_pred != y_test)[0]
+
+   print(f"Misclassified: {len(misclassified_idx)} / {len(y_test)}")
+
+   # Examine a few examples
+   for idx in misclassified_idx[:5]:
+       print(f"\nExample {idx}:")
+       print(f"  True label: {y_test[idx]}")
+       print(f"  Predicted: {y_pred[idx]}")
+       print(f"  Features: {X_test[idx]}")
+
+   # Analyze error patterns by class
+   for class_label in np.unique(y_test):
+       class_mask = y_test == class_label
+       class_acc = accuracy_score(y_test[class_mask], y_pred[class_mask])
+       print(f"Class {class_label} accuracy: {class_acc:.3f}")
+   ```
+
+4. Model Calibration
+
+   Check if predicted probabilities match true frequencies:
+
+   ```python
+   from sklearn.calibration import calibration_curve
+   import matplotlib.pyplot as plt
+
+   # Get predicted probabilities
+   y_prob = model.predict_proba(X_test)[:, 1]
+
+   # Calibration curve
+   fraction_of_positives, mean_predicted_value = calibration_curve(
+       y_test, y_prob, n_bins=10
+   )
+
+   plt.figure(figsize=(8, 6))
+   plt.plot(mean_predicted_value, fraction_of_positives, marker='o')
+   plt.plot([0, 1], [0, 1], linestyle='--', color='gray')
+   plt.xlabel('Mean Predicted Probability')
+   plt.ylabel('Fraction of Positives')
+   plt.title('Calibration Plot')
+   plt.show()
+
+   # If poorly calibrated, use calibration:
+   from sklearn.calibration import CalibratedClassifierCV
+
+   calibrated_model = CalibratedClassifierCV(model, cv=5, method='sigmoid')
+   calibrated_model.fit(X_train, y_train)
+   ```
+
+─────────────────────────────────────────────────────────────────────────────
+REPRODUCIBILITY
+─────────────────────────────────────────────────────────────────────────────
+
+COMPLETE REPRODUCIBILITY SETUP:
+
+```python
+import random
+import numpy as np
+import torch
+import os
+
+def set_seed(seed=42):
+    """Set seeds for reproducibility"""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+
+    # Make CuDNN deterministic
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+# Set at start of notebook
+set_seed(42)
+
+# Log environment
+import sys
+import sklearn
+import torch
+
+env_info = {
+    'python_version': sys.version,
+    'numpy_version': np.__version__,
+    'sklearn_version': sklearn.__version__,
+    'torch_version': torch.__version__,
+    'cuda_version': torch.version.cuda if torch.cuda.is_available() else None,
+    'device': 'cuda' if torch.cuda.is_available() else 'cpu'
+}
+
+print("Environment:")
+for key, value in env_info.items():
+    print(f"  {key}: {value}")
+
+# Save to file
+import json
+with open('results/environment.json', 'w') as f:
+    json.dump(env_info, f, indent=2)
+```
+
+─────────────────────────────────────────────────────────────────────────────
+COMMON PITFALLS
+─────────────────────────────────────────────────────────────────────────────
+
+✗ WRONG: Using accuracy for imbalanced datasets
+✓ RIGHT: Use F1, AUC-ROC, or AUC-PR
+
+✗ WRONG: Normalizing before splitting
+✓ RIGHT: Fit scaler on train, transform all sets
+
+✗ WRONG: Tuning hyperparameters on test set
+✓ RIGHT: Use validation set for tuning, test set only for final evaluation
+
+✗ WRONG: Not setting random seeds
+✓ RIGHT: Set seeds everywhere (Python, NumPy, PyTorch, etc.)
+
+✗ WRONG: Comparing single runs
+✓ RIGHT: Average over multiple runs with different seeds
+
+✗ WRONG: Only using training accuracy to select model
+✓ RIGHT: Monitor validation metrics and use early stopping
+
+✗ WRONG: Ignoring class imbalance
+✓ RIGHT: Use stratified splits, appropriate metrics, class weights
+
+✗ WRONG: Not checking for data leakage
+✓ RIGHT: Carefully audit preprocessing and feature engineering
+
+✗ WRONG: Using entire dataset for feature selection
+✓ RIGHT: Feature selection only on training set
+
+✗ WRONG: model.eval() forgotten during inference
+✓ RIGHT: Always use model.eval() for evaluation (disables dropout, etc.)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+ADDITIONAL RESOURCES:
+
+- Experiment Tracking: Use W&B (wandb.ai) or MLflow
+- Model Cards: Document model details, intended use, limitations
+- Data Sheets: Document dataset creation, composition, biases
+
+═══════════════════════════════════════════════════════════════════════════════

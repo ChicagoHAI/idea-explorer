@@ -1,0 +1,681 @@
+═══════════════════════════════════════════════════════════════════════════════
+                   DATA SCIENCE SPECIFIC GUIDELINES
+═══════════════════════════════════════════════════════════════════════════════
+
+These guidelines supplement the base researcher template with data science
+best practices for exploratory analysis, statistical testing, and visualization.
+
+─────────────────────────────────────────────────────────────────────────────
+EXPLORATORY DATA ANALYSIS (EDA)
+─────────────────────────────────────────────────────────────────────────────
+
+1. Initial Data Inspection
+
+   ```python
+   import pandas as pd
+   import numpy as np
+
+   # Load data
+   df = pd.read_csv('data.csv')
+
+   # Basic info
+   print("="*80)
+   print("DATASET OVERVIEW")
+   print("="*80)
+   print(f"Shape: {df.shape[0]} rows × {df.shape[1]} columns")
+   print(f"Memory: {df.memory_usage(deep=True).sum() / 1024**2:.2f} MB")
+   print(f"\nColumn Types:")
+   print(df.dtypes.value_counts())
+
+   # First/last rows
+   print("\nFirst 5 rows:")
+   display(df.head())
+
+   print("\nLast 5 rows:")
+   display(df.tail())
+
+   # Basic statistics
+   print("\nNumerical Summary:")
+   display(df.describe())
+
+   print("\nCategorical Summary:")
+   display(df.describe(include=['object']))
+   ```
+
+2. Missing Data Analysis
+
+   ```python
+   import missingno as msno
+   import matplotlib.pyplot as plt
+
+   # Missing value counts
+   missing = df.isnull().sum()
+   missing_pct = (missing / len(df) * 100).round(2)
+
+   missing_df = pd.DataFrame({
+       'Column': missing.index,
+       'Missing_Count': missing.values,
+       'Missing_Percentage': missing_pct.values
+   })
+   missing_df = missing_df[missing_df['Missing_Count'] > 0].sort_values(
+       'Missing_Percentage', ascending=False
+   )
+
+   print("\nMissing Values:")
+   display(missing_df)
+
+   # Visualize missing patterns
+   msno.matrix(df, figsize=(12, 6))
+   plt.title('Missing Data Pattern')
+   plt.savefig('results/missing_pattern.png', dpi=300, bbox_inches='tight')
+
+   # Missing data heatmap
+   msno.heatmap(df, figsize=(12, 6))
+   plt.title('Missing Data Correlation')
+   plt.savefig('results/missing_correlation.png', dpi=300, bbox_inches='tight')
+   ```
+
+3. Distribution Analysis
+
+   NUMERICAL VARIABLES:
+   ```python
+   import seaborn as sns
+
+   numerical_cols = df.select_dtypes(include=[np.number]).columns
+
+   # Histograms for all numerical columns
+   n_cols = len(numerical_cols)
+   n_rows = (n_cols + 2) // 3
+   fig, axes = plt.subplots(n_rows, 3, figsize=(15, 4*n_rows))
+   axes = axes.flatten()
+
+   for idx, col in enumerate(numerical_cols):
+       axes[idx].hist(df[col].dropna(), bins=30, edgecolor='black')
+       axes[idx].set_title(f'{col}\nSkewness: {df[col].skew():.2f}')
+       axes[idx].set_xlabel(col)
+       axes[idx].set_ylabel('Frequency')
+
+   # Remove empty subplots
+   for idx in range(len(numerical_cols), len(axes)):
+       fig.delaxes(axes[idx])
+
+   plt.tight_layout()
+   plt.savefig('results/distributions.png', dpi=300, bbox_inches='tight')
+
+   # Box plots to identify outliers
+   fig, axes = plt.subplots(n_rows, 3, figsize=(15, 4*n_rows))
+   axes = axes.flatten()
+
+   for idx, col in enumerate(numerical_cols):
+       axes[idx].boxplot(df[col].dropna())
+       axes[idx].set_title(col)
+       axes[idx].set_ylabel('Value')
+
+   for idx in range(len(numerical_cols), len(axes)):
+       fig.delaxes(axes[idx])
+
+   plt.tight_layout()
+   plt.savefig('results/boxplots.png', dpi=300, bbox_inches='tight')
+   ```
+
+   CATEGORICAL VARIABLES:
+   ```python
+   categorical_cols = df.select_dtypes(include=['object', 'category']).columns
+
+   for col in categorical_cols:
+       print(f"\n{col}:")
+       value_counts = df[col].value_counts()
+       print(f"  Unique values: {df[col].nunique()}")
+       print(f"  Most common: {value_counts.index[0]} ({value_counts.iloc[0]})")
+
+       # Bar plot
+       plt.figure(figsize=(10, 6))
+       value_counts.head(20).plot(kind='bar')
+       plt.title(f'Distribution of {col} (Top 20)')
+       plt.xlabel(col)
+       plt.ylabel('Count')
+       plt.xticks(rotation=45, ha='right')
+       plt.tight_layout()
+       plt.savefig(f'results/dist_{col}.png', dpi=300, bbox_inches='tight')
+       plt.close()
+   ```
+
+4. Correlation Analysis
+
+   ```python
+   # Correlation matrix for numerical features
+   corr_matrix = df[numerical_cols].corr()
+
+   # Heatmap
+   plt.figure(figsize=(12, 10))
+   sns.heatmap(corr_matrix, annot=True, fmt='.2f', cmap='coolwarm',
+               center=0, square=True, linewidths=1)
+   plt.title('Correlation Matrix')
+   plt.tight_layout()
+   plt.savefig('results/correlation_matrix.png', dpi=300, bbox_inches='tight')
+
+   # Identify highly correlated pairs
+   high_corr = []
+   for i in range(len(corr_matrix.columns)):
+       for j in range(i+1, len(corr_matrix.columns)):
+           if abs(corr_matrix.iloc[i, j]) > 0.7:
+               high_corr.append({
+                   'Feature 1': corr_matrix.columns[i],
+                   'Feature 2': corr_matrix.columns[j],
+                   'Correlation': corr_matrix.iloc[i, j]
+               })
+
+   if high_corr:
+       print("\nHighly Correlated Features (|r| > 0.7):")
+       display(pd.DataFrame(high_corr))
+   ```
+
+5. Outlier Detection
+
+   ```python
+   def detect_outliers_iqr(df, col):
+       """Detect outliers using IQR method"""
+       Q1 = df[col].quantile(0.25)
+       Q3 = df[col].quantile(0.75)
+       IQR = Q3 - Q1
+       lower_bound = Q1 - 1.5 * IQR
+       upper_bound = Q3 + 1.5 * IQR
+
+       outliers = df[(df[col] < lower_bound) | (df[col] > upper_bound)]
+       return outliers, lower_bound, upper_bound
+
+   print("\nOutlier Analysis:")
+   for col in numerical_cols:
+       outliers, lower, upper = detect_outliers_iqr(df, col)
+       pct = len(outliers) / len(df) * 100
+       if len(outliers) > 0:
+           print(f"\n{col}:")
+           print(f"  Outliers: {len(outliers)} ({pct:.1f}%)")
+           print(f"  Bounds: [{lower:.2f}, {upper:.2f}]")
+   ```
+
+─────────────────────────────────────────────────────────────────────────────
+STATISTICAL ANALYSIS
+─────────────────────────────────────────────────────────────────────────────
+
+1. Hypothesis Testing Framework
+
+   STEP 1: Formulate Hypotheses
+   - H₀ (Null): No effect / no difference
+   - H₁ (Alternative): There is an effect / difference
+   - Significance level: α = 0.05 (typically)
+
+   STEP 2: Choose Test
+   See decision tree below
+
+   STEP 3: Check Assumptions
+   - Normality (if required)
+   - Equal variance (if required)
+   - Independence
+
+   STEP 4: Run Test
+   - Calculate test statistic
+   - Compute p-value
+
+   STEP 5: Interpret
+   - If p < α: Reject H₀ (statistically significant)
+   - If p ≥ α: Fail to reject H₀
+   - Report effect size
+   - Consider practical significance
+
+2. Test Selection Decision Tree
+
+   COMPARING TWO GROUPS:
+
+   Are samples independent or paired?
+   │
+   ├─ Independent:
+   │  │
+   │  ├─ Is data normally distributed?
+   │  │  │
+   │  │  ├─ Yes: Independent t-test
+   │  │  └─ No: Mann-Whitney U test
+   │  │
+   │  └─ Do groups have equal variance?
+   │     │
+   │     ├─ Yes: Standard t-test
+   │     └─ No: Welch's t-test
+   │
+   └─ Paired:
+      │
+      ├─ Is data normally distributed?
+      │  │
+      │  ├─ Yes: Paired t-test
+      │  └─ No: Wilcoxon signed-rank test
+
+   COMPARING MULTIPLE GROUPS:
+
+   Are samples independent?
+   │
+   ├─ Independent:
+   │  │
+   │  ├─ Is data normally distributed?
+   │  │  │
+   │  │  ├─ Yes: One-way ANOVA
+   │  │  └─ No: Kruskal-Wallis test
+   │
+   └─ Paired:
+      │
+      └─ Is data normally distributed?
+         │
+         ├─ Yes: Repeated measures ANOVA
+         └─ No: Friedman test
+
+   CATEGORICAL ASSOCIATIONS:
+   - Chi-square test of independence
+   - Fisher's exact test (small samples)
+
+3. Testing for Normality
+
+   ```python
+   from scipy.stats import shapiro, normaltest, kstest
+
+   def test_normality(data, col_name):
+       """Test if data is normally distributed"""
+       data_clean = data.dropna()
+
+       # Shapiro-Wilk test (best for n < 5000)
+       stat_sw, p_sw = shapiro(data_clean)
+
+       # D'Agostino-Pearson test
+       stat_dp, p_dp = normaltest(data_clean)
+
+       print(f"\nNormality Tests for {col_name}:")
+       print(f"  Shapiro-Wilk: p = {p_sw:.4f}")
+       print(f"  D'Agostino: p = {p_dp:.4f}")
+
+       if p_sw > 0.05 and p_dp > 0.05:
+           print("  ✓ Data appears normally distributed")
+           return True
+       else:
+           print("  ✗ Data is not normally distributed")
+           return False
+
+       # Q-Q plot
+       from scipy import stats
+       import matplotlib.pyplot as plt
+
+       fig, ax = plt.subplots(1, 2, figsize=(12, 5))
+
+       # Histogram with normal curve
+       ax[0].hist(data_clean, bins=30, density=True, alpha=0.7, edgecolor='black')
+       mu, sigma = data_clean.mean(), data_clean.std()
+       x = np.linspace(data_clean.min(), data_clean.max(), 100)
+       ax[0].plot(x, stats.norm.pdf(x, mu, sigma), 'r-', lw=2)
+       ax[0].set_title(f'{col_name} Distribution')
+       ax[0].set_xlabel('Value')
+       ax[0].set_ylabel('Density')
+
+       # Q-Q plot
+       stats.probplot(data_clean, dist="norm", plot=ax[1])
+       ax[1].set_title(f'{col_name} Q-Q Plot')
+
+       plt.tight_layout()
+       plt.savefig(f'results/normality_{col_name}.png', dpi=300, bbox_inches='tight')
+   ```
+
+4. Common Statistical Tests
+
+   A. COMPARING TWO MEANS:
+
+   ```python
+   from scipy.stats import ttest_ind, ttest_rel, mannwhitneyu, wilcoxon
+
+   # Independent t-test
+   group_a = df[df['group'] == 'A']['value']
+   group_b = df[df['group'] == 'B']['value']
+
+   t_stat, p_value = ttest_ind(group_a, group_b)
+
+   # Effect size (Cohen's d)
+   mean_diff = group_a.mean() - group_b.mean()
+   pooled_std = np.sqrt((group_a.std()**2 + group_b.std()**2) / 2)
+   cohens_d = mean_diff / pooled_std
+
+   print("Independent t-test:")
+   print(f"  Group A: {group_a.mean():.3f} ± {group_a.std():.3f}")
+   print(f"  Group B: {group_b.mean():.3f} ± {group_b.std():.3f}")
+   print(f"  t-statistic: {t_stat:.3f}")
+   print(f"  p-value: {p_value:.4f}")
+   print(f"  Cohen's d: {cohens_d:.3f}")
+
+   if p_value < 0.05:
+       print("  ✓ Statistically significant difference")
+   else:
+       print("  ✗ No significant difference")
+
+   # Mann-Whitney U (non-parametric alternative)
+   u_stat, p_value_mw = mannwhitneyu(group_a, group_b)
+   print(f"\nMann-Whitney U test p-value: {p_value_mw:.4f}")
+   ```
+
+   B. COMPARING MULTIPLE GROUPS:
+
+   ```python
+   from scipy.stats import f_oneway, kruskal
+
+   # One-way ANOVA
+   groups = [df[df['category'] == cat]['value'] for cat in df['category'].unique()]
+   f_stat, p_value = f_oneway(*groups)
+
+   print("One-way ANOVA:")
+   print(f"  F-statistic: {f_stat:.3f}")
+   print(f"  p-value: {p_value:.4f}")
+
+   # If significant, do post-hoc tests
+   if p_value < 0.05:
+       from scipy.stats import ttest_ind
+       from itertools import combinations
+
+       print("\nPost-hoc pairwise comparisons:")
+       categories = df['category'].unique()
+       for cat_a, cat_b in combinations(categories, 2):
+           group_a = df[df['category'] == cat_a]['value']
+           group_b = df[df['category'] == cat_b]['value']
+           t, p = ttest_ind(group_a, group_b)
+           print(f"  {cat_a} vs {cat_b}: p = {p:.4f}")
+   ```
+
+   C. CHI-SQUARE TEST (Categorical):
+
+   ```python
+   from scipy.stats import chi2_contingency
+
+   # Create contingency table
+   contingency_table = pd.crosstab(df['var1'], df['var2'])
+
+   print("Contingency Table:")
+   display(contingency_table)
+
+   # Chi-square test
+   chi2, p_value, dof, expected = chi2_contingency(contingency_table)
+
+   print(f"\nChi-square test:")
+   print(f"  χ² = {chi2:.3f}")
+   print(f"  p-value = {p_value:.4f}")
+   print(f"  degrees of freedom = {dof}")
+
+   if p_value < 0.05:
+       print("  ✓ Variables are associated")
+   else:
+       print("  ✗ Variables are independent")
+   ```
+
+   D. CORRELATION TESTS:
+
+   ```python
+   from scipy.stats import pearsonr, spearmanr
+
+   # Pearson correlation (linear relationship, normally distributed)
+   r_pearson, p_pearson = pearsonr(df['var1'], df['var2'])
+
+   # Spearman correlation (monotonic relationship, non-parametric)
+   r_spearman, p_spearman = spearmanr(df['var1'], df['var2'])
+
+   print("Correlation Analysis:")
+   print(f"  Pearson r: {r_pearson:.3f} (p = {p_pearson:.4f})")
+   print(f"  Spearman ρ: {r_spearman:.3f} (p = {p_spearman:.4f})")
+   ```
+
+5. Multiple Comparisons Correction
+
+   When performing multiple tests, correct for false positives:
+
+   ```python
+   from statsmodels.stats.multitest import multipletests
+
+   # Suppose you have many p-values from multiple tests
+   p_values = [0.01, 0.03, 0.12, 0.005, 0.08]
+
+   # Bonferroni correction (conservative)
+   reject_bonf, p_corrected_bonf, _, _ = multipletests(
+       p_values, alpha=0.05, method='bonferroni'
+   )
+
+   # False Discovery Rate (FDR) - Benjamini-Hochberg (less conservative)
+   reject_fdr, p_corrected_fdr, _, _ = multipletests(
+       p_values, alpha=0.05, method='fdr_bh'
+   )
+
+   results = pd.DataFrame({
+       'Original_p': p_values,
+       'Bonferroni_p': p_corrected_bonf,
+       'FDR_p': p_corrected_fdr,
+       'Significant_Bonf': reject_bonf,
+       'Significant_FDR': reject_fdr
+   })
+
+   display(results)
+   ```
+
+─────────────────────────────────────────────────────────────────────────────
+VISUALIZATION BEST PRACTICES
+─────────────────────────────────────────────────────────────────────────────
+
+1. General Principles
+
+   ✓ Every plot must have:
+     - Clear, descriptive title
+     - Labeled axes with units
+     - Legend (if multiple series)
+     - Appropriate scale
+     - Readable font size
+
+   ✓ Choose the right plot type:
+     - Distribution → Histogram, KDE, Box plot
+     - Comparison → Bar chart, Box plot
+     - Relationship → Scatter plot, Line plot
+     - Composition → Pie chart, Stacked bar
+     - Time series → Line plot
+
+   ✓ Use color effectively:
+     - Colorblind-friendly palettes
+     - Consistent colors across plots
+     - Highlight key findings
+
+2. Publication-Quality Plot Template
+
+   ```python
+   import matplotlib.pyplot as plt
+   import seaborn as sns
+
+   # Set style
+   sns.set_style("whitegrid")
+   sns.set_context("paper", font_scale=1.5)
+
+   # Create figure
+   fig, ax = plt.subplots(figsize=(10, 6))
+
+   # Plot data
+   ax.plot(x, y, marker='o', linewidth=2, markersize=8, label='Series 1')
+
+   # Labels and title
+   ax.set_xlabel('X-axis Label [units]', fontsize=14, fontweight='bold')
+   ax.set_ylabel('Y-axis Label [units]', fontsize=14, fontweight='bold')
+   ax.set_title('Clear, Descriptive Title', fontsize=16, fontweight='bold', pad=20)
+
+   # Legend
+   ax.legend(loc='best', frameon=True, shadow=True, fontsize=12)
+
+   # Grid
+   ax.grid(True, alpha=0.3, linestyle='--')
+
+   # Tight layout
+   plt.tight_layout()
+
+   # Save at high resolution
+   plt.savefig('results/plot_name.png', dpi=300, bbox_inches='tight')
+   plt.show()
+   ```
+
+3. Common Plot Types
+
+   A. COMPARISON PLOTS:
+
+   ```python
+   # Grouped bar chart
+   df_grouped = df.groupby(['category', 'subcategory'])['value'].mean().unstack()
+
+   fig, ax = plt.subplots(figsize=(12, 6))
+   df_grouped.plot(kind='bar', ax=ax)
+   ax.set_xlabel('Category')
+   ax.set_ylabel('Mean Value')
+   ax.set_title('Comparison Across Categories')
+   ax.legend(title='Subcategory')
+   plt.xticks(rotation=45, ha='right')
+   plt.tight_layout()
+   plt.savefig('results/comparison.png', dpi=300, bbox_inches='tight')
+   ```
+
+   B. RELATIONSHIP PLOTS:
+
+   ```python
+   # Scatter plot with regression line
+   from scipy.stats import linregress
+
+   fig, ax = plt.subplots(figsize=(10, 6))
+   ax.scatter(df['x'], df['y'], alpha=0.6, s=50)
+
+   # Add regression line
+   slope, intercept, r_value, p_value, std_err = linregress(df['x'], df['y'])
+   line_x = np.array([df['x'].min(), df['x'].max()])
+   line_y = slope * line_x + intercept
+   ax.plot(line_x, line_y, 'r--', linewidth=2,
+           label=f'r = {r_value:.3f}, p = {p_value:.4f}')
+
+   ax.set_xlabel('X Variable')
+   ax.set_ylabel('Y Variable')
+   ax.set_title('Relationship Between X and Y')
+   ax.legend()
+   plt.tight_layout()
+   plt.savefig('results/scatter.png', dpi=300, bbox_inches='tight')
+   ```
+
+   C. TIME SERIES PLOTS:
+
+   ```python
+   fig, ax = plt.subplots(figsize=(14, 6))
+
+   ax.plot(df['date'], df['value'], linewidth=2)
+
+   # Highlight significant events
+   ax.axvline(x=important_date, color='r', linestyle='--', label='Event')
+
+   # Add confidence band
+   ax.fill_between(df['date'], df['lower'], df['upper'], alpha=0.3)
+
+   ax.set_xlabel('Date')
+   ax.set_ylabel('Value')
+   ax.set_title('Time Series Analysis')
+   ax.legend()
+
+   # Format x-axis
+   import matplotlib.dates as mdates
+   ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+   ax.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
+   plt.xticks(rotation=45)
+
+   plt.tight_layout()
+   plt.savefig('results/timeseries.png', dpi=300, bbox_inches='tight')
+   ```
+
+─────────────────────────────────────────────────────────────────────────────
+FEATURE ENGINEERING
+─────────────────────────────────────────────────────────────────────────────
+
+1. Handling Missing Data
+
+   STRATEGIES:
+
+   A. Deletion (if < 5% missing and MCAR):
+   ```python
+   df_clean = df.dropna()
+   ```
+
+   B. Imputation:
+   ```python
+   from sklearn.impute import SimpleImputer
+
+   # Mean/median for numerical
+   imputer_num = SimpleImputer(strategy='median')
+   df[numerical_cols] = imputer_num.fit_transform(df[numerical_cols])
+
+   # Mode for categorical
+   imputer_cat = SimpleImputer(strategy='most_frequent')
+   df[categorical_cols] = imputer_cat.fit_transform(df[categorical_cols])
+   ```
+
+   C. Predictive Imputation:
+   ```python
+   from sklearn.experimental import enable_iterative_imputer
+   from sklearn.impute import IterativeImputer
+
+   imputer = IterativeImputer(random_state=42, max_iter=10)
+   df_imputed = imputer.fit_transform(df[numerical_cols])
+   ```
+
+   D. Add Missingness Indicator:
+   ```python
+   for col in df.columns:
+       if df[col].isnull().any():
+           df[f'{col}_was_missing'] = df[col].isnull().astype(int)
+   ```
+
+2. Encoding Categorical Variables
+
+   ```python
+   from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+
+   # One-hot encoding for nominal categories
+   df_encoded = pd.get_dummies(df, columns=['category_col'], drop_first=True)
+
+   # Label encoding for ordinal categories
+   le = LabelEncoder()
+   df['ordinal_encoded'] = le.fit_transform(df['ordinal_col'])
+
+   # Frequency encoding for high cardinality
+   freq_map = df['high_card_col'].value_counts(normalize=True).to_dict()
+   df['high_card_freq'] = df['high_card_col'].map(freq_map)
+   ```
+
+─────────────────────────────────────────────────────────────────────────────
+REPORTING RESULTS
+─────────────────────────────────────────────────────────────────────────────
+
+STATISTICAL RESULT TEMPLATE:
+
+"Group A (M = 50.2, SD = 5.1, n = 100) showed significantly higher scores
+than Group B (M = 45.3, SD = 4.8, n = 98), t(196) = 4.52, p < .001, d = 0.91."
+
+Components:
+- Descriptive statistics (M, SD, n)
+- Test statistic with df
+- p-value
+- Effect size
+
+BUSINESS RECOMMENDATIONS TEMPLATE:
+
+1. Executive Summary
+   - Key finding in one sentence
+   - Practical implication
+
+2. Detailed Findings
+   - Supporting evidence
+   - Visualizations
+
+3. Actionable Recommendations
+   - Specific actions
+   - Expected impact
+   - Required resources
+
+4. Limitations and Caveats
+   - Data quality issues
+   - Assumptions
+   - Confidence in results
+
+═══════════════════════════════════════════════════════════════════════════════

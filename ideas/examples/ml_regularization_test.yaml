@@ -1,0 +1,102 @@
+# Example Research Idea: Testing L2 Regularization Impact
+#
+# This is a simple example idea for testing the Idea Explorer system.
+# You can use this as a template for creating your own research ideas.
+
+idea:
+  title: "Impact of L2 Regularization on Small Dataset Generalization"
+
+  domain: machine_learning
+
+  hypothesis: |
+    L2 regularization significantly reduces overfitting on small datasets
+    (< 1000 samples) compared to unregularized models, leading to better
+    generalization performance on held-out test data.
+
+  background:
+    description: |
+      Regularization is a fundamental technique for preventing overfitting
+      in machine learning models. L2 regularization (ridge regression) adds
+      a penalty term proportional to the square of model weights.
+
+      While widely used, the quantitative impact on small datasets is not
+      always well-documented in practical settings. This experiment aims
+      to measure the effect systematically.
+
+    datasets:
+      - name: "Wine Quality Dataset"
+        source: "sklearn.datasets or UCI ML Repository"
+        description: "Small classification dataset (~1000 samples)"
+        size: "~1K samples"
+
+  methodology:
+    approach: "Controlled comparison study with cross-validation"
+
+    steps:
+      - "Load wine quality dataset and perform EDA"
+      - "Split data into train (70%), validation (15%), test (15%)"
+      - "Train baseline logistic regression (no regularization)"
+      - "Train L2-regularized models with varying alpha values"
+      - "Perform cross-validation to select best alpha"
+      - "Evaluate final models on held-out test set"
+      - "Visualize training curves and regularization paths"
+
+    baselines:
+      - "Unregularized logistic regression"
+      - "Random guess (stratified)"
+
+    metrics:
+      - "Test accuracy"
+      - "F1-score (weighted)"
+      - "Training vs validation gap (overfitting measure)"
+      - "Model complexity (L2 norm of weights)"
+
+  constraints:
+    compute: cpu_only
+    time_limit: 1800  # 30 minutes
+    memory: "4GB"
+    dependencies:
+      - "numpy"
+      - "pandas"
+      - "scikit-learn"
+      - "matplotlib"
+      - "seaborn"
+
+  expected_outputs:
+    - type: metrics
+      format: json
+      fields:
+        - baseline_test_acc
+        - l2_test_acc
+        - baseline_train_val_gap
+        - l2_train_val_gap
+      description: "Performance metrics for baseline vs L2-regularized models"
+
+    - type: visualization
+      format: png
+      description: |
+        Plots showing:
+        1. Training/validation curves
+        2. Regularization path (weights vs alpha)
+        3. Performance vs regularization strength
+
+    - type: report
+      format: markdown
+      description: "Comprehensive analysis with statistical significance testing"
+
+  evaluation_criteria:
+    - "L2 model shows lower train-validation gap than baseline"
+    - "Statistical significance tested with paired t-test (p < 0.05)"
+    - "Results reproducible across 3 runs with different random seeds"
+    - "Code runs without errors and produces all expected outputs"
+    - "Documentation clearly explains methodology and findings"
+
+  metadata:
+    author: "example_user"
+    tags:
+      - "regularization"
+      - "overfitting"
+      - "small-data"
+      - "classification"
+    priority: medium
+    estimated_duration: "30 minutes"

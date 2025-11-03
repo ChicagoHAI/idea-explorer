@@ -1,0 +1,412 @@
+# Idea Specification Schema
+# This schema defines the structure for research idea submissions
+
+$schema: "http://json-schema.org/draft-07/schema#"
+$id: "https://idea-explorer.io/schemas/idea-v1.yaml"
+
+title: Research Idea Specification
+description: Structured format for submitting research ideas to the Idea Explorer framework
+version: "1.0"
+
+type: object
+required: [idea]
+
+properties:
+  idea:
+    type: object
+    required: [title, domain, hypothesis, expected_outputs]
+    properties:
+
+      # ═══════════════════════════════════════════════════════
+      # BASIC INFORMATION
+      # ═══════════════════════════════════════════════════════
+
+      title:
+        type: string
+        minLength: 10
+        maxLength: 200
+        description: "Brief descriptive title for the research"
+        examples:
+          - "Compare fine-tuning vs RAG for domain-specific QA"
+          - "Impact of L2 regularization on small dataset generalization"
+          - "Optimizing database query performance with learned indexes"
+
+      domain:
+        type: string
+        enum:
+          - machine_learning
+          - data_science
+          - systems
+          - theory
+          - scientific_computing
+          - nlp
+          - computer_vision
+          - reinforcement_learning
+        description: "Primary research domain"
+
+      hypothesis:
+        type: string
+        minLength: 20
+        description: |
+          Research question or hypothesis to test. Should be specific,
+          testable, and clearly state expected relationships between variables.
+        examples:
+          - "Fine-tuning is more effective than RAG for specialized domains but less cost-effective"
+          - "L2 regularization reduces overfitting more than dropout on small datasets"
+
+      # ═══════════════════════════════════════════════════════
+      # BACKGROUND & CONTEXT
+      # ═══════════════════════════════════════════════════════
+
+      background:
+        type: object
+        properties:
+          description:
+            type: string
+            description: "Context and motivation for the research"
+
+          papers:
+            type: array
+            description: "Relevant academic papers"
+            items:
+              oneOf:
+                - type: object
+                  required: [url, description]
+                  properties:
+                    url:
+                      type: string
+                      format: uri
+                      description: "URL to paper (arXiv, journal, etc.)"
+                    description:
+                      type: string
+                      description: "Brief summary of paper's relevance"
+                - type: object
+                  required: [path, description]
+                  properties:
+                    path:
+                      type: string
+                      description: "Local path to PDF file"
+                    description:
+                      type: string
+                      description: "Brief summary of paper's relevance"
+
+          datasets:
+            type: array
+            description: "Datasets to use in experiments"
+            items:
+              type: object
+              required: [name, source]
+              properties:
+                name:
+                  type: string
+                  description: "Dataset name"
+                source:
+                  type: string
+                  description: "Where to get it (HuggingFace, Kaggle, URL, local path)"
+                  examples:
+                    - "huggingface:datasets/squad"
+                    - "kaggle:zillow/zecon"
+                    - "https://example.com/data.csv"
+                    - "/data/my_dataset.parquet"
+                description:
+                  type: string
+                  description: "What this dataset contains"
+                size:
+                  type: string
+                  description: "Dataset size (optional)"
+                  examples: ["10K samples", "500MB", "1M rows"]
+
+          code_references:
+            type: array
+            description: "Relevant code repositories or implementations"
+            items:
+              type: object
+              required: [repo, description]
+              properties:
+                repo:
+                  type: string
+                  description: "GitHub repo URL or local path"
+                description:
+                  type: string
+                  description: "What this code implements"
+                branch:
+                  type: string
+                  description: "Specific branch/tag (optional)"
+
+      # ═══════════════════════════════════════════════════════
+      # METHODOLOGY
+      # ═══════════════════════════════════════════════════════
+
+      methodology:
+        type: object
+        properties:
+          approach:
+            type: string
+            description: "High-level research approach"
+            examples:
+              - "Comparative study with controlled evaluation"
+              - "Ablation study measuring component contributions"
+              - "Exploratory data analysis with statistical testing"
+
+          steps:
+            type: array
+            description: "Key experimental steps in order"
+            items:
+              type: string
+            examples:
+              - ["Load data and perform EDA", "Train baseline model", "Implement proposed method", "Compare results"]
+
+          baselines:
+            type: array
+            description: "Baseline methods to compare against"
+            items:
+              type: string
+            examples:
+              - ["Random guess", "Logistic regression", "GPT-3.5 zero-shot"]
+
+          metrics:
+            type: array
+            description: "Evaluation metrics"
+            items:
+              type: string
+            examples:
+              - ["Accuracy", "F1 Score", "AUC-ROC", "Inference latency", "Cost per query"]
+
+      # ═══════════════════════════════════════════════════════
+      # CONSTRAINTS & REQUIREMENTS
+      # ═══════════════════════════════════════════════════════
+
+      constraints:
+        type: object
+        properties:
+          compute:
+            type: string
+            enum:
+              - cpu_only
+              - gpu_required
+              - multi_gpu
+              - tpu
+              - any
+            default: cpu_only
+            description: "Computational requirements"
+
+          time_limit:
+            type: integer
+            minimum: 60
+            maximum: 86400
+            default: 3600
+            description: "Maximum execution time in seconds (default 1 hour)"
+
+          memory:
+            type: string
+            pattern: "^[0-9]+(GB|MB)$"
+            description: "Memory requirements"
+            examples: ["8GB", "16GB", "32GB", "256MB"]
+
+          budget:
+            type: number
+            minimum: 0
+            description: "API/compute budget in USD (optional)"
+
+          dependencies:
+            type: array
+            items:
+              type: string
+            description: "Required Python packages or system libraries"
+            examples:
+              - ["transformers", "torch", "scikit-learn", "pandas"]
+              - ["numpy>=1.20.0", "scipy", "matplotlib"]
+
+      # ═══════════════════════════════════════════════════════
+      # EXPECTED OUTPUTS
+      # ═══════════════════════════════════════════════════════
+
+      expected_outputs:
+        type: array
+        minItems: 1
+        description: "What the research should produce"
+        items:
+          type: object
+          required: [type, format]
+          properties:
+            type:
+              type: string
+              enum:
+                - metrics
+                - visualization
+                - model
+                - dataset
+                - report
+                - code
+                - analysis
+              description: "Type of output"
+
+            format:
+              type: string
+              description: "File format"
+              examples: ["json", "png", "pytorch", "csv", "markdown", "pdf"]
+
+            fields:
+              type: array
+              items:
+                type: string
+              description: "Expected fields (for structured outputs like metrics)"
+              examples:
+                - ["accuracy", "f1_score", "precision", "recall"]
+                - ["train_loss", "val_loss", "test_accuracy"]
+
+            description:
+              type: string
+              description: "What this output contains"
+
+      # ═══════════════════════════════════════════════════════
+      # EVALUATION CRITERIA
+      # ═══════════════════════════════════════════════════════
+
+      evaluation_criteria:
+        type: array
+        minItems: 1
+        items:
+          type: string
+        description: "How to judge success of the research"
+        examples:
+          - "Statistical significance tested with paired t-test (p < 0.05)"
+          - "Reproducible results across 3 independent runs"
+          - "Performance improvement over baseline > 5%"
+          - "Code quality score > 80/100"
+          - "All experiments complete within time/budget constraints"
+
+      # ═══════════════════════════════════════════════════════
+      # METADATA
+      # ═══════════════════════════════════════════════════════
+
+      metadata:
+        type: object
+        properties:
+          author:
+            type: string
+            description: "Who submitted this idea"
+
+          created_at:
+            type: string
+            format: date-time
+            description: "When idea was created (auto-generated)"
+
+          tags:
+            type: array
+            items:
+              type: string
+            description: "Tags for categorization"
+            examples:
+              - ["llm", "rag", "fine-tuning"]
+              - ["classification", "imbalanced-data"]
+
+          priority:
+            type: string
+            enum: [low, medium, high, urgent]
+            default: medium
+            description: "Execution priority"
+
+          estimated_duration:
+            type: string
+            description: "Estimated time to complete"
+            examples: ["1 hour", "4 hours", "1 day"]
+
+          related_ideas:
+            type: array
+            items:
+              type: string
+            description: "IDs of related ideas"
+
+# ═══════════════════════════════════════════════════════════
+# EXAMPLE TEMPLATES
+# ═══════════════════════════════════════════════════════════
+
+examples:
+  - title: "Machine Learning Experiment"
+    idea:
+      title: "Compare fine-tuning vs RAG for domain-specific QA"
+      domain: machine_learning
+      hypothesis: |
+        Fine-tuning on domain data achieves better accuracy than RAG
+        for closed-domain QA, but RAG is more cost-effective.
+      background:
+        description: "Comparing two popular LLM adaptation methods"
+        papers:
+          - url: "https://arxiv.org/abs/2005.11401"
+            description: "RAG paper"
+        datasets:
+          - name: "PubMedQA"
+            source: "huggingface:datasets/pubmedqa"
+            description: "Biomedical QA dataset"
+      methodology:
+        approach: "Comparative study with controlled evaluation"
+        steps:
+          - "Establish baseline with zero-shot GPT-3.5"
+          - "Implement RAG pipeline"
+          - "Fine-tune GPT-3.5"
+          - "Evaluate both approaches"
+        baselines: ["Zero-shot GPT-3.5"]
+        metrics: ["Accuracy", "F1 Score", "Latency", "Cost"]
+      constraints:
+        compute: gpu_required
+        time_limit: 7200
+        memory: "32GB"
+        dependencies: ["transformers", "datasets", "faiss-gpu"]
+      expected_outputs:
+        - type: metrics
+          format: json
+          fields: [accuracy, f1_score, latency_ms, cost_usd]
+        - type: visualization
+          format: png
+          description: "Comparison plots"
+      evaluation_criteria:
+        - "Statistical significance (p < 0.05)"
+        - "Reproducible across 3 runs"
+      metadata:
+        tags: ["llm", "rag", "fine-tuning"]
+        priority: high
+
+  - title: "Data Science Analysis"
+    idea:
+      title: "Customer churn prediction with interpretable features"
+      domain: data_science
+      hypothesis: |
+        Interpretable models (gradient boosting) can achieve accuracy
+        comparable to deep learning while providing actionable insights.
+      background:
+        description: "Balance accuracy with interpretability"
+        datasets:
+          - name: "Telco Churn"
+            source: "kaggle:blastchar/telco-customer-churn"
+            description: "Customer churn data"
+      methodology:
+        approach: "Comparative modeling with interpretability focus"
+        steps:
+          - "Exploratory data analysis"
+          - "Feature engineering"
+          - "Train multiple models"
+          - "Generate SHAP explanations"
+        baselines: ["Logistic Regression"]
+        metrics: ["AUC-ROC", "Precision@10%", "Feature Importance"]
+      constraints:
+        compute: cpu_only
+        time_limit: 1800
+        memory: "8GB"
+        dependencies: ["pandas", "scikit-learn", "xgboost", "shap"]
+      expected_outputs:
+        - type: metrics
+          format: json
+          fields: [auc_roc, precision_at_10pct]
+        - type: visualization
+          format: png
+          description: "Feature importance and SHAP plots"
+        - type: report
+          format: markdown
+          description: "Business recommendations"
+      evaluation_criteria:
+        - "AUC-ROC > 0.75"
+        - "Actionable recommendations provided"
+      metadata:
+        tags: ["churn", "classification", "interpretability"]
+        priority: medium
