@@ -11,6 +11,11 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 import yaml
 from jinja2 import Environment, FileSystemLoader, Template, select_autoescape
+import sys
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from core.config_loader import ConfigLoader, normalize_domain
 
 
 class PromptGenerator:
@@ -104,16 +109,35 @@ class PromptGenerator:
         # Load base researcher template
         base_template = self.load_template('base/researcher.txt')
 
-        # Load domain-specific template
+        # Load domain-specific template with intelligent fallback
+        config_loader = ConfigLoader()
         domain = idea_spec.get('domain', 'machine_learning')
-        domain_template_path = f'domains/{domain}/core.txt'
+
+        # Normalize domain (falls back to default if unknown)
+        normalized_domain = normalize_domain(domain)
+
+        if domain != normalized_domain:
+            print(f"ℹ️  Domain '{domain}' not recognized, using '{normalized_domain}' template")
+
+        # Try to load domain template
+        domain_template = ""
+        domain_template_path = f'domains/{normalized_domain}/core.txt'
 
         try:
             domain_template = self.load_template(domain_template_path)
         except FileNotFoundError:
-            # Fallback to empty string if domain template doesn't exist
-            domain_template = ""
-            print(f"Warning: Domain template not found: {domain_template_path}")
+            # If no specific template exists, try the default domain
+            default_domain = config_loader.get_default_domain()
+            default_template_path = f'domains/{default_domain}/core.txt'
+
+            print(f"ℹ️  No template for '{normalized_domain}', using '{default_domain}' template")
+
+            try:
+                domain_template = self.load_template(default_template_path)
+            except FileNotFoundError:
+                # Ultimate fallback: no domain-specific guidance
+                print(f"⚠️  No domain templates available, using base template only")
+                domain_template = ""
 
         # Prepare variables for template rendering
         variables = self._prepare_variables(idea_spec, root_dir)

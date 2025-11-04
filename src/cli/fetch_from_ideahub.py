@@ -28,6 +28,13 @@ if env_local.exists():
 elif env_file.exists():
     load_dotenv(env_file)
 
+# Check if GitHub integration is available
+try:
+    from core.github_manager import GitHubManager
+    GITHUB_AVAILABLE = True
+except ImportError:
+    GITHUB_AVAILABLE = False
+
 
 def fetch_ideahub_content(url: str) -> dict:
     """
@@ -330,6 +337,16 @@ def main():
         action="store_true",
         help="Automatically submit the idea after conversion"
     )
+    parser.add_argument(
+        "--no-github",
+        action="store_true",
+        help="Skip GitHub repository creation (only with --submit)"
+    )
+    parser.add_argument(
+        "--github-org",
+        default="ChicagoHAI",
+        help="GitHub organization name (default: ChicagoHAI)"
+    )
 
     args = parser.parse_args()
 
@@ -373,8 +390,81 @@ def main():
         idea_id = manager.submit_idea(idea_data['idea'], validate=True)
 
         print(f"\n✓ Idea submitted successfully: {idea_id}")
-        print(f"\nTo run this research:")
-        print(f"  python src/core/runner.py {idea_id}")
+
+        # GitHub integration (same as submit.py)
+        github_repo_url = None
+        workspace_path = None
+
+        if not args.no_github and GITHUB_AVAILABLE and os.getenv('GITHUB_TOKEN'):
+            print(f"\n📦 Creating GitHub repository...")
+            try:
+                github_manager = GitHubManager(org_name=args.github_org)
+
+                # Get idea details
+                idea = manager.get_idea(idea_id)
+                title = idea.get('idea', {}).get('title', idea_id)
+                domain = idea.get('idea', {}).get('domain', 'research')
+                description = f"{domain.replace('_', ' ').title()} research: {title}"
+
+                # Create repository
+                repo_info = github_manager.create_research_repo(
+                    idea_id=idea_id,
+                    title=title,
+                    description=description,
+                    private=False
+                )
+
+                github_repo_url = repo_info['repo_url']
+                workspace_path = repo_info['local_path']
+
+                print(f"✅ Repository created: {github_repo_url}")
+
+                # Clone repository
+                print(f"📥 Cloning repository to workspace...")
+                repo = github_manager.clone_repo(
+                    repo_info['clone_url'],
+                    workspace_path
+                )
+
+                # Add research metadata
+                print(f"📝 Adding research metadata...")
+                github_manager.add_research_metadata(workspace_path, idea)
+
+                # Initial commit
+                github_manager.commit_and_push(
+                    workspace_path,
+                    f"Initialize research project: {title}"
+                )
+
+                print(f"✅ Workspace ready at: {workspace_path}")
+
+            except Exception as e:
+                print(f"\n⚠️  GitHub repository creation failed: {e}")
+                print("   You can still run the research locally with --no-github")
+
+        elif not args.no_github:
+            if not GITHUB_AVAILABLE:
+                print(f"\n⚠️  GitHub integration not available (missing dependencies)")
+                print("   Install with: uv add PyGithub GitPython")
+            elif not os.getenv('GITHUB_TOKEN'):
+                print(f"\n⚠️  GITHUB_TOKEN not set")
+                print("   Set it in .env file or export GITHUB_TOKEN=your_token")
+
+        # Final instructions
+        print("\n" + "=" * 80)
+        print("NEXT STEPS")
+        print("=" * 80)
+
+        if workspace_path:
+            print(f"\n1. (Optional) Add resources to workspace:")
+            print(f"   cd {workspace_path}")
+            print(f"   # Add datasets, documents, etc.")
+            print(f"\n2. Run the research:")
+            print(f"   python src/core/runner.py {idea_id}")
+            print(f"\n   Results will be pushed to: {github_repo_url}")
+        else:
+            print(f"\nRun the research:")
+            print(f"  python src/core/runner.py {idea_id}")
     else:
         print(f"\nTo submit this idea:")
         print(f"  python src/cli/submit.py {output_path}")

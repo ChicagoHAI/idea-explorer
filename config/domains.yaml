@@ -1,0 +1,61 @@
+# Research Domain Configuration
+# This file defines available research domains for Idea Explorer
+
+# Default domain to use when an unknown domain is specified
+default_domain: artificial_intelligence
+
+# Available research domains
+# Each domain should have a corresponding template in templates/domains/<domain>/core.txt
+domains:
+  artificial_intelligence:
+    name: "Artificial Intelligence"
+    description: "LLM research, prompt engineering, AI agents, benchmarks"
+    has_template: true
+
+  machine_learning:
+    name: "Machine Learning"
+    description: "Model training, evaluation, hyperparameter tuning"
+    has_template: true
+
+  data_science:
+    name: "Data Science"
+    description: "Exploratory data analysis, statistical analysis, visualization"
+    has_template: true
+
+  nlp:
+    name: "Natural Language Processing"
+    description: "Traditional NLP tasks (non-LLM), text processing"
+    has_template: false  # Will use default
+
+  computer_vision:
+    name: "Computer Vision"
+    description: "Image processing, object detection, visual analysis"
+    has_template: false  # Will use default
+
+  reinforcement_learning:
+    name: "Reinforcement Learning"
+    description: "Agent training, policy evaluation, RL algorithms"
+    has_template: false  # Will use default
+
+  systems:
+    name: "Systems"
+    description: "Performance benchmarking, optimization, distributed systems"
+    has_template: true
+
+  theory:
+    name: "Theory"
+    description: "Algorithmic analysis, complexity theory, formal methods"
+    has_template: true
+
+  scientific_computing:
+    name: "Scientific Computing"
+    description: "Numerical methods, simulations, computational science"
+    has_template: false  # Will use default
+
+# Validation settings
+validation:
+  # Whether to allow unknown domains (will use default_domain)
+  allow_unknown: true
+
+  # Whether to warn when domain has no specific template
+  warn_missing_template: true

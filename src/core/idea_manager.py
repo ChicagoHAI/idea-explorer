@@ -14,6 +14,12 @@ from datetime import datetime
 import yaml
 import json
 import hashlib
+import sys
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from core.config_loader import ConfigLoader
 
 
 class IdeaManager:
@@ -120,14 +126,22 @@ class IdeaManager:
                 errors.append(f"Missing required field: {field}")
 
         # Validate domain
-        valid_domains = [
-            'machine_learning', 'data_science', 'systems', 'theory',
-            'scientific_computing', 'nlp', 'computer_vision',
-            'reinforcement_learning'
-        ]
+        config_loader = ConfigLoader()
+        valid_domains = config_loader.get_valid_domains()
+        allow_unknown = config_loader.should_allow_unknown_domains()
+
         if 'domain' in idea and idea['domain'] not in valid_domains:
-            errors.append(f"Invalid domain: {idea['domain']}. "
-                         f"Must be one of: {', '.join(valid_domains)}")
+            if allow_unknown:
+                default_domain = config_loader.get_default_domain()
+                warnings.append(
+                    f"Unknown domain '{idea['domain']}' will be treated as '{default_domain}'. "
+                    f"Valid domains: {', '.join(valid_domains)}"
+                )
+            else:
+                errors.append(
+                    f"Invalid domain: {idea['domain']}. "
+                    f"Must be one of: {', '.join(valid_domains)}"
+                )
 
         # Validate hypothesis length
         if 'hypothesis' in idea and len(idea['hypothesis']) < 20:
