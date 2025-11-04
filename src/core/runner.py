@@ -245,19 +245,113 @@ class ResearchRunner:
         # Prepare session instructions
         session_instructions = f"""Start a new session for research execution.
 
-IMPORTANT: Set up the correct working directory by running:
-import os
-os.chdir('{work_dir}')
+CRITICAL: Environment Setup
+────────────────────────────────────────────────────────────────────────────────
+You MUST create a fresh isolated environment for this project. DO NOT use the
+idea-explorer environment or any existing environment.
 
-Now execute the following research task:
+REQUIRED STEPS (in order):
+
+1. Create a fresh virtual environment using uv:
+   uv venv
+
+2. Activate the environment:
+   source .venv/bin/activate
+
+3. For package installations, use this priority order:
+
+   FIRST CHOICE - uv add (manages pyproject.toml automatically):
+   uv add <package-name>
+
+   Examples:
+   - uv add numpy pandas matplotlib
+   - uv add torch transformers
+   - uv add scikit-learn scipy
+
+   SECOND CHOICE - if uv add doesn't work:
+   uv pip install <package-name>
+
+   LAST RESORT - if uv fails entirely:
+   pip install <package-name>
+
+   NEVER use conda or conda install!
+
+4. Dependency Management:
+   - Using 'uv add' automatically creates and maintains pyproject.toml
+   - Verify dependencies with: cat pyproject.toml
+   - If you used pip, also maintain: pip freeze > requirements.txt
+   - This ensures reproducibility of the research environment
+
+WHY: Using an isolated environment ensures:
+- No pollution of the idea-explorer environment
+- Fast package installation with uv (10-100x faster than pip)
+- Automatic dependency tracking with pyproject.toml
+- Clean, reproducible research setup
+
+════════════════════════════════════════════════════════════════════════════════
+
+IMPORTANT: Check for User-Provided Resources
+────────────────────────────────────────────────────────────────────────────────
+Before starting your research, CHECK the workspace directory for resources that
+may have been added by the user. These could be in directories like:
+
+- papers/ or docs/ - Research papers, documentation (PDFs, markdown)
+- datasets/ or data/ - Pre-downloaded datasets, data files
+- resources/ - Any other relevant materials
+- Root directory - Individual files like papers.txt, data.csv, etc.
+
+If you find relevant resources:
+1. List them and briefly describe what you found
+2. Review papers or documentation to inform your approach
+3. Use provided datasets instead of downloading new ones when applicable
+4. Incorporate any constraints or suggestions from these materials
+
+The research specification below may reference some resources, but ALWAYS check
+the workspace for additional materials the user may have added!
+
+════════════════════════════════════════════════════════════════════════════════
+
+Execute the following research task:
 
 {prompt}
 
 Remember to:
+- You are already in the correct working directory: {work_dir}
+- Set up the isolated environment FIRST before installing any packages
+- Use 'uv add' for package installation (manages pyproject.toml automatically)
 - Create all required notebooks (plan_Md.ipynb, documentation_Md.ipynb, code_walk_Md.ipynb)
-- Save all outputs to appropriate directories
+- Save all outputs to appropriate directories (notebooks/, outputs/, etc.)
 - Follow the methodology carefully
 - Document everything thoroughly
+
+FINAL REQUIRED TASK - After completing all research:
+────────────────────────────────────────────────────────────────────────────────
+Before finishing, you MUST create two final documentation files:
+
+1. REPORT.md - A comprehensive, easy-to-read research report containing:
+   - Executive Summary (2-3 paragraphs)
+   - Research Question & Hypothesis
+   - Methodology (what you did, step-by-step)
+   - Key Findings (main results with supporting data/figures)
+   - Discussion & Interpretation
+   - Limitations & Future Work
+   - Conclusion
+   - References (papers, datasets, tools used)
+
+   This should be written for a technical audience but be MORE readable than the
+   raw notebooks. Include key visualizations/tables inline (as markdown).
+
+2. Update README.md - Add/update the following sections:
+   - Brief project description (2-3 sentences)
+   - Key findings summary (bullet points, 3-5 main results)
+   - How to reproduce (environment setup, run instructions)
+   - File structure overview
+   - Link to REPORT.md for full details
+
+   Keep README concise and scannable. Think of it as a quick overview someone
+   would read to understand what this research accomplished.
+
+These documents are CRITICAL for making your research accessible and understandable!
 
 DO NOT resume the session in the same notebook. Create a new session if continuation is needed.
 """
@@ -295,7 +389,7 @@ DO NOT resume the session in the same notebook. Create a new session if continua
             print()
 
             with open(log_file, 'w') as log_f:
-                # Start process
+                # Start process in workspace directory
                 process = subprocess.Popen(
                     shlex.split(cmd),
                     stdin=subprocess.PIPE,
@@ -303,7 +397,8 @@ DO NOT resume the session in the same notebook. Create a new session if continua
                     stderr=subprocess.STDOUT,
                     env=env,
                     text=True,
-                    bufsize=1
+                    bufsize=1,
+                    cwd=str(work_dir)
                 )
 
                 # Send session instructions
