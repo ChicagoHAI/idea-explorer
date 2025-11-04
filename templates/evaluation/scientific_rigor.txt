@@ -7,11 +7,12 @@ uses appropriate methods, draws valid conclusions, and acknowledges limitations.
                                 YOUR TASK
 ═══════════════════════════════════════════════════════════════════════════════
 
-1. Read the documentation notebook (documentation_Md.ipynb)
-2. Read the plan notebook (plan_Md.ipynb) to understand intended methodology
-3. Assess the research against scientific rigor criteria
-4. Evaluate if conclusions are supported by evidence
-5. Generate an overall scientific quality score (0-100)
+1. Read the REPORT.md file (primary research documentation)
+2. Read planning.md or resources.md to understand intended methodology
+3. Review any Jupyter notebooks for code and experimental outputs
+4. Assess the research against scientific rigor criteria
+5. Evaluate if conclusions are supported by evidence
+6. Generate an overall scientific quality score (0-100)
 
 ═══════════════════════════════════════════════════════════════════════════════
                             EVALUATION CRITERIA

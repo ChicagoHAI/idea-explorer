@@ -28,7 +28,41 @@ cp .env.example .env
 
 ### Step 2: Create Research Idea
 
-Create a YAML file describing your research idea:
+Create a YAML file describing your research idea. You have two options:
+
+**Option A: Minimal Specification (v1.1 - Recommended)**
+
+Let the agent research details through literature review:
+
+```yaml
+# my_experiment.yaml
+idea:
+  title: "Impact of Chain-of-Thought on Math Reasoning"
+  domain: artificial_intelligence
+  hypothesis: |
+    Chain-of-thought prompting improves LLM performance on
+    multi-step math problems by 15-30% compared to direct prompting.
+
+  background:
+    papers:
+      - url: "https://arxiv.org/abs/2201.11903"
+        description: "Original Chain-of-Thought paper"
+
+  constraints:
+    compute: cpu_only
+    budget: 50
+    time_limit: 3600
+```
+
+The agent will automatically:
+- Search for appropriate datasets (e.g., GSM8K, MATH)
+- Identify baselines from literature
+- Select standard evaluation metrics
+- Document choices in `resources.md`
+
+**Option B: Detailed Specification (Traditional)**
+
+Provide full experimental details if you have specific requirements:
 
 ```yaml
 # my_experiment.yaml
@@ -39,10 +73,14 @@ idea:
 
   methodology:
     approach: "High-level strategy"
-    steps:
-      - "Step 1"
-      - "Step 2"
+    steps: ["Step 1", "Step 2"]
+    baselines: ["Baseline 1", "Baseline 2"]
     metrics: ["accuracy", "f1_score"]
+
+  background:
+    datasets:
+      - name: "Dataset Name"
+        source: "huggingface:org/dataset"
 
   expected_outputs:
     - type: metrics
@@ -50,7 +88,7 @@ idea:
       fields: [accuracy, f1_score]
 ```
 
-See `ideas/schema.yaml` for complete specification.
+See `ideas/schema.yaml` for complete specification and `ideas/examples/` for more examples.
 
 ### Step 3: Submit Idea
 
@@ -141,13 +179,14 @@ python src/core/runner.py my_experiment_20250103_120000_abc123de
 1. 📥 Pulls latest changes from GitHub (includes your resources)
 2. 📝 Generates comprehensive research prompt
 3. 🤖 Launches AI agent in the workspace
-4. 🔬 Agent executes research:
-   - Reads your resources
-   - Designs experiments
-   - Implements code
-   - Runs analyses
-   - Generates visualizations
-   - Creates documentation
+4. 🔬 Agent executes research (v1.1 workflow):
+   - **Phase 0**: Checks provided resources, identifies gaps
+   - **Research** (if needed): Searches for datasets, baselines, methods (30-60 min)
+   - **Planning**: Designs detailed experimental plan
+   - **Setup**: Creates virtual environment, installs dependencies
+   - **Implementation**: Writes code, runs experiments (uses notebooks)
+   - **Analysis**: Analyzes results, creates visualizations
+   - **Documentation**: Writes REPORT.md, README.md, resources.md
 5. 📤 Commits and pushes all results to GitHub
 
 **During execution:**
@@ -162,13 +201,15 @@ All results are available both locally and on GitHub:
 **Local workspace:**
 ```
 workspace/<repo-name>/
+├── REPORT.md                   # Main research report (v1.1)
+├── README.md                   # Project overview
+├── resources.md                # Research process documentation (v1.1)
 ├── notebooks/
-│   ├── plan_Md.ipynb           # Research plan
-│   ├── documentation_Md.ipynb   # Results & analysis
-│   └── code_walk_Md.ipynb      # Code walkthrough
+│   ├── experiments.ipynb       # Experimental code (descriptive names)
+│   └── analysis.ipynb          # Analysis and visualizations
 ├── results/
 │   ├── metrics.json            # Quantitative results
-│   └── *.png                   # Visualizations
+│   └── figures/                # Plots and visualizations
 ├── artifacts/
 │   └── *.pt / *.pkl            # Models, checkpoints
 ├── logs/

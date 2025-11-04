@@ -1,13 +1,14 @@
 # IdeaHub Integration Guide
 
-Idea Explorer can automatically fetch research ideas from [IdeaHub](https://hypogenic.ai/ideahub/) and convert them into the Idea Explorer YAML format using GPT-4.
+Idea Explorer can automatically fetch research ideas from [IdeaHub](https://hypogenic.ai/ideahub/) and convert them into minimal YAML format (v1.1).
 
 ## Overview
 
 IdeaHub is a platform for sharing and discovering research ideas. This integration allows you to:
 1. **Fetch** ideas from IdeaHub URLs
-2. **Convert** them automatically to Idea Explorer format using GPT-4
-3. **Submit** them directly to run experiments
+2. **Convert** them to minimal Idea Explorer format (preserves only provided info)
+3. **Submit** them directly - agent will research missing details
+4. **Run** autonomous experiments with agent-driven resource discovery
 
 ## Setup
 
@@ -35,11 +36,11 @@ Fetch an idea from IdeaHub:
 python src/cli/fetch_from_ideahub.py https://hypogenic.ai/ideahub/idea/HGVv4Z0ALWVHZ9YsstWT
 ```
 
-**What happens:**
-1. 📥 Fetches the idea content from IdeaHub
-2. 🤖 Uses GPT-4 to convert to Idea Explorer YAML format
-3. 💾 Saves the YAML file to `ideas/` directory
-4. ✅ Displays the path to the saved file
+**What happens (v1.1):**
+1. 📥 Fetches the idea content from IdeaHub (title, description, references)
+2. 🤖 Uses GPT-4o-mini to format as minimal YAML (no hallucination)
+3. 💾 Saves only provided information - no invented datasets/methods
+4. ✅ Agent will research missing details when you run the experiment
 
 **Example output:**
 ```

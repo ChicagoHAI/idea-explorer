@@ -302,13 +302,37 @@ class CriticSystem:
 
 ## Idea Specification Format
 
+### Philosophy: Research-First, Pragmatic Execution
+
+**Version 1.1 Update (2025-11-04):**
+
+The Idea Explorer follows a "research-first, pragmatic execution" philosophy:
+
+1. **Minimal Specifications Accepted**: Users can submit ideas with just a title, domain, and research question. Detailed experimental design is optional.
+
+2. **Agent-Driven Research**: When details are missing, agents conduct focused literature reviews to identify:
+   - Appropriate datasets (HuggingFace, Papers with Code, academic benchmarks)
+   - Standard baselines and evaluation methods from related work
+   - Best practices and metrics used in the field
+
+3. **Pragmatic Fallbacks**: If research doesn't yield suitable resources:
+   - Agents can generate synthetic/custom datasets
+   - Simple baselines (random, majority class, heuristics) are acceptable
+   - Agents propose reasonable alternatives and document rationale
+   - **Critical**: Always proceed to execution - don't get stuck researching
+
+4. **Documentation Requirements**:
+   - **Jupyter notebooks**: For experiments, analysis, interactive code
+   - **Markdown files**: For documentation meant to be read
+   - Required: `resources.md` (research findings), `REPORT.md` (results), `README.md` (overview)
+
 ### Schema Definition (YAML)
 
 ```yaml
-# ideas/schema.yaml
+# ideas/schema.yaml (v1.1)
 idea:
   type: object
-  required: [title, domain, hypothesis, expected_outputs]
+  required: [title, domain, hypothesis]  # expected_outputs now optional
   properties:
     title:
       type: string
@@ -453,7 +477,46 @@ idea:
 
 ### Example Idea Specifications
 
-**Example 1: Machine Learning Experiment**
+**Example 1: Minimal Specification (v1.1 - Agent researches details)**
+
+```yaml
+# ideas/submitted/llm_belief_differentiation_minimal.yaml
+idea:
+  title: "Do LLMs Differentiate Epistemic Belief from Non-Epistemic Belief?"
+  domain: artificial_intelligence
+
+  hypothesis: |
+    Large Language Models can distinguish between epistemic beliefs
+    (beliefs about what is true) and non-epistemic beliefs (such as
+    preferences or commitments) when prompted with scenarios requiring
+    such differentiation.
+
+  background:
+    description: |
+      Humans distinguish multiple kinds of belief in theory of mind tasks.
+      As LLMs are used for reasoning and decision-making, it's important
+      to assess whether they also differentiate these belief types.
+
+    papers:
+      - url: "https://dx.doi.org/10.1037/xge0001765"
+        description: |
+          Vesga et al. (2025) - Evidence for multiple kinds of belief
+          in theory of mind. Provides experimental paradigms.
+
+  constraints:
+    compute: cpu_only
+    time_limit: 3600
+    budget: 100
+
+# Note: No datasets, baselines, or metrics specified!
+# Agent will:
+# 1. Search for appropriate datasets or create scenarios
+# 2. Identify baselines from literature (e.g., majority class, random)
+# 3. Select metrics (e.g., accuracy, F1, Cohen's kappa)
+# 4. Document choices in resources.md
+```
+
+**Example 2: Detailed Specification (traditional approach)**
 
 ```yaml
 # ideas/submitted/compare_finetuning_vs_rag_001.yaml
@@ -551,7 +614,7 @@ idea:
     priority: high
 ```
 
-**Example 2: Data Science Analysis**
+**Example 3: Data Science Analysis (detailed)**
 
 ```yaml
 # ideas/submitted/analyze_customer_churn_002.yaml

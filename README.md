@@ -60,20 +60,40 @@ python src/core/runner.py <idea_id>
 
 Idea Explorer automates the entire research workflow:
 
-1. **Submit**: Define research ideas in structured YAML format
-2. **Validate**: Automatically checks idea completeness and feasibility
+1. **Submit**: Define research ideas (minimal or detailed) in YAML format
+2. **Research**: Agents conduct literature review and resource discovery
 3. **Execute**: AI agents design experiments, write code, and run analyses
-4. **Document**: Generates comprehensive reports with code walkthroughs
-5. **Evaluate**: Critic agents assess research quality and reproducibility
+4. **Document**: Generates comprehensive reports (REPORT.md, README.md)
+5. **Evaluate**: (Future) Critic agents assess research quality and reproducibility
+
+### Research-First Philosophy (v1.1)
+
+**You can submit minimal ideas** - agents will research the details:
+
+- ✅ Just provide: title, domain, research question
+- 🔍 Agent searches for: datasets, baselines, evaluation methods
+- 📚 Grounds in literature when resources exist
+- 🛠️ Creates synthetic data/baselines when they don't
+- ⚡ Always proceeds to execution - doesn't get stuck
+
+**Example minimal idea:**
+```yaml
+idea:
+  title: "Do LLMs understand causality?"
+  domain: artificial_intelligence
+  hypothesis: "LLMs can distinguish causal from correlational relationships"
+  # That's it! Agent handles the rest
+```
 
 ### Key Features
 
-- **Domain-Agnostic**: Works across ML, data science, systems, theory, and more
-- **Structured Ideas**: YAML schema ensures completeness and clarity
+- **Flexible Specifications**: Minimal ideas (just research question) or detailed plans
+- **Agent-Driven Research**: Literature review, dataset search, baseline identification
+- **Pragmatic Execution**: Creates resources when they don't exist, always proceeds
+- **Domain-Agnostic**: Works across ML, data science, AI, systems, theory, and more
 - **Layered Prompts**: Base methodology + domain-specific best practices
-- **Multi-Provider**: Supports Claude, Gemini, and Codex
-- **Quality Assurance**: Automated evaluation of code, rigor, and reproducibility
-- **Reproducible**: Enforces best practices for reproducible research
+- **Multi-Provider**: Supports Claude, Gemini, and Codex via scribe
+- **Smart Documentation**: Notebooks for experiments, markdown for readable docs
 
 ## Architecture
 
@@ -215,7 +235,28 @@ python src/core/runner.py my_idea_20250103_120000_abc123de
 # Options:
 #   --provider claude|gemini|codex  (default: claude)
 #   --timeout SECONDS               (default: 3600)
+#   --full-permissions              (allow agents to run without permission prompts)
+#   --no-github                     (run locally without GitHub integration)
+#   --github-org ORG                (specify GitHub organization, default: ChicagoHAI)
 ```
+
+**Permission Modes:**
+
+By default, agents will prompt for permission before executing sensitive operations. Use `--full-permissions` to allow agents to run autonomously:
+
+```bash
+# With permission prompts (default, safer)
+python src/core/runner.py my_idea
+
+# Full autonomous mode (faster, no interruptions)
+python src/core/runner.py my_idea --provider codex --full-permissions
+```
+
+The `--full-permissions` flag translates to provider-specific flags:
+- Codex: `codex --yolo`
+- Claude: `claude --dangerously-skip-permissions`
+- Gemini: (no permission system)
+
 
 The agent will:
 - Generate a comprehensive research plan

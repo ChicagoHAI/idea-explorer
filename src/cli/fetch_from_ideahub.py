@@ -162,8 +162,8 @@ def convert_to_yaml(ideahub_content: dict) -> dict:
     with open(example_path, 'r') as f:
         example_content = f.read()
 
-    # Create prompt for GPT
-    prompt = f"""You are an expert research assistant helping convert research ideas from IdeaHub to the Idea Explorer YAML format.
+    # Create prompt for GPT - minimal formatting only
+    prompt = f"""You are converting a research idea from IdeaHub to a simple YAML format.
 
 # IdeaHub Content
 
@@ -176,43 +176,38 @@ Description/Content:
 
 # Task
 
-Convert this IdeaHub idea into a complete YAML file following the Idea Explorer schema.
+Convert this to a minimal YAML file with ONLY the information provided. Do NOT invent or make up:
+- Specific datasets (unless mentioned in the content)
+- Experimental methodologies (unless described)
+- Baselines or metrics (unless specified)
+- Budget or time estimates (use defaults)
+
+The AI research agent will handle finding datasets, designing experiments, and identifying evaluation methods through literature review.
 
 # Schema Reference
 
 {schema_content}
 
-# Example YAML
-
-Here's an example of a well-formatted idea:
-
-{example_content}
-
 # Instructions
 
-1. **Domain**: Infer the most appropriate domain from: machine_learning, data_science, systems, theory, scientific_computing, nlp, computer_vision, reinforcement_learning, artificial_intelligence
-   - Use "artificial_intelligence" for LLM/AI research, prompt engineering, AI agents
-   - Use "nlp" for traditional NLP (non-LLM)
-   - Use "machine_learning" for model training/evaluation
+1. **Required fields**:
+   - title: Use the provided title
+   - domain: Infer from: machine_learning, data_science, systems, theory, scientific_computing, nlp, computer_vision, reinforcement_learning, artificial_intelligence
+   - hypothesis: Extract the research question or reformulate the idea as a testable hypothesis
 
-2. **Hypothesis**: Extract or formulate a clear, testable hypothesis from the description
+2. **Optional fields** (only include if present in the content):
+   - background.description: Use the description from IdeaHub
+   - background.papers: Only include papers explicitly mentioned
+   - background.datasets: Only include if specific datasets are mentioned
+   - constraints: Use sensible defaults (cpu_only, time_limit: 3600, budget: 50-100 for AI research)
 
-3. **Methodology**: Design a reasonable experimental approach including:
-   - Steps to execute the research
-   - Appropriate baselines
-   - Relevant metrics
+3. **DO NOT include**:
+   - methodology (agent will design this)
+   - expected_outputs (agent will determine)
+   - evaluation_criteria (agent will establish based on field)
+   - Any made-up datasets, baselines, or metrics
 
-4. **Constraints**: Specify reasonable constraints:
-   - For AI/LLM research: cpu_only, budget: "$50-150", time_limit: 3600-7200
-   - For ML research: gpu_required if needed, appropriate time limits
-
-5. **Expected Outputs**: Define what the research should produce (metrics, visualizations, reports)
-
-6. **Evaluation Criteria**: List clear success criteria
-
-7. **Background**: Expand on the idea's context and motivation
-
-Be comprehensive but realistic. The resulting YAML should be directly usable for running experiments.
+Keep it minimal. The agent does the research.
 
 # Output Format
 
@@ -226,15 +221,15 @@ Return ONLY the YAML content, starting with "idea:". Do not include markdown cod
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an expert research assistant that converts research ideas into structured YAML format. You always return valid YAML without markdown formatting."
+                    "content": "You are a research assistant that formats research ideas into minimal YAML. Only include information explicitly provided - do not invent datasets, methods, or metrics. Return valid YAML without markdown formatting."
                 },
                 {
                     "role": "user",
                     "content": prompt
                 }
             ],
-            temperature=0.3,
-            max_tokens=8000
+            temperature=0.1,  # Lower temperature for more conservative output
+            max_tokens=2000  # Reduced since we want minimal output
         )
 
         yaml_content = response.choices[0].message.content.strip()

@@ -50,7 +50,10 @@ Before writing any code, create a detailed research plan:
 IMPORTANT: Think step-by-step about each decision. Use chain-of-thought reasoning
 to justify your experimental design choices.
 
-DELIVERABLE: notebooks/plan_Md.ipynb
+NOTE: Use Jupyter notebooks freely for experiments, analysis, and code execution.
+For documentation, use markdown files (.md) as they're more suitable for reading.
+
+DELIVERABLE: planning.md (or similar markdown document)
 
 Must include:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -262,9 +265,12 @@ PHASE 4: DOCUMENTATION
 Create comprehensive documentation that allows others (and your future self)
 to understand and reproduce your work.
 
+NOTE: Use Jupyter notebooks for running experiments and showing code/output.
+Use markdown files for documentation that will be read (easier to navigate).
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-DELIVERABLE 1: notebooks/documentation_Md.ipynb
+DELIVERABLE 1: REPORT.md
 
 This is the primary research report. Include these sections:
 
@@ -463,9 +469,10 @@ Unanswered questions raised by this research
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-DELIVERABLE 2: notebooks/code_walk_Md.ipynb
+DELIVERABLE 2: Well-commented code and optional CODE_WALKTHROUGH.md
 
-A detailed walkthrough that explains your implementation:
+Ensure code is self-documenting with clear comments and docstrings.
+Optionally create CODE_WALKTHROUGH.md with:
 
 ## Code Structure Overview
 - Organization of notebook sections

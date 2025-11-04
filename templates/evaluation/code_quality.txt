@@ -7,11 +7,12 @@ objective assessment of its quality, correctness, and adherence to best practice
                                 YOUR TASK
 ═══════════════════════════════════════════════════════════════════════════════
 
-1. Read the code_walk notebook (code_walk_Md.ipynb) from the research project
-2. Re-execute every code block to verify it runs correctly
-3. Assess the code against multiple quality dimensions
-4. Provide specific examples and actionable feedback
-5. Generate an overall code quality score (0-100)
+1. Locate and review all code files (Python scripts, Jupyter notebooks, etc.)
+2. Read CODE_WALKTHROUGH.md or REPORT.md for code documentation
+3. Re-execute code in notebooks to verify it runs correctly
+4. Assess the code against multiple quality dimensions
+5. Provide specific examples and actionable feedback
+6. Generate an overall code quality score (0-100)
 
 ═══════════════════════════════════════════════════════════════════════════════
                             EVALUATION CRITERIA

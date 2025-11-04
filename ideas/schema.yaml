@@ -5,8 +5,23 @@ $schema: "http://json-schema.org/draft-07/schema#"
 $id: "https://idea-explorer.io/schemas/idea-v1.yaml"
 
 title: Research Idea Specification
-description: Structured format for submitting research ideas to the Idea Explorer framework
-version: "1.0"
+description: |
+  Structured format for submitting research ideas to the Idea Explorer framework.
+
+  IMPORTANT: Most fields are optional. The AI research agent will automatically:
+  - Search for relevant datasets and evaluation methods from literature
+  - Identify appropriate baselines from related work
+  - Design detailed experimental methodology based on research
+  - Select evaluation metrics based on field best practices
+
+  You only need to provide:
+  - Basic idea (title, domain, research question)
+  - Any references or resources you already have (optional)
+  - Constraints (compute, budget, time)
+
+  The agent handles the rest through systematic literature review and resource gathering.
+
+version: "1.1"
 
 type: object
 required: [idea]
@@ -14,7 +29,7 @@ required: [idea]
 properties:
   idea:
     type: object
-    required: [title, domain, hypothesis, expected_outputs]
+    required: [title, domain, hypothesis]
     properties:
 
       # ═══════════════════════════════════════════════════════
@@ -93,7 +108,13 @@ properties:
 
           datasets:
             type: array
-            description: "Datasets to use in experiments"
+            description: |
+              OPTIONAL: Datasets to use in experiments.
+              If not specified, agent will search for and select appropriate datasets from:
+              - HuggingFace Datasets
+              - Papers with Code
+              - Academic benchmarks
+              - GitHub repositories
             items:
               type: object
               required: [name, source]
@@ -135,11 +156,17 @@ properties:
                   description: "Specific branch/tag (optional)"
 
       # ═══════════════════════════════════════════════════════
-      # METHODOLOGY
+      # METHODOLOGY (OPTIONAL - Agent will design based on research)
       # ═══════════════════════════════════════════════════════
 
       methodology:
         type: object
+        description: |
+          OPTIONAL: You can specify methodology details if you have specific requirements.
+          If not provided, the AI agent will:
+          - Review literature to identify standard approaches
+          - Select appropriate baselines from related work
+          - Choose evaluation metrics based on field conventions
         properties:
           approach:
             type: string
@@ -159,7 +186,9 @@ properties:
 
           baselines:
             type: array
-            description: "Baseline methods to compare against"
+            description: |
+              Baseline methods to compare against.
+              If not specified, agent will identify baselines from literature review.
             items:
               type: string
             examples:
@@ -167,7 +196,9 @@ properties:
 
           metrics:
             type: array
-            description: "Evaluation metrics"
+            description: |
+              Evaluation metrics.
+              If not specified, agent will select standard metrics from the field.
             items:
               type: string
             examples:
@@ -219,13 +250,17 @@ properties:
               - ["numpy>=1.20.0", "scipy", "matplotlib"]
 
       # ═══════════════════════════════════════════════════════
-      # EXPECTED OUTPUTS
+      # EXPECTED OUTPUTS (OPTIONAL - Agent will determine appropriate outputs)
       # ═══════════════════════════════════════════════════════
 
       expected_outputs:
         type: array
-        minItems: 1
-        description: "What the research should produce"
+        description: |
+          OPTIONAL: What the research should produce.
+          If not specified, agent will determine appropriate outputs based on:
+          - Research question type
+          - Standard outputs in the field
+          - Available data and methods
         items:
           type: object
           required: [type, format]
