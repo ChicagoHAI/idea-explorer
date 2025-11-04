@@ -16,6 +16,7 @@ import shlex
 from datetime import datetime
 import sys
 import os
+import yaml
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -125,7 +126,9 @@ class ResearchRunner:
 
         if self.use_github and self.github_manager:
             # Check if workspace already exists from submission
-            existing_workspace = self.github_manager.get_workspace_path(idea_id)
+            # Try to get repo_name from metadata (new method with short names)
+            repo_name = idea_spec.get('metadata', {}).get('github_repo_name')
+            existing_workspace = self.github_manager.get_workspace_path(idea_id, repo_name)
 
             if existing_workspace:
                 print(f"\n✅ Using existing workspace from submission")
@@ -159,15 +162,27 @@ class ResearchRunner:
                 print(f"   (Tip: Use submit.py to create workspace before running)\n")
 
                 try:
+                    domain = idea_spec.get('domain', 'research')
                     repo_info = self.github_manager.create_research_repo(
                         idea_id=idea_id,
                         title=title,
                         description=idea_spec.get('hypothesis', ''),
-                        private=False  # Public by default
+                        private=False,  # Public by default
+                        domain=domain
                     )
 
                     github_url = repo_info['repo_url']
                     github_repo = repo_info['repo_object']
+
+                    # Store repo_name in idea metadata
+                    idea['idea']['metadata'] = idea['idea'].get('metadata', {})
+                    idea['idea']['metadata']['github_repo_name'] = repo_info['repo_name']
+                    idea['idea']['metadata']['github_repo_url'] = github_url
+
+                    # Save updated metadata
+                    idea_path = self.idea_manager.ideas_dir / "submitted" / f"{idea_id}.yaml"
+                    with open(idea_path, 'w') as f:
+                        yaml.dump(idea, f, default_flow_style=False, sort_keys=False)
 
                     # Clone repository
                     repo = self.github_manager.clone_repo(

@@ -387,7 +387,7 @@ def main():
         from core.idea_manager import IdeaManager
 
         manager = IdeaManager()
-        idea_id = manager.submit_idea(idea_data['idea'], validate=True)
+        idea_id = manager.submit_idea(idea_data, validate=True)
 
         print(f"\n✓ Idea submitted successfully: {idea_id}")
 
@@ -411,11 +411,23 @@ def main():
                     idea_id=idea_id,
                     title=title,
                     description=description,
-                    private=False
+                    private=False,
+                    domain=domain
                 )
 
                 github_repo_url = repo_info['repo_url']
                 workspace_path = repo_info['local_path']
+                repo_name = repo_info['repo_name']
+
+                # Store repo_name in idea metadata for runner to find workspace
+                idea['idea']['metadata'] = idea['idea'].get('metadata', {})
+                idea['idea']['metadata']['github_repo_name'] = repo_name
+                idea['idea']['metadata']['github_repo_url'] = github_repo_url
+
+                # Save updated metadata
+                idea_path = manager.ideas_dir / "submitted" / f"{idea_id}.yaml"
+                with open(idea_path, 'w') as f:
+                    yaml.dump(idea, f, default_flow_style=False, sort_keys=False)
 
                 print(f"✅ Repository created: {github_repo_url}")
 

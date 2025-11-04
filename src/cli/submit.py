@@ -9,10 +9,20 @@ import sys
 import os
 from pathlib import Path
 import yaml
+from dotenv import load_dotenv
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Load environment variables from .env.local or .env
+env_local = Path(__file__).parent.parent.parent / ".env.local"
+env_file = Path(__file__).parent.parent.parent / ".env"
+
+if env_local.exists():
+    load_dotenv(env_local)
+elif env_file.exists():
+    load_dotenv(env_file)
+    
 from core.idea_manager import IdeaManager
 
 # Check if GitHub integration is available
@@ -113,40 +123,69 @@ def main():
                 domain = idea.get('idea', {}).get('domain', 'research')
                 description = f"{domain.replace('_', ' ').title()} research: {title}"
 
-                # Create repository
-                repo_info = github_manager.create_research_repo(
-                    idea_id=idea_id,
-                    title=title,
-                    description=description,
-                    private=False
-                )
+                try:
+                    # Create repository
+                    repo_info = github_manager.create_research_repo(
+                        idea_id=idea_id,
+                        title=title,
+                        description=description,
+                        private=False,
+                        domain=domain
+                    )
 
-                github_repo_url = repo_info['repo_url']
-                workspace_path = repo_info['local_path']
+                    github_repo_url = repo_info['repo_url']
+                    workspace_path = repo_info['local_path']
+                    repo_name = repo_info['repo_name']
 
-                print(f"✅ Repository created: {github_repo_url}")
+                    # Store repo_name in idea metadata for runner to find workspace
+                    idea['idea']['metadata'] = idea['idea'].get('metadata', {})
+                    idea['idea']['metadata']['github_repo_name'] = repo_name
+                    idea['idea']['metadata']['github_repo_url'] = github_repo_url
 
-                # Clone repository
-                print(f"📥 Cloning repository to workspace...")
-                repo = github_manager.clone_repo(
-                    repo_info['clone_url'],
-                    workspace_path
-                )
+                    # Save updated metadata
+                    idea_path = manager.ideas_dir / "submitted" / f"{idea_id}.yaml"
+                    with open(idea_path, 'w') as f:
+                        yaml.dump(idea, f, default_flow_style=False, sort_keys=False)
 
-                # Add research metadata
-                print(f"📝 Adding research metadata...")
-                github_manager.add_research_metadata(workspace_path, idea)
+                    print(f"✅ Repository created: {github_repo_url}")
 
-                # Initial commit
-                github_manager.commit_and_push(
-                    workspace_path,
-                    f"Initialize research project: {title}"
-                )
+                except Exception as create_error:
+                    raise Exception(f"Failed during repo creation: {create_error}") from create_error
+
+                try:
+                    # Clone repository
+                    print(f"📥 Cloning repository to workspace...")
+                    repo = github_manager.clone_repo(
+                        repo_info['clone_url'],
+                        workspace_path
+                    )
+                except Exception as clone_error:
+                    raise Exception(f"Failed during repo cloning: {clone_error}") from clone_error
+
+                try:
+                    # Add research metadata
+                    print(f"📝 Adding research metadata...")
+                    github_manager.add_research_metadata(workspace_path, idea)
+                except Exception as metadata_error:
+                    raise Exception(f"Failed adding metadata: {metadata_error}") from metadata_error
+
+                try:
+                    # Initial commit
+                    github_manager.commit_and_push(
+                        workspace_path,
+                        f"Initialize research project: {title}"
+                    )
+                except Exception as commit_error:
+                    raise Exception(f"Failed during commit/push: {commit_error}") from commit_error
 
                 print(f"✅ Workspace ready at: {workspace_path}")
 
             except Exception as e:
-                print(f"\n⚠️  GitHub repository creation failed: {e}")
+                print(f"\n⚠️  GitHub repository creation failed:")
+                print(f"   Error type: {type(e).__name__}")
+                print(f"   Error message: {str(e) if str(e) else '(No message provided)'}")
+                if hasattr(e, '__cause__') and e.__cause__:
+                    print(f"   Caused by: {e.__cause__}")
                 print("   You can still run the research locally with --no-github")
 
         elif not args.no_github:

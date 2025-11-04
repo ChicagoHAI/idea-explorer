@@ -1,0 +1,153 @@
+idea:
+  title: Do LLMs Differentiate Epistemic Belief from Non-Epistemic Belief?
+  domain: artificial_intelligence
+  hypothesis: 'Large Language Models (LLMs) can distinguish between epistemic beliefs
+    (beliefs about what is true or likely true) and non-epistemic beliefs (such as
+    preferences, commitments, or pragmatic stances) when prompted with scenarios that
+    require such differentiation. The models'' responses will systematically reflect
+    this distinction above chance and in ways that partially align with human judgments.
+
+    '
+  background:
+    description: 'Human cognition involves multiple kinds of belief, including epistemic
+      beliefs (about truth or knowledge) and non-epistemic beliefs (such as preferences,
+      intentions, or pragmatic stances). Vesga et al. (2025) provide empirical evidence
+      that humans distinguish these belief types in theory of mind tasks. As LLMs
+      are increasingly used for reasoning, decision-making, and simulating human-like
+      understanding, it is important to assess whether they also differentiate between
+      these belief types, or if they treat all "belief" statements similarly. This
+      research will probe LLMs with scenarios adapted from cognitive science to test
+      for such distinctions, informing our understanding of LLMs'' theory-of-mind
+      capabilities and potential limitations in simulating nuanced human cognition.
+
+      '
+    papers:
+    - url: https://dx.doi.org/10.1037/xge0001765
+      description: 'Vesga, A., Van Leeuwen, N., & Lombrozo, T. (2025). Evidence for
+        multiple kinds of belief in theory of mind. Demonstrates that humans distinguish
+        epistemic and non-epistemic beliefs in reasoning tasks, providing experimental
+        paradigms that can be adapted for LLM evaluation.
+
+        '
+    datasets:
+    - name: Belief Type Scenarios (Synthetic)
+      source: custom/generated
+      description: 'A set of scenarios adapted from Vesga et al. and newly constructed
+        vignettes, each designed to elicit either epistemic or non-epistemic belief
+        attributions. Includes ground-truth labels for belief type.
+
+        '
+      size: 100-200 scenarios
+    code_references:
+    - repo: https://github.com/allenai/model-theory-of-mind
+      description: Codebase for evaluating LLMs on theory-of-mind tasks, adaptable
+        for belief type probing
+  methodology:
+    approach: Controlled prompt-based probing and comparative analysis with human
+      data
+    steps:
+    - Curate and adapt a set of scenarios distinguishing epistemic and non-epistemic
+      beliefs, based on Vesga et al. and additional constructed examples.
+    - Design prompts for LLMs (e.g., GPT-4, Claude, Gemini) to elicit belief attributions
+      and require explicit classification or explanation.
+    - Collect LLM responses for each scenario, using temperature=0 for reproducibility.
+    - Obtain human baseline responses for a subset of scenarios via crowdsourcing
+      or literature.
+    - Quantitatively analyze LLM accuracy in distinguishing belief types (vs. ground
+      truth and human judgments).
+    - Qualitatively analyze explanations and error patterns in LLM outputs.
+    - Compare results across different LLMs and prompt formulations.
+    - Visualize performance and error breakdowns.
+    baselines:
+    - Majority class baseline (always predict epistemic or non-epistemic)
+    - Random guess baseline
+    - Human performance (from Vesga et al. or new crowd annotations)
+    metrics:
+    - Accuracy (belief type classification)
+    - F1 Score (for epistemic and non-epistemic labels)
+    - Agreement with human judgments (Cohen's kappa)
+    - Qualitative error analysis (manual coding of explanations)
+    - Response consistency across prompt variants
+  constraints:
+    compute: cpu_only
+    time_limit: 5400
+    memory: 8GB
+    budget: 100
+    dependencies:
+    - openai>=1.0.0
+    - anthropic>=0.18.0
+    - google-generativeai>=0.3.0
+    - pandas
+    - scikit-learn
+    - numpy
+    - matplotlib
+    - seaborn
+    - tqdm
+  expected_outputs:
+  - type: metrics
+    format: json
+    fields:
+    - model
+    - scenario_id
+    - ground_truth_belief_type
+    - predicted_belief_type
+    - accuracy
+    - f1_score
+    - human_agreement
+    description: Structured metrics for belief type classification by model and scenario
+  - type: visualization
+    format: png
+    description: 'Plots showing:
+
+      1. Model vs. human accuracy on epistemic/non-epistemic belief distinction
+
+      2. Confusion matrices for each model
+
+      3. Agreement scores (Cohen''s kappa) between models and humans
+
+      '
+  - type: analysis
+    format: markdown
+    description: 'Qualitative analysis of LLM explanations, error types, and representative
+      cases where models succeed or fail to distinguish belief types.
+
+      '
+  - type: report
+    format: pdf
+    description: 'Comprehensive report including background, methodology, quantitative
+      and qualitative results, discussion of implications for LLM theory-of-mind,
+      and recommendations for future research.
+
+      '
+  - type: dataset
+    format: csv
+    description: 'Annotated scenario set with ground-truth belief type labels and
+      corresponding LLM and human responses.
+
+      '
+  evaluation_criteria:
+  - LLMs achieve statistically significant accuracy above random and majority-class
+    baselines (p < 0.05)
+  - Agreement with human judgments (Cohen's kappa > 0.4) on at least one model
+  - Qualitative analysis identifies systematic patterns in model errors
+  - Results are reproducible across at least two LLMs
+  - All code and data are documented and released for reproducibility
+  - Experiments completed within specified compute and budget constraints
+  metadata:
+    tags:
+    - llm
+    - theory-of-mind
+    - belief
+    - epistemic
+    - cognitive-science
+    - model-evaluation
+    priority: medium
+    estimated_duration: 1 day
+    source: IdeaHub
+    source_url: https://hypogenic.ai/ideahub/idea/HGVv4Z0ALWVHZ9YsstWT
+    idea_id: do_llms_differentiate_epistemi_20251103_230522_3d891818
+    created_at: '2025-11-03T23:05:22.989386'
+    status: completed
+    github_repo_name: llm-epistemic-belief-6f3b
+    github_repo_url: https://github.com/ChicagoHAI/llm-epistemic-belief-6f3b
+    updated_at: '2025-11-03T23:37:42.676753'
