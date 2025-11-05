@@ -20,8 +20,6 @@ try:
     PYGITHUB_AVAILABLE = True
 except ImportError:
     PYGITHUB_AVAILABLE = False
-
-from .config_loader import ConfigLoader
     print("Warning: PyGithub not installed. Install with: pip install PyGithub")
 
 try:
@@ -30,6 +28,8 @@ try:
 except ImportError:
     GITPYTHON_AVAILABLE = False
     print("Warning: GitPython not installed. Install with: pip install GitPython")
+
+from .config_loader import ConfigLoader
 
 
 class GitHubManager:
