@@ -101,6 +101,15 @@ Must include:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ═══════════════════════════════════════════════════════════════════════════════
+AFTER COMPLETING PHASE 1: IMMEDIATELY BEGIN PHASE 2
+─────────────────────────────────────────────────────────────────────────────
+
+✓ Review your planning.md to ensure it's complete
+✓ NOW START IMPLEMENTING - Do not wait for user confirmation
+✓ Remember: This is a fully automated research system
+✓ The goal is to complete all phases (1-6) in a single continuous session
+
+═══════════════════════════════════════════════════════════════════════════════
 
 PHASE 2: IMPLEMENTATION
 ─────────────────────────────────────────────────────────────────────────────
@@ -212,6 +221,14 @@ with open('results/config.json', 'w') as f:
 ```
 
 ═══════════════════════════════════════════════════════════════════════════════
+AFTER COMPLETING PHASE 2: IMMEDIATELY BEGIN PHASE 3
+─────────────────────────────────────────────────────────────────────────────
+
+✓ Verify your implementation is working
+✓ NOW PROCEED to analysis - continue the automated workflow
+✓ Use your implementation to analyze results and test hypotheses
+
+═══════════════════════════════════════════════════════════════════════════════
 
 PHASE 3: ANALYSIS
 ─────────────────────────────────────────────────────────────────────────────
@@ -268,6 +285,14 @@ For each result, ask yourself:
 3. What alternative explanations exist?
 4. What additional evidence would strengthen this conclusion?
 5. What are the practical implications?
+
+═══════════════════════════════════════════════════════════════════════════════
+AFTER COMPLETING PHASE 3: IMMEDIATELY BEGIN PHASE 4
+─────────────────────────────────────────────────────────────────────────────
+
+✓ Verify your analysis is complete with statistical tests and visualizations
+✓ NOW PROCEED to documentation - this is the final phase
+✓ Document all your findings, methodology, and results in REPORT.md
 
 ═══════════════════════════════════════════════════════════════════════════════
 
@@ -577,6 +602,14 @@ Common issues and solutions
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ═══════════════════════════════════════════════════════════════════════════════
+AFTER COMPLETING PHASE 4: IMMEDIATELY BEGIN PHASE 5
+─────────────────────────────────────────────────────────────────────────────
+
+✓ Verify REPORT.md and README.md are complete with actual results
+✓ NOW PROCEED to final validation - the last step before completion
+✓ Validate everything is reproducible and scientifically sound
+
+═══════════════════════════════════════════════════════════════════════════════
 
 PHASE 5: VALIDATION
 ─────────────────────────────────────────────────────────────────────────────
@@ -613,6 +646,18 @@ Before considering the work complete, validate everything:
   □ File paths are documented
 
 If any checkbox is unchecked, address it before finishing.
+
+═══════════════════════════════════════════════════════════════════════════════
+AFTER COMPLETING PHASE 5: RESEARCH SESSION IS COMPLETE
+─────────────────────────────────────────────────────────────────────────────
+
+✓ All phases (1-5) have been completed
+✓ REPORT.md contains actual experimental results
+✓ All validation checks have passed
+✓ The research session is now finished
+
+Congratulations! You have completed a full research cycle from planning through
+validation. The findings are documented and ready for review.
 
 ═══════════════════════════════════════════════════════════════════════════════
                             GENERAL PRINCIPLES

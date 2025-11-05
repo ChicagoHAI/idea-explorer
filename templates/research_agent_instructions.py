@@ -92,6 +92,16 @@ lacks details (datasets, methods, baselines), you MUST research to find them.
 If research doesn't yield suitable resources, PROPOSE something reasonable and
 PROCEED - don't get stuck. The goal is to run SOMETHING that advances knowledge.
 
+WHAT "FULLY-AUTOMATED" MEANS:
+✓ Complete ALL phases (0-6) in a SINGLE CONTINUOUS SESSION
+✓ Make reasonable decisions autonomously without waiting for user input
+✓ Move immediately from one phase to the next
+✓ Document decisions, but keep moving forward
+✓ Deliver REPORT.md with actual experimental results at the end
+
+YOU WILL NOT GET ADDITIONAL INSTRUCTIONS between phases.
+This prompt contains everything you need. Execute it completely from start to finish.
+
 PHASE 0: INITIAL ASSESSMENT (Quick evaluation)
 ───────────────────────────────────────────────────────────────────────────────
 
@@ -158,10 +168,16 @@ RESEARCH STEPS (only if needed based on gaps):
    - Justification for your choices
 
 CRITICAL: Don't get stuck in endless research!
-- Spend 30-60 minutes maximum on initial research
+- Spend 15-30 minutes maximum on initial research
+- Keep resources.md brief (1-2 pages) - just key findings
 - If you can't find perfect resources, find good-enough ones
 - If nothing exists, CREATE it (synthetic data, simple baselines, etc.)
 - ALWAYS PROCEED to execution - the goal is to run experiments
+
+BUDGET GUIDANCE FOR PHASE 0:
+- Time: 15-30 minutes maximum
+- Keep it lightweight - detailed work happens in implementation phases
+- Focus on making quick decisions to unblock planning
 
 WHY THIS MATTERS:
 - Grounds research in existing work when possible
@@ -196,32 +212,38 @@ Execute the following research task:
 
 ════════════════════════════════════════════════════════════════════════════════
 
-EXECUTION WORKFLOW:
+EXECUTION WORKFLOW (FOLLOW THIS SEQUENCE - DO NOT STOP BETWEEN PHASES):
 ────────────────────────────────────────────────────────────────────────────────
 
-Phase 0: Initial Assessment & Research (see above - only if needed)
+Phase 0: Initial Assessment & Research (15-30 min)
   ✓ Check what's provided in the specification
   ✓ Identify gaps (datasets, methods, metrics)
   ✓ Conduct focused research to fill gaps (30-60 min max)
   ✓ If resources not found, propose reasonable alternatives
-  ✓ Document decisions in resources.md
-  ✓ ALWAYS PROCEED - don't get stuck researching
+  ✓ Document decisions in resources.md (1-2 pages maximum)
 
-Phase 1: Detailed Planning (do this BEFORE coding!)
+  → WHEN COMPLETE: Immediately proceed to Phase 1 (Planning)
+
+Phase 1: Detailed Planning (15-30 min)
   ✓ Create experimental plan based on research findings
   ✓ Design experiments with specific steps
   ✓ Choose baselines and metrics (from research or proposed)
   ✓ Plan timeline and resource allocation
-  ✓ Document plan in planning.md or similar
+  ✓ Document plan in planning.md (2-3 pages maximum)
 
-Phase 2: Environment & Data Setup
+  → WHEN COMPLETE: Immediately proceed to Phase 2 (Setup)
+  → DO NOT WAIT for user confirmation - this is fully automated!
+
+Phase 2: Environment & Data Setup (10-20 min)
   ✓ Set up isolated virtual environment (uv venv)
   ✓ Install required packages (uv add)
   ✓ Download and prepare datasets (found or created)
   ✓ Verify data quality and characteristics
   ✓ Run exploratory data analysis
 
-Phase 3: Implementation
+  → WHEN COMPLETE: Immediately proceed to Phase 3 (Implementation)
+
+Phase 3: Implementation (60-90 min)
   ✓ Use Jupyter notebooks as needed for experiments and analysis
   ✓ Implement baselines first (simpler methods)
   ✓ Implement proposed method
@@ -229,26 +251,41 @@ Phase 3: Implementation
   ✓ Write clean, documented code with comments and docstrings
   ✓ Test incrementally
 
-Phase 4: Experimentation
+  → WHEN COMPLETE: Immediately proceed to Phase 4 (Experiments)
+
+Phase 4: Experimentation (60-90 min)
   ✓ Run baseline experiments
   ✓ Run proposed method experiments
   ✓ Collect results systematically (save to results/ directory)
   ✓ Generate visualizations
   ✓ Monitor for issues
 
-Phase 5: Analysis
+  → WHEN COMPLETE: Immediately proceed to Phase 5 (Analysis)
+
+Phase 5: Analysis (30-45 min)
   ✓ Analyze results statistically
   ✓ Compare against baselines and literature
   ✓ Perform error analysis
   ✓ Create comprehensive visualizations
   ✓ Document findings incrementally
 
-Phase 6: Final Documentation (REQUIRED - see below for details)
-  ✓ Create REPORT.md (comprehensive research report)
-  ✓ Update README.md (project overview and quick start)
+  → WHEN COMPLETE: Immediately proceed to Phase 6 (Documentation)
+
+Phase 6: Final Documentation (20-30 min) - MANDATORY BEFORE ENDING SESSION
+  ✓ Create REPORT.md with ACTUAL experimental results (not placeholder)
+  ✓ Create README.md with project overview and key findings
   ✓ Ensure resources.md documents your research process
   ✓ Verify all code has clear comments and docstrings
   ✓ Check reproducibility
+
+  → WHEN COMPLETE: Session is finished
+
+CRITICAL REMINDERS:
+- This is a SINGLE CONTINUOUS SESSION covering all 6 phases
+- Never stop between phases waiting for user input
+- If you encounter issues, document them and continue
+- Even if experiments fail, complete Phase 6 documenting what happened
+- REPORT.md is mandatory - it's the primary deliverable
 
 Remember:
 - You are already in the correct working directory: {work_dir}
@@ -260,39 +297,55 @@ Remember:
 - Save outputs to organized directories (results/, figures/, etc.)
 - Follow the methodology carefully, but adapt based on your research findings
 
-FINAL REQUIRED TASK - After completing all research:
 ────────────────────────────────────────────────────────────────────────────────
-Before finishing, you MUST create two final documentation files:
+PHASE 6 REQUIREMENTS - WHAT TO INCLUDE IN FINAL DOCUMENTATION
+────────────────────────────────────────────────────────────────────────────────
 
-1. REPORT.md - A comprehensive, easy-to-read research report containing:
-   - Executive Summary (2-3 paragraphs)
+When you reach Phase 6, create these files with ACTUAL results from your experiments:
+
+1. REPORT.md - Comprehensive research report containing:
+   - Executive Summary (2-3 paragraphs summarizing what you found)
    - Research Question & Hypothesis
-   - Literature Review Summary (key papers and insights)
-   - Methodology (what you did, step-by-step)
-     * How you selected datasets/baselines based on literature
-     * Justification for evaluation metrics
-   - Key Findings (main results with supporting data/figures)
+   - Literature Review Summary (key papers and insights from Phase 0)
+   - Methodology (what you actually did, step-by-step)
+     * Datasets/baselines you used and why
+     * Evaluation metrics and justification
+   - Key Findings (ACTUAL results with supporting data/figures from experiments)
    - Discussion & Interpretation
-     * How results compare to literature
+     * How your results compare to expectations
      * What this means for the research question
    - Limitations & Future Work
    - Conclusion
    - References (papers, datasets, tools used)
 
-   This should be written for a technical audience but be MORE readable than the
-   raw notebooks. Include key visualizations/tables inline (as markdown).
+   Include key visualizations/tables inline (as markdown).
 
-2. Update README.md - Add/update the following sections:
+2. README.md - Quick overview containing:
    - Brief project description (2-3 sentences)
-   - Key findings summary (bullet points, 3-5 main results)
+   - Key findings summary (bullet points, 3-5 main results from your experiments)
    - How to reproduce (environment setup, run instructions)
    - File structure overview
    - Link to REPORT.md for full details
 
-   Keep README concise and scannable. Think of it as a quick overview someone
-   would read to understand what this research accomplished.
+   Keep this concise and scannable.
 
-These documents are CRITICAL for making your research accessible and understandable!
+IMPORTANT NOTES:
+- Do NOT create placeholder/stub reports during planning - wait until Phase 6
+- If experiments fail or are incomplete, document what you attempted and what happened
+- REPORT.md is the PRIMARY DELIVERABLE - it must contain actual findings
+- These documents make your research accessible and understandable
 
-DO NOT resume the session in the same notebook. Create a new session if continuation is needed.
+────────────────────────────────────────────────────────────────────────────────
+SESSION COMPLETION
+────────────────────────────────────────────────────────────────────────────────
+
+The session is COMPLETE when:
+✓ All phases (0-6) have been attempted
+✓ Experiments were run (even if simple or preliminary)
+✓ REPORT.md has been created documenting actual results
+✓ README.md has been created with overview
+✓ Code is organized with comments
+✓ Results are saved to results/ directory
+
+If you reach this point, your research session is finished.
 """

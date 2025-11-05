@@ -67,22 +67,28 @@ def fetch_ideahub_content(url: str) -> dict:
         if title_elem:
             title = title_elem.get_text(strip=True)
 
-        # Try to find description/content
+        # Try to find description/content - specifically target the prose div for IdeaHub
         description = None
-        # Look for main content areas
-        content_selectors = [
-            'div.description',
-            'div.content',
-            'div.idea-content',
-            'article',
-            'main'
-        ]
 
-        for selector in content_selectors:
-            content_elem = soup.select_one(selector)
-            if content_elem:
-                description = content_elem.get_text(separator='\n', strip=True)
-                break
+        # First try IdeaHub-specific selector (the prose div contains everything)
+        prose_elem = soup.select_one('div.prose')
+        if prose_elem:
+            description = prose_elem.get_text(separator='\n', strip=True)
+
+        # Fallback to other selectors if prose not found
+        if not description:
+            content_selectors = [
+                'div.description',
+                'div.content',
+                'div.idea-content',
+                'article',
+                'main'
+            ]
+            for selector in content_selectors:
+                content_elem = soup.select_one(selector)
+                if content_elem:
+                    description = content_elem.get_text(separator='\n', strip=True)
+                    break
 
         # If still no description, try to get all paragraphs
         if not description:
@@ -197,7 +203,13 @@ The AI research agent will handle finding datasets, designing experiments, and i
 
 2. **Optional fields** (only include if present in the content):
    - background.description: Use the description from IdeaHub
-   - background.papers: Only include papers explicitly mentioned
+   - background.papers: **CRITICAL** - For each paper in the content, you MUST copy the FULL citation verbatim.
+     Include the complete paper title in quotes, ALL author names, year, and venue/source.
+     Example format:
+       - description: '"Paper Title Here." Author1, Author2, Author3 (Year). Venue/Source.'
+     DO NOT use "et al." - list ALL authors.
+     DO NOT abbreviate titles.
+     DO NOT summarize - copy the EXACT reference text from the content.
    - background.datasets: Only include if specific datasets are mentioned
    - constraints: Use sensible defaults (cpu_only, time_limit: 3600, budget: 50-100 for AI research)
 
@@ -211,7 +223,25 @@ Keep it minimal. The agent does the research.
 
 # Output Format
 
-Return ONLY the YAML content, starting with "idea:". Do not include markdown code fences or explanations.
+Return ONLY clean, valid YAML content starting with "idea:".
+
+IMPORTANT formatting rules:
+- Use single quotes for strings with special characters (colons, quotes, etc.)
+- Use the literal block scalar style (|) for multi-line text to avoid escape sequences
+- Ensure all unicode characters (ü, &, etc.) are preserved as-is, not escaped
+- Do not include markdown code fences (```yaml) or explanations
+- Make the YAML clean and readable
+
+Example of good formatting:
+```
+idea:
+  title: 'My Title: A Subtitle'
+  description: |
+    This is a longer description that spans
+    multiple lines. Unicode like ü works fine.
+  papers:
+    - description: 'Full paper citation here'
+```
 """
 
     try:
@@ -244,29 +274,34 @@ Return ONLY the YAML content, starting with "idea:". Do not include markdown cod
         # Parse YAML to validate
         try:
             parsed = yaml.safe_load(yaml_content)
-            return parsed
+            # Return both parsed data and the raw YAML string
+            return {'parsed': parsed, 'yaml_string': yaml_content}
         except yaml.YAMLError as e:
             print(f"⚠️  Warning: Generated YAML may have issues: {e}")
             print("   Attempting to fix...")
             # Try to return anyway
-            return yaml.safe_load(yaml_content)
+            parsed = yaml.safe_load(yaml_content)
+            return {'parsed': parsed, 'yaml_string': yaml_content}
 
     except Exception as e:
         print(f"❌ Error calling GPT API: {e}")
         sys.exit(1)
 
 
-def save_yaml_file(idea_data: dict, url: str) -> Path:
+def save_yaml_file(result: dict, url: str) -> Path:
     """
     Save the idea as a YAML file.
 
     Args:
-        idea_data: Parsed YAML data
+        result: Dictionary with 'parsed' and 'yaml_string' keys
         url: Original IdeaHub URL
 
     Returns:
         Path to saved file
     """
+    idea_data = result['parsed']
+    yaml_string = result['yaml_string']
+
     # Generate filename from title or URL
     if 'idea' in idea_data and 'title' in idea_data['idea']:
         title = idea_data['idea']['title']
@@ -282,7 +317,7 @@ def save_yaml_file(idea_data: dict, url: str) -> Path:
         else:
             filename = "ideahub_idea"
 
-    # Add metadata about source
+    # Add metadata about source to the parsed data (for submission later)
     if 'idea' not in idea_data:
         idea_data = {'idea': idea_data}
 
@@ -291,6 +326,9 @@ def save_yaml_file(idea_data: dict, url: str) -> Path:
 
     idea_data['idea']['metadata']['source'] = 'IdeaHub'
     idea_data['idea']['metadata']['source_url'] = url
+
+    # Update the result
+    result['parsed'] = idea_data
 
     # Save to ideas/ directory
     ideas_dir = Path(__file__).parent.parent.parent / "ideas"
@@ -304,8 +342,9 @@ def save_yaml_file(idea_data: dict, url: str) -> Path:
         output_path = ideas_dir / f"{filename}_{counter}.yaml"
         counter += 1
 
+    # Save the GPT-generated YAML string directly
     with open(output_path, 'w', encoding='utf-8') as f:
-        yaml.dump(idea_data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+        f.write(yaml_string)
 
     return output_path
 
@@ -362,7 +401,7 @@ def main():
         print(f"\n✓ Found idea: {ideahub_content['title']}")
 
     # Step 2: Convert with GPT
-    idea_data = convert_to_yaml(ideahub_content)
+    result = convert_to_yaml(ideahub_content)
 
     # Step 3: Save file
     if args.output:
@@ -370,9 +409,9 @@ def main():
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(output_path, 'w', encoding='utf-8') as f:
-            yaml.dump(idea_data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+            f.write(result['yaml_string'])
     else:
-        output_path = save_yaml_file(idea_data, args.url)
+        output_path = save_yaml_file(result, args.url)
 
     print(f"\n✅ Idea saved to: {output_path}")
 
@@ -382,7 +421,7 @@ def main():
         from core.idea_manager import IdeaManager
 
         manager = IdeaManager()
-        idea_id = manager.submit_idea(idea_data, validate=True)
+        idea_id = manager.submit_idea(result['parsed'], validate=True)
 
         print(f"\n✓ Idea submitted successfully: {idea_id}")
 
