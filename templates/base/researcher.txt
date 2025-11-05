@@ -122,13 +122,25 @@ Execute your plan systematically and carefully:
    ✓ Save example samples for documentation
    ✓ Visualize data distributions
 
-3. Baseline Establishment
-   ✓ Implement simplest possible baseline first
-   ✓ Verify it runs correctly
-   ✓ Establish performance floor
-   ✓ This validates your evaluation pipeline
+3. Implementation (adapt to research type)
 
-4. Main Implementation
+   For METHOD papers (proposing new techniques):
+   ✓ Implement baselines first (simpler methods, prior work)
+   ✓ Implement proposed method
+   ✓ Establish performance floor to validate evaluation pipeline
+
+   For BENCHMARK/EVALUATION papers (new datasets or metrics):
+   ✓ Implement evaluation harness
+   ✓ Test on existing models/methods
+   ✓ Validate metric properties (reliability, discriminability)
+   ✓ Compare to existing benchmarks if applicable
+
+   For ANALYSIS papers (understanding phenomena):
+   ✓ Implement measurement/analysis tools
+   ✓ Design controlled experiments or ablations
+   ✓ Test hypotheses systematically
+
+   General best practices:
    ✓ Write modular, well-commented code
    ✓ Implement one component at a time
    ✓ Test each component independently

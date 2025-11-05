@@ -28,10 +28,29 @@ REQUIRED STEPS (in order):
 1. Create a fresh virtual environment using uv:
    uv venv
 
-2. Activate the environment:
+2. Initialize project dependencies file:
+   Create pyproject.toml to manage dependencies in THIS workspace only:
+
+   cat > pyproject.toml << 'EOF'
+   [project]
+   name = "research-workspace"
+   version = "0.1.0"
+   description = "Research workspace for experiments"
+   requires-python = ">=3.10"
+   dependencies = []
+
+   [build-system]
+   requires = ["hatchling"]
+   build-backend = "hatchling.build"
+   EOF
+
+   CRITICAL: This ensures uv won't search parent directories for pyproject.toml
+   and contaminate the idea-explorer environment!
+
+3. Activate the environment:
    source .venv/bin/activate
 
-3. For package installations, use this priority order:
+4. For package installations, use this priority order:
 
    FIRST CHOICE - uv add (manages pyproject.toml automatically):
    uv add <package-name>
@@ -43,14 +62,16 @@ REQUIRED STEPS (in order):
 
    SECOND CHOICE - if uv add doesn't work:
    uv pip install <package-name>
+   pip freeze > requirements.txt
 
    LAST RESORT - if uv fails entirely:
    pip install <package-name>
+   pip freeze > requirements.txt
 
    NEVER use conda or conda install!
 
-4. Dependency Management:
-   - Using 'uv add' automatically creates and maintains pyproject.toml
+5. Dependency Management:
+   - Using 'uv add' automatically updates pyproject.toml
    - Verify dependencies with: cat pyproject.toml
    - If you used pip, also maintain: pip freeze > requirements.txt
    - This ensures reproducibility of the research environment
@@ -97,6 +118,12 @@ RESEARCH STEPS (only if needed based on gaps):
    - Read abstracts and methodology sections of top 3-5 relevant papers
    - Identify what methods and baselines are commonly used in this area
    - Note what evaluation metrics are standard in the field
+
+   FOR LLM/AI RESEARCH SPECIFICALLY:
+   - Search for latest model releases and capabilities (2024-2025)
+   - Check current state-of-the-art models (GPT, Claude, Gemini series, and openrouter)
+   - Verify model availability and API endpoints
+   - Avoid using outdated models (pre-2024) unless for historical baseline
 
 2. DATASET SEARCH (if no dataset specified):
    - Search existing datasets:

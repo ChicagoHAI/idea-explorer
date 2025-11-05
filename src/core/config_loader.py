@@ -7,6 +7,7 @@ Provides centralized access to configuration like domains, settings, etc.
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 import yaml
+import os
 
 
 class ConfigLoader:
@@ -140,6 +141,53 @@ class ConfigLoader:
         config = self.get_domains_config()
         domain_config = config.get('domains', {}).get(domain, {})
         return domain_config.get('name', domain.replace('_', ' ').title())
+
+    def get_workspace_config(self) -> Dict[str, Any]:
+        """
+        Get workspace configuration.
+
+        Returns:
+            Workspace config dictionary
+        """
+        return self.load_config('workspace')
+
+    def get_workspace_parent_dir(self) -> Path:
+        """
+        Get the workspace parent directory path.
+
+        Supports:
+        - Absolute paths: /data/hypogenicai/workspaces
+        - Relative paths: workspace (relative to project root)
+        - Environment variables: ${IDEA_EXPLORER_WORKSPACE}
+
+        Returns:
+            Resolved Path object for workspace parent directory
+        """
+        config = self.get_workspace_config()
+        parent_dir = config.get('workspace', {}).get('parent_dir', 'workspace')
+
+        # Handle environment variable substitution
+        if parent_dir.startswith('${') and parent_dir.endswith('}'):
+            env_var = parent_dir[2:-1]
+            parent_dir = os.getenv(env_var, 'workspace')
+
+        parent_path = Path(parent_dir)
+
+        # If relative, make it relative to project root
+        if not parent_path.is_absolute():
+            parent_path = self.project_root / parent_path
+
+        return parent_path
+
+    def should_auto_create_workspace(self) -> bool:
+        """
+        Check if workspace parent directory should be auto-created.
+
+        Returns:
+            True if auto-create is enabled
+        """
+        config = self.get_workspace_config()
+        return config.get('workspace', {}).get('auto_create', True)
 
 
 # Convenience functions for direct access

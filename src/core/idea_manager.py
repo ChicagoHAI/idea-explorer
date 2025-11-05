@@ -119,8 +119,8 @@ class IdeaManager:
 
         idea = idea_spec['idea']
 
-        # Required fields
-        required_fields = ['title', 'domain', 'hypothesis', 'expected_outputs']
+        # Required fields (v1.1 - reduced from v1.0)
+        required_fields = ['title', 'domain', 'hypothesis']
         for field in required_fields:
             if field not in idea or not idea[field]:
                 errors.append(f"Missing required field: {field}")
@@ -148,18 +148,20 @@ class IdeaManager:
             warnings.append("Hypothesis is very short (< 20 characters). "
                           "Consider providing more detail.")
 
-        # Validate expected outputs
+        # Validate expected outputs (optional in v1.1)
         if 'expected_outputs' in idea:
             if not isinstance(idea['expected_outputs'], list):
                 errors.append("expected_outputs must be a list")
             elif len(idea['expected_outputs']) == 0:
-                errors.append("At least one expected output is required")
+                warnings.append("expected_outputs is empty - agent will determine appropriate outputs")
             else:
                 for idx, output in enumerate(idea['expected_outputs']):
                     if 'type' not in output:
                         errors.append(f"Output {idx}: missing 'type' field")
                     if 'format' not in output:
                         errors.append(f"Output {idx}: missing 'format' field")
+        else:
+            warnings.append("No expected_outputs specified - agent will determine appropriate outputs based on research type")
 
         # Validate constraints
         if 'constraints' in idea:

@@ -1,0 +1,19 @@
+# Workspace Configuration
+# This file defines workspace location and related settings
+
+# Workspace directory configuration
+workspace:
+  # Parent directory for all research workspaces
+  # Can be:
+  # - Absolute path: /data/hypogenicai/workspaces
+  # - Relative to idea-explorer root: workspace
+  # - Environment variable: ${IDEA_EXPLORER_WORKSPACE}
+  #
+  # Default: /data/hypogenicai/workspaces (outside idea-explorer to avoid contamination)
+  parent_dir: "/data/hypogenicai/workspaces"
+
+  # Whether to create workspace parent directory if it doesn't exist
+  auto_create: true
+
+  # Default permissions for created workspace directories (octal)
+  permissions: 0o755

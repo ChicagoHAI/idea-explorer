@@ -315,11 +315,41 @@ Create error taxonomy specific to your task:
 - RAM: 8-16GB for data processing
 - Storage: Varies by dataset size (typically <10GB)
 
+**Model Selection (2025)**
+
+IMPORTANT: Use state-of-the-art models for credible research results.
+
+**Recommended Models (as of 2025):**
+- **GPT-4.1 or GPT-5** (OpenAI, August 2025) - Best for everyday reasoning, coding, reliability
+  - API: `gpt-4.1`, `gpt-5`, `gpt-5-codex` (for coding tasks)
+  - Pricing: ~$1.25/M input tokens, ~$10/M output tokens
+  - Context: Standard context window
+
+- **Claude Sonnet 4.5** (Anthropic, September 2025) - Best for coding, agents, polished writing
+  - API: `claude-sonnet-4-5`
+  - Context: 1,000,000 tokens
+  - Excels at: Complex B2B workflows, multi-file reasoning, autonomous agents
+
+- **Gemini 2.5 Pro** (Google, June 2025) - Best for long context, visual reasoning
+  - API: `gemini-2-5-pro`
+  - Context: 1,000,000 tokens
+  - Features: Computer Use for browser control, excellent multimodal
+
+You may also search models on openrouter. You can assume that we have the api keys available as environment variables
+**When to use older/smaller models:**
+- Historical baselines: Compare new methods against prior SOTA
+- Ablation studies: Test how model size affects phenomenon
+- Resource constraints: Explicitly justified (e.g., on-device deployment)
+
+**AVOID using models older than 2024** unless explicitly justified as baseline comparison.
+Do NOT use: FLAN-T5, GPT-3.5, Claude 2.x, Gemini 1.0 as primary evaluation models.
+
 **Budget Considerations**
-- API costs: $10-$1000 depending on scale
-- Cheaper models for development: GPT-3.5, Claude Instant
-- Production runs: GPT-4, Claude Opus/Sonnet
-- Consider token limits and rate limits in planning
+- API costs: $10-$200 for most experiments (< 1M tokens)
+- Small-scale (<1000 examples): $10-50
+- Medium-scale (<10000 examples): $50-200
+- Budget $100-200 is standard and reasonable for AI research
+- Modern models use fewer tokens than older ones for same quality
 
 **Time Estimates**
 - Prompt development: 1-3 days

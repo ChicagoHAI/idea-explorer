@@ -20,6 +20,8 @@ try:
     PYGITHUB_AVAILABLE = True
 except ImportError:
     PYGITHUB_AVAILABLE = False
+
+from .config_loader import ConfigLoader
     print("Warning: PyGithub not installed. Install with: pip install PyGithub")
 
 try:
@@ -60,10 +62,15 @@ class GitHubManager:
 
         # Set workspace directory
         if workspace_dir is None:
-            project_root = Path(__file__).parent.parent.parent
-            workspace_dir = project_root / "workspace"
+            config_loader = ConfigLoader()
+            workspace_dir = config_loader.get_workspace_parent_dir()
+
         self.workspace_dir = Path(workspace_dir)
-        self.workspace_dir.mkdir(exist_ok=True)
+
+        # Auto-create if configured
+        config_loader = ConfigLoader()
+        if config_loader.should_auto_create_workspace():
+            self.workspace_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize PyGithub
         if not PYGITHUB_AVAILABLE:
