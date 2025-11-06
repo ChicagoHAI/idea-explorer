@@ -102,6 +102,49 @@ WHAT "FULLY-AUTOMATED" MEANS:
 YOU WILL NOT GET ADDITIONAL INSTRUCTIONS between phases.
 This prompt contains everything you need. Execute it completely from start to finish.
 
+════════════════════════════════════════════════════════════════════════════════
+
+CRITICAL: For LLM/AI Research - Use Real Models, Not Simulations
+────────────────────────────────────────────────────────────────────────────────
+
+IF your research involves LLM behavior, agents, prompting, or AI capabilities:
+
+✓ YOU MUST use REAL LLM APIs:
+  - GPT-4.1 or GPT-5, or other real models
+  - You can also use openrouter, there is openrouter key in environment variable.
+  - Use actual API calls to test behavior
+  - Measure real model outputs, not simulated behavior
+  - If you are not sure how to prompt and send API calls, search online.
+
+✗ DO NOT create "simulated LLM agents":
+  - Don't fake LLM behavior with predefined rules
+  - Don't make up confidence scores or calibration behavior
+  - Simulated LLMs have NO scientific value for LLM research
+
+WHY THIS MATTERS:
+- Real LLMs behave in complex, emergent ways that can't be simulated
+- Research on fake agents doesn't generalize to real systems
+- API calls are affordable and fast (100s of calls = $5-50)
+- You have freedom to use resources needed for quality research
+
+EXAMPLES:
+
+✓ CORRECT: "Test if chain-of-thought improves calibration"
+  → Download TruthfulQA dataset
+  → Prompt Claude/GPT with and without CoT
+  → Measure actual calibration metrics
+  → Statistical comparison
+
+✗ WRONG: "Test if chain-of-thought improves calibration"
+  → Create simulated agent with confidence = 0.7 + noise
+  → Make up 50 questions
+  → Run simulation
+  → This is NOT research!
+
+If you find yourself about to create "simulated LLM agents," STOP and use real APIs instead.
+
+════════════════════════════════════════════════════════════════════════════════
+
 PHASE 0: INITIAL ASSESSMENT (Quick evaluation)
 ───────────────────────────────────────────────────────────────────────────────
 
@@ -136,29 +179,56 @@ RESEARCH STEPS (only if needed based on gaps):
    - Avoid using outdated models (pre-2024) unless for historical baseline
 
 2. DATASET SEARCH (if no dataset specified):
-   - Search existing datasets:
-     * HuggingFace Datasets (https://huggingface.co/datasets)
+
+   PRIORITY: Use existing datasets whenever possible!
+
+   - Search and DOWNLOAD from:
+     * HuggingFace Datasets (https://huggingface.co/datasets) - use datasets library
      * Papers with Code datasets (https://paperswithcode.com/datasets)
+     * GitHub repositories with datasets
      * Kaggle datasets
      * Academic benchmarks from papers
 
+   - Don't just search - ACTUALLY DOWNLOAD and load the data
    - Evaluate for: relevance, size, quality, accessibility
-   - Download and inspect promising datasets
+   - Inspect the actual data structure and samples
+
+   FOR LLM/AI RESEARCH:
+   Common benchmarks you should check first:
+     * TruthfulQA - truthfulness and calibration
+     * MMLU - knowledge and reasoning
+     * HellaSwag, ARC - commonsense reasoning
+     * HumanEval, MBPP - code generation
+     * BBQ, WinoBias - bias evaluation
 
    IF NO SUITABLE DATASET FOUND:
-   → It's OK to generate synthetic data or create a custom dataset
-   → Document your rationale clearly
-   → Proceed with execution
+   → First, search more thoroughly (try different keywords)
+   → Check if you can adapt an existing dataset
+   → ONLY create synthetic data if genuinely nothing exists
+   → Document extensive search efforts before creating synthetic data
+   → Synthetic data should be last resort, not default choice
 
 3. CODE & BASELINE SEARCH (if no baselines specified):
-   - Look for existing implementations on GitHub
-   - Check for established libraries/frameworks
+
+   PRIORITY: Use and adapt existing implementations!
+
+   - Search GitHub for relevant repositories
+   - CLONE or download promising codebases
+   - Check official model implementations (HuggingFace, OpenAI repos, etc.)
+   - Look for established libraries/frameworks
    - Identify baseline implementations from papers
+   - Download and inspect the actual code
+
+   EXAMPLES:
+   - For LLM research: Check HuggingFace model cards, official repos
+   - For mechanistic interp: TransformerLens, SAELens libraries
+   - For multi-agent: Check AutoGen, CrewAI, LangGraph repos
 
    IF NO SUITABLE BASELINES FOUND:
-   → Propose simple, reasonable baselines (random, majority class, simple heuristic)
-   → Document your choice
-   → Proceed with execution
+   → First, search more thoroughly (different terms, check paper citations)
+   → Consider: Can you implement a simple version of a paper's method?
+   → ONLY create simple baselines (random, majority) if truly nothing exists
+   → Document search efforts
 
 4. RESOURCE DOCUMENTATION:
    Create a brief resources.md file noting:
