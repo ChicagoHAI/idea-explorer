@@ -529,27 +529,13 @@ Contributions welcome! Areas of interest:
 - **[ideas/schema.yaml](ideas/schema.yaml)**: Full specification schema
 - **[ideas/examples/](ideas/examples/)**: Example research ideas
 
-## Comparison with mechinterp_playground
-
-Idea Explorer generalizes the approach from `mechinterp_playground`:
-
-| Feature | mechinterp_playground | Idea Explorer |
-|---------|----------------------|---------------|
-| Domain | Mechanistic interp. only | Any domain |
-| Task Definition | Hardcoded prompts | Structured YAML |
-| Templates | Domain-specific | Layered (base + domain) |
-| Prompt Generation | Manual | Automated from schema |
-| Extensibility | Limited | Modular and composable |
-
 ## License
 
 MIT License - See LICENSE file
 
 ## Acknowledgments
 
-- Inspired by [mechinterp_playground](mechinterp_playground/)
 - Built on [Scribe](https://github.com/goodfire-ai/scribe) by Goodfire AI
-- Informed by research on autonomous scientific discovery
 
 ## Citation
 
@@ -558,9 +544,9 @@ If you use Idea Explorer in research, please cite:
 ```bibtex
 @software{idea_explorer_2025,
   title={Idea Explorer: Autonomous Research Framework},
-  author={Your Name},
+  author={Haokun Liu},
   year={2025},
-  url={https://github.com/yourusername/idea-explorer}
+  url={https://github.com/ChicagoHAI/idea-explorer}
 }
 ```
 
