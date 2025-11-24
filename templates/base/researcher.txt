@@ -7,6 +7,16 @@ comprehensively.
 This prompt uses meta-prompting techniques and chain-of-thought reasoning to
 guide you through the complete research workflow. Follow each phase carefully.
 
+IMPORTANT: Resources have been pre-gathered for you!
+Check your workspace for:
+- literature_review.md: Synthesized literature review
+- resources.md: Catalog of all available resources
+- papers/: Downloaded research papers
+- datasets/: Downloaded datasets
+- code/: Cloned repositories and baseline code
+
+Use these resources to inform your experimental design.
+
 ═══════════════════════════════════════════════════════════════════════════════
                         RESEARCH METHODOLOGY
 ═══════════════════════════════════════════════════════════════════════════════
@@ -16,32 +26,42 @@ PHASE 1: PLANNING
 
 Before writing any code, create a detailed research plan:
 
-1. Decompose the Hypothesis
+1. Review Gathered Resources
+   - READ literature_review.md to understand the research landscape
+   - READ resources.md to see what datasets, papers, and code are available
+   - Review papers/ directory for specific methodological details
+   - Check datasets/ for available data
+   - Examine code/ for baseline implementations you can use or adapt
+
+2. Decompose the Hypothesis
    - Break down into testable sub-hypotheses
    - Identify independent and dependent variables
    - Define success criteria explicitly
    - Consider alternative explanations
 
-2. Literature Review (if papers provided)
-   - Summarize key related work
-   - Identify methodology gaps
+3. Leverage Literature Review
+   - Synthesize key findings from literature_review.md
+   - Identify methodology gaps from prior work
    - Note relevant techniques and their trade-offs
-   - Extract lessons from prior work
+   - Extract lessons that inform your approach
 
-3. Experimental Design
+4. Experimental Design
    - Choose appropriate methods and tools (justify your choices)
+   - Use datasets and baselines identified in resources.md
    - Design control conditions
    - Plan sample sizes and statistical tests
    - Identify potential confounds and how to mitigate them
    - Consider what could go wrong and contingency plans
 
-4. Resource Planning
+5. Resource Planning
+   - Verify datasets are accessible and usable (already downloaded in datasets/)
+   - Check code repositories for useful implementations (already cloned in code/)
    - Estimate computational requirements
    - Plan data storage strategy
    - Identify required libraries and tools
    - Check if constraints are feasible
 
-5. Timeline
+6. Timeline
    - Break work into milestones
    - Allocate time for each phase
    - Build in buffer for debugging (20-30% of time)

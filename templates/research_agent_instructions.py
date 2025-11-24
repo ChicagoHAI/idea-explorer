@@ -84,18 +84,37 @@ WHY: Using an isolated environment ensures:
 
 ════════════════════════════════════════════════════════════════════════════════
 
-CRITICAL: Initial Research & Resource Gathering Phase
+CRITICAL: Resources Have Been Pre-Gathered
 ────────────────────────────────────────────────────────────────────────────────
+IMPORTANT: A separate resource-finding agent has already gathered research
+resources for you. Your workspace contains:
+
+- literature_review.md: Comprehensive literature review and synthesis
+- resources.md: Catalog of all available datasets, papers, and code
+- papers/: Downloaded research papers (PDFs)
+- datasets/: Downloaded datasets ready to use (locally available, not in git)
+- code/: Cloned repositories with baseline implementations
+
+NOTE: The datasets/ directory contains a .gitignore that excludes large data files
+from git commits. The data is available locally for your experiments, and
+datasets/README.md contains download instructions for reproducibility.
+
+READ THESE RESOURCES FIRST before starting your experimental design!
+They contain valuable information about:
+- Standard approaches in this research area
+- Available datasets and their characteristics
+- Baseline methods to compare against
+- Evaluation metrics commonly used
+- Code you can adapt or build upon
+
 IMPORTANT PHILOSOPHY: This is a fully-automated research system. Your goal is to
-run meaningful experiments that test the hypothesis. If the idea specification
-lacks details (datasets, methods, baselines), you MUST research to find them.
-If research doesn't yield suitable resources, PROPOSE something reasonable and
-PROCEED - don't get stuck. The goal is to run SOMETHING that advances knowledge.
+run meaningful experiments that test the hypothesis using the resources provided.
 
 WHAT "FULLY-AUTOMATED" MEANS:
-✓ Complete ALL phases (0-6) in a SINGLE CONTINUOUS SESSION
+✓ Complete ALL phases (1-6) in a SINGLE CONTINUOUS SESSION
 ✓ Make reasonable decisions autonomously without waiting for user input
 ✓ Move immediately from one phase to the next
+✓ Use the pre-gathered resources effectively
 ✓ Document decisions, but keep moving forward
 ✓ Deliver REPORT.md with actual experimental results at the end
 
@@ -145,137 +164,6 @@ If you find yourself about to create "simulated LLM agents," STOP and use real A
 
 ════════════════════════════════════════════════════════════════════════════════
 
-PHASE 0: INITIAL ASSESSMENT (Quick evaluation)
-───────────────────────────────────────────────────────────────────────────────
-
-First, assess what's provided in the research specification:
-
-1. CHECK PROVIDED RESOURCES:
-   - Are datasets specified? If yes, use them
-   - Are baselines/methods specified? If yes, use them
-   - Are evaluation metrics specified? If yes, use them
-   - Are there user-provided files in the workspace? If yes, review them
-
-2. IDENTIFY GAPS:
-   - What information is missing?
-   - What do you need to research?
-   - What can you reasonably infer or propose?
-
-DECISION: If everything is specified → proceed to planning (Phase 1)
-         If gaps exist → conduct focused research (steps below)
-
-RESEARCH STEPS (only if needed based on gaps):
-
-1. LITERATURE REVIEW (15-30 minutes max):
-   - Search for recent papers on the research topic (use web search, arXiv, etc.)
-   - Read abstracts and methodology sections of top 3-5 relevant papers
-   - Identify what methods and baselines are commonly used in this area
-   - Note what evaluation metrics are standard in the field
-
-   FOR LLM/AI RESEARCH SPECIFICALLY:
-   - Search for latest model releases and capabilities (2024-2025)
-   - Check current state-of-the-art models (GPT, Claude, Gemini series, and openrouter)
-   - Verify model availability and API endpoints
-   - Avoid using outdated models (pre-2024) unless for historical baseline
-
-2. DATASET SEARCH (if no dataset specified):
-
-   PRIORITY: Use existing datasets whenever possible!
-
-   - Search and DOWNLOAD from:
-     * HuggingFace Datasets (https://huggingface.co/datasets) - use datasets library
-     * Papers with Code datasets (https://paperswithcode.com/datasets)
-     * GitHub repositories with datasets
-     * Kaggle datasets
-     * Academic benchmarks from papers
-
-   - Don't just search - ACTUALLY DOWNLOAD and load the data
-   - Evaluate for: relevance, size, quality, accessibility
-   - Inspect the actual data structure and samples
-
-   FOR LLM/AI RESEARCH:
-   Common benchmarks you should check first:
-     * TruthfulQA - truthfulness and calibration
-     * MMLU - knowledge and reasoning
-     * HellaSwag, ARC - commonsense reasoning
-     * HumanEval, MBPP - code generation
-     * BBQ, WinoBias - bias evaluation
-
-   IF NO SUITABLE DATASET FOUND:
-   → First, search more thoroughly (try different keywords)
-   → Check if you can adapt an existing dataset
-   → ONLY create synthetic data if genuinely nothing exists
-   → Document extensive search efforts before creating synthetic data
-   → Synthetic data should be last resort, not default choice
-
-3. CODE & BASELINE SEARCH (if no baselines specified):
-
-   PRIORITY: Use and adapt existing implementations!
-
-   - Search GitHub for relevant repositories
-   - CLONE or download promising codebases
-   - Check official model implementations (HuggingFace, OpenAI repos, etc.)
-   - Look for established libraries/frameworks
-   - Identify baseline implementations from papers
-   - Download and inspect the actual code
-
-   EXAMPLES:
-   - For LLM research: Check HuggingFace model cards, official repos
-   - For mechanistic interp: TransformerLens, SAELens libraries
-   - For multi-agent: Check AutoGen, CrewAI, LangGraph repos
-
-   IF NO SUITABLE BASELINES FOUND:
-   → First, search more thoroughly (different terms, check paper citations)
-   → Consider: Can you implement a simple version of a paper's method?
-   → ONLY create simple baselines (random, majority) if truly nothing exists
-   → Document search efforts
-
-4. RESOURCE DOCUMENTATION:
-   Create a brief resources.md file noting:
-   - What you searched for and what you found (or didn't find)
-   - Why you selected certain resources
-   - What you decided to create/propose if nothing suitable existed
-   - Justification for your choices
-
-CRITICAL: Don't get stuck in endless research!
-- Spend 15-30 minutes maximum on initial research
-- Keep resources.md brief (1-2 pages) - just key findings
-- If you can't find perfect resources, find good-enough ones
-- If nothing exists, CREATE it (synthetic data, simple baselines, etc.)
-- ALWAYS PROCEED to execution - the goal is to run experiments
-
-BUDGET GUIDANCE FOR PHASE 0:
-- Time: 15-30 minutes maximum
-- Keep it lightweight - detailed work happens in implementation phases
-- Focus on making quick decisions to unblock planning
-
-WHY THIS MATTERS:
-- Grounds research in existing work when possible
-- Ensures comparability with literature when resources exist
-- Enables progress even when resources don't exist
-- Balances rigor with pragmatism
-
-IMPORTANT: Check for User-Provided Resources
-────────────────────────────────────────────────────────────────────────────────
-After your initial research, CHECK the workspace directory for resources that
-may have been added by the user. These could be in directories like:
-
-- papers/ or docs/ - Research papers, documentation (PDFs, markdown)
-- datasets/ or data/ - Pre-downloaded datasets, data files
-- resources/ - Any other relevant materials
-- Root directory - Individual files like papers.txt, data.csv, etc.
-
-If you find relevant resources:
-1. List them and briefly describe what you found
-2. Review papers or documentation to inform your approach
-3. Use provided datasets instead of downloading new ones when applicable
-4. Incorporate any constraints or suggestions from these materials
-
-The research specification below may reference some resources, but ALWAYS check
-the workspace for additional materials the user may have added!
-
-════════════════════════════════════════════════════════════════════════════════
-
 Execute the following research task:
 
 {prompt}
@@ -285,19 +173,20 @@ Execute the following research task:
 EXECUTION WORKFLOW (FOLLOW THIS SEQUENCE - DO NOT STOP BETWEEN PHASES):
 ────────────────────────────────────────────────────────────────────────────────
 
-Phase 0: Initial Assessment & Research (15-30 min)
-  ✓ Check what's provided in the specification
-  ✓ Identify gaps (datasets, methods, metrics)
-  ✓ Conduct focused research to fill gaps (30-60 min max)
-  ✓ If resources not found, propose reasonable alternatives
-  ✓ Document decisions in resources.md (1-2 pages maximum)
+BEFORE YOU START: Review Pre-Gathered Resources (5-10 min)
+  ✓ READ literature_review.md to understand the research landscape
+  ✓ READ resources.md to see what's available
+  ✓ Browse papers/ directory for key papers
+  ✓ Check datasets/ directory to see what data is ready
+  ✓ Explore code/ directory for baseline implementations
 
   → WHEN COMPLETE: Immediately proceed to Phase 1 (Planning)
 
 Phase 1: Detailed Planning (15-30 min)
-  ✓ Create experimental plan based on research findings
+  ✓ Review pre-gathered resources (literature_review.md, resources.md)
+  ✓ Create experimental plan leveraging available datasets and code
   ✓ Design experiments with specific steps
-  ✓ Choose baselines and metrics (from research or proposed)
+  ✓ Choose baselines and metrics based on literature review
   ✓ Plan timeline and resource allocation
   ✓ Document plan in planning.md (2-3 pages maximum)
 
@@ -307,7 +196,7 @@ Phase 1: Detailed Planning (15-30 min)
 Phase 2: Environment & Data Setup (10-20 min)
   ✓ Set up isolated virtual environment (uv venv)
   ✓ Install required packages (uv add)
-  ✓ Download and prepare datasets (found or created)
+  ✓ Load and verify pre-downloaded datasets from datasets/ directory
   ✓ Verify data quality and characteristics
   ✓ Run exploratory data analysis
 
@@ -315,7 +204,8 @@ Phase 2: Environment & Data Setup (10-20 min)
 
 Phase 3: Implementation (60-90 min)
   ✓ Use Jupyter notebooks as needed for experiments and analysis
-  ✓ Implement baselines first (simpler methods)
+  ✓ Leverage code from code/ directory where applicable
+  ✓ Implement baselines first (use/adapt existing implementations)
   ✓ Implement proposed method
   ✓ Create evaluation harness
   ✓ Write clean, documented code with comments and docstrings
@@ -352,20 +242,29 @@ Phase 6: Final Documentation (20-30 min) - MANDATORY BEFORE ENDING SESSION
 
 CRITICAL REMINDERS:
 - This is a SINGLE CONTINUOUS SESSION covering all 6 phases
+- Resources have been PRE-GATHERED for you - use them!
 - Never stop between phases waiting for user input
 - If you encounter issues, document them and continue
 - Even if experiments fail, complete Phase 6 documenting what happened
 - REPORT.md is mandatory - it's the primary deliverable
 
+WORKSPACE DIRECTORY:
+────────────────────────────────────────────────────────────────────────────────
+You are already running in the project workspace directory: {work_dir}
+
+All files and directories you create will be saved here automatically.
+DO NOT use cd or change directories - you are already in the correct location.
+All paths are relative to your current working directory (the workspace).
+
 Remember:
-- You are already in the correct working directory: {work_dir}
-- SEARCH and RESEARCH first (but don't get stuck), code later
-- Use established datasets and methods from literature when possible
-- If nothing suitable exists, CREATE it and document your rationale
-- Use Jupyter notebooks for experiments and analysis (name descriptively)
-- Use markdown files (.md) for documentation
-- Save outputs to organized directories (results/, figures/, etc.)
-- Follow the methodology carefully, but adapt based on your research findings
+- READ literature_review.md and resources.md first (they're in your current directory)
+- Use pre-downloaded datasets from datasets/ directory (relative to current directory)
+- Leverage code from code/ directory (relative to current directory)
+- Use Jupyter notebooks for experiments and analysis (saved in current directory)
+- Use markdown files (.md) for documentation (saved in current directory)
+- Save outputs to organized directories: results/, figures/, logs/ (all relative)
+- All your work stays within this workspace directory
+- Follow the methodology carefully, leveraging the pre-gathered resources
 
 ────────────────────────────────────────────────────────────────────────────────
 PHASE 6 REQUIREMENTS - WHAT TO INCLUDE IN FINAL DOCUMENTATION
@@ -410,7 +309,8 @@ SESSION COMPLETION
 ────────────────────────────────────────────────────────────────────────────────
 
 The session is COMPLETE when:
-✓ All phases (0-6) have been attempted
+✓ All phases (1-6) have been attempted
+✓ Pre-gathered resources have been reviewed and used
 ✓ Experiments were run (even if simple or preliminary)
 ✓ REPORT.md has been created documenting actual results
 ✓ README.md has been created with overview
