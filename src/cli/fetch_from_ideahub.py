@@ -211,7 +211,7 @@ The AI research agent will handle finding datasets, designing experiments, and i
      DO NOT abbreviate titles.
      DO NOT summarize - copy the EXACT reference text from the content.
    - background.datasets: Only include if specific datasets are mentioned
-   - constraints: Use sensible defaults (cpu_only, time_limit: 3600, budget: 50-100 for AI research)
+   - constraints: Only include if specified in the content (do NOT default to cpu_only, let users specify their own compute constraints)
 
 3. **DO NOT include**:
    - methodology (agent will design this)

@@ -219,8 +219,7 @@ properties:
               - multi_gpu
               - tpu
               - any
-            default: cpu_only
-            description: "Computational requirements"
+            description: "Computational requirements (optional - if not specified, no constraint is assumed)"
 
           time_limit:
             type: integer
