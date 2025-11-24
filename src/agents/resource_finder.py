@@ -19,9 +19,10 @@ from datetime import datetime
 
 
 # CLI commands for different providers
+# Note: For codex, we use 'exec' subcommand for non-interactive mode (stdin pipe)
 CLI_COMMANDS = {
     'claude': 'claude',
-    'codex': 'codex',
+    'codex': 'codex exec',  # Non-interactive mode: read from stdin
     'gemini': 'gemini'
 }
 
