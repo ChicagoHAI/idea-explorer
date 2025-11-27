@@ -255,7 +255,7 @@ python src/core/runner.py my_idea --provider codex --full-permissions
 The `--full-permissions` flag translates to provider-specific flags:
 - Codex: `codex --yolo`
 - Claude: `claude --dangerously-skip-permissions`
-- Gemini: (no permission system)
+- Gemini: `gemini --yolo`
 
 
 The agent will:

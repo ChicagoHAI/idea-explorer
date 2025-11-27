@@ -85,7 +85,11 @@ class ResearchRunner:
     def run_research(self, idea_id: str,
                     provider: str = "claude",
                     timeout: int = 3600,
-                    full_permissions: bool = False) -> Dict[str, Any]:
+                    full_permissions: bool = False,
+                    multi_agent: bool = True,
+                    pause_after_resources: bool = False,
+                    skip_resource_finder: bool = False,
+                    resource_finder_timeout: int = 2700) -> Dict[str, Any]:
         """
         Execute research for a given idea.
 
@@ -95,8 +99,12 @@ class ResearchRunner:
         Args:
             idea_id: Unique identifier of the idea
             provider: AI provider (claude, gemini, codex)
-            timeout: Maximum execution time in seconds
+            timeout: Maximum execution time in seconds (for experiment runner)
             full_permissions: Allow full permissions to CLI agents (default: False)
+            multi_agent: Use multi-agent pipeline (default: True)
+            pause_after_resources: Pause for human review after resource finding (default: False)
+            skip_resource_finder: Skip resource finder stage (default: False)
+            resource_finder_timeout: Timeout for resource finder in seconds (default: 45 min)
 
         Returns:
             Dictionary with:
@@ -230,6 +238,56 @@ class ResearchRunner:
         (work_dir / "results").mkdir(parents=True, exist_ok=True)
         (work_dir / "artifacts").mkdir(parents=True, exist_ok=True)
 
+        # Choose execution mode: multi-agent pipeline or legacy monolithic
+        if multi_agent:
+            print()
+            print("🔀 Using MULTI-AGENT pipeline")
+            print("   Stage 1: Resource Finder (literature review, datasets, code)")
+            print("   Stage 2: Experiment Runner (implementation, experiments, analysis)")
+            print()
+
+            # Use pipeline orchestrator
+            from core.pipeline_orchestrator import ResearchPipelineOrchestrator
+
+            orchestrator = ResearchPipelineOrchestrator(
+                work_dir=work_dir,
+                templates_dir=self.project_root / "templates"
+            )
+
+            try:
+                pipeline_result = orchestrator.run_pipeline(
+                    idea=idea,
+                    provider=provider,
+                    pause_after_resources=pause_after_resources,
+                    skip_resource_finder=skip_resource_finder,
+                    resource_finder_timeout=resource_finder_timeout,
+                    experiment_runner_timeout=timeout,
+                    full_permissions=full_permissions
+                )
+
+                success = pipeline_result.get('success', False)
+
+            except Exception as e:
+                print(f"\n❌ Pipeline error: {e}")
+                success = False
+                # Don't raise - let finally block handle cleanup
+            finally:
+                # GitHub integration and status updates
+                self._finalize_research(idea_id, work_dir, github_url, title, provider, success)
+
+            # Return result info
+            return {
+                'work_dir': work_dir,
+                'github_url': github_url,
+                'success': success
+            }
+
+        # LEGACY MONOLITHIC MODE BELOW
+        print()
+        print("⚠️  Using LEGACY monolithic agent mode")
+        print("   (Single agent handles all phases including literature review)")
+        print()
+
         # Generate prompt
         print("📝 Generating research prompt...")
         prompt = self.prompt_generator.generate_research_prompt(
@@ -276,7 +334,8 @@ class ResearchRunner:
                     cmd += " --yolo"
                 elif provider == "claude":
                     cmd += " --dangerously-skip-permissions"
-                # Note: gemini doesn't have a skip permissions flag
+                elif provider == "gemini":
+                    cmd += " --yolo"
 
             print(f"   Command: {cmd}")
             print(f"   Log file: {log_file}")
@@ -421,6 +480,66 @@ https://github.com/ChicagoHAI/idea-explorer
 
         print("   ✓ Outputs organized")
 
+    def _finalize_research(self, idea_id: str, work_dir: Path, github_url: Optional[str],
+                          title: str, provider: str, success: bool):
+        """
+        Finalize research execution: commit to GitHub and update status.
+
+        Args:
+            idea_id: Idea identifier
+            work_dir: Working directory
+            github_url: GitHub URL (if applicable)
+            title: Research title
+            provider: AI provider used
+            success: Whether research succeeded
+        """
+        # Organize outputs (skip for GitHub repos, files already in place)
+        if not self.use_github:
+            print()
+            print("📦 Organizing outputs...")
+            self._organize_outputs(work_dir)
+
+        # Commit and push to GitHub if enabled
+        if self.use_github and self.github_manager:
+            try:
+                print()
+                print("📤 Pushing results to GitHub...")
+
+                # Generate commit message
+                status_emoji = "✅" if success else "⚠️"
+                commit_msg = f"""{status_emoji} Research execution completed
+
+Research: {title}
+Provider: {provider}
+Status: {"Success" if success else "Completed with issues"}
+
+Generated by Idea Explorer
+https://github.com/ChicagoHAI/idea-explorer
+"""
+
+                # Commit and push
+                self.github_manager.commit_and_push(
+                    work_dir,
+                    commit_msg
+                )
+
+                print(f"\n🎉 Results published to GitHub!")
+                if github_url:
+                    print(f"   {github_url}")
+
+            except Exception as e:
+                print(f"\n⚠️  Failed to push to GitHub: {e}")
+                print("   Results are available locally")
+
+        # Update idea status
+        self.idea_manager.update_status(idea_id, 'completed')
+
+        print()
+        print(f"✅ Research completed!")
+        print(f"   Location: {work_dir}")
+        if github_url:
+            print(f"   GitHub: {github_url}")
+
 
 def main():
     """CLI entry point for runner."""
@@ -469,7 +588,28 @@ def main():
     parser.add_argument(
         "--full-permissions",
         action="store_true",
-        help="Allow full permissions to CLI agents (codex --yolo, claude --dangerously-skip-permissions)"
+        help="Allow full permissions to CLI agents (codex/gemini: --yolo, claude: --dangerously-skip-permissions)"
+    )
+    parser.add_argument(
+        "--legacy-mode",
+        action="store_true",
+        help="Use legacy monolithic agent (single agent for all phases including literature review)"
+    )
+    parser.add_argument(
+        "--pause-after-resources",
+        action="store_true",
+        help="Pause for human review after resource finding stage (only with multi-agent mode)"
+    )
+    parser.add_argument(
+        "--skip-resource-finder",
+        action="store_true",
+        help="Skip resource finding stage (assumes resources already gathered)"
+    )
+    parser.add_argument(
+        "--resource-finder-timeout",
+        type=int,
+        default=2700,
+        help="Timeout for resource finder in seconds (default: 2700 = 45 min)"
     )
 
     args = parser.parse_args()
@@ -484,7 +624,11 @@ def main():
             idea_id=args.idea_id,
             provider=args.provider,
             timeout=args.timeout,
-            full_permissions=args.full_permissions
+            full_permissions=args.full_permissions,
+            multi_agent=not args.legacy_mode,
+            pause_after_resources=args.pause_after_resources,
+            skip_resource_finder=args.skip_resource_finder,
+            resource_finder_timeout=args.resource_finder_timeout
         )
 
         print()
