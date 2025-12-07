@@ -211,6 +211,11 @@ def run_resource_finder(
     env = os.environ.copy()
     env['PYTHONUNBUFFERED'] = '1'
 
+    # Disable IDE integration for Gemini CLI to avoid directory mismatch errors
+    # when running programmatically from different work directories
+    if provider == "gemini":
+        env['GEMINI_CLI_IDE_DISABLE'] = '1'
+
     # Execute agent
     success = False
     completion_marker = work_dir / ".resource_finder_complete"
