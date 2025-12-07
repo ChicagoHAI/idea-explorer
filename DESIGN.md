@@ -410,8 +410,8 @@ idea:
       properties:
         compute:
           type: string
-          enum: [cpu_only, gpu_required, multi_gpu, tpu]
-          default: cpu_only
+          enum: [cpu_only, gpu_required, multi_gpu, tpu, any]
+          description: "Optional - if not specified, no constraint is assumed"
         time_limit:
           type: integer
           description: "Maximum execution time in seconds"
