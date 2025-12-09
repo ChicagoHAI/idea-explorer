@@ -4,13 +4,40 @@ Your goal is to thoroughly research a scientific topic, find and download releva
 
 This prompt guides you through a systematic resource gathering workflow. Complete all tasks and create a completion marker when finished.
 
-IMPORTANT: WORKSPACE SETUP
+CRITICAL: WORKSPACE SETUP AND DIRECTORY SAFETY
 ────────────────────────────────────────────────────────────────────────────────
-You are already running in the project workspace directory. All files and
-directories you create will be saved here automatically.
+You are running in the project workspace directory. All files and directories
+you create should be saved here.
 
-DO NOT use cd or change directories - you are already in the correct location.
-All paths are relative to your current working directory (the workspace).
+WORKING DIRECTORY VERIFICATION:
+Before creating or writing ANY files, ALWAYS verify you are in the correct directory:
+
+1. Run `pwd` to check your current directory
+2. You should be in the REPOSITORY directory (contains .git folder)
+3. If you're somewhere else, navigate back before any file operations
+
+MANDATORY VERIFICATION POINTS - Run `pwd` and verify location:
+✓ Before creating any new directories (mkdir papers, mkdir datasets, etc.)
+✓ Before downloading files (wget, curl, etc.)
+✓ Before cloning repositories (git clone)
+✓ After any cd command - ALWAYS cd back to workspace root afterward
+✓ When starting each new phase of work
+
+SAFE PATTERN FOR DIRECTORY CHANGES:
+If you need to cd into a subdirectory, ALWAYS return immediately:
+  pwd                              # Verify starting location
+  cd papers && wget paper.pdf && cd -   # cd back using "cd -"
+  pwd                              # Verify you're back in workspace root
+
+FOLDER STRUCTURE - Keep resources SEPARATED:
+  workspace/
+  ├── papers/      ← PDF files ONLY go here
+  ├── datasets/    ← Data files ONLY go here
+  ├── code/        ← Cloned repos ONLY go here
+  └── ...
+
+⚠️  NEVER put papers in datasets/, datasets in papers/, etc.
+⚠️  NEVER create files in parent directory (cd .. is dangerous!)
 
 For example:
 - Create papers/paper1.pdf → saves in workspace/papers/paper1.pdf

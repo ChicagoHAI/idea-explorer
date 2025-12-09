@@ -248,13 +248,32 @@ CRITICAL REMINDERS:
 - Even if experiments fail, complete Phase 6 documenting what happened
 - REPORT.md is mandatory - it's the primary deliverable
 
-WORKSPACE DIRECTORY:
+WORKSPACE DIRECTORY AND DIRECTORY SAFETY:
 ────────────────────────────────────────────────────────────────────────────────
-You are already running in the project workspace directory: {work_dir}
+You are running in the project workspace directory: {work_dir}
 
-All files and directories you create will be saved here automatically.
-DO NOT use cd or change directories - you are already in the correct location.
-All paths are relative to your current working directory (the workspace).
+WORKING DIRECTORY VERIFICATION:
+Before creating or writing ANY files, ALWAYS verify you are in the correct directory:
+
+1. Run `pwd` to check your current directory
+2. You should be in: {work_dir}
+3. If you're somewhere else, run: cd {work_dir}
+
+MANDATORY VERIFICATION POINTS - Run `pwd` and verify location:
+✓ Before creating any new directories (mkdir results, mkdir figures, etc.)
+✓ Before saving any output files
+✓ Before running experiments that produce output
+✓ After any cd command - ALWAYS cd back to workspace root afterward
+✓ When starting each new phase of work
+
+SAFE PATTERN FOR DIRECTORY CHANGES:
+If you need to cd into a subdirectory, ALWAYS return immediately:
+  pwd                              # Verify starting location
+  cd results && python script.py && cd -   # cd back using "cd -"
+  pwd                              # Verify you're back in workspace root
+
+⚠️  NEVER create files in parent directory (cd .. is dangerous!)
+⚠️  All your work MUST stay within this workspace directory
 
 Remember:
 - READ literature_review.md and resources.md first (they're in your current directory)
