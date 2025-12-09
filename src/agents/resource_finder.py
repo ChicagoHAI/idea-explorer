@@ -26,6 +26,16 @@ CLI_COMMANDS = {
     'gemini': 'gemini'
 }
 
+# CLI flags for verbose/structured transcript output
+# These enable capturing detailed conversation transcripts for logging
+# Note: Claude's --output-format only works with -p (print mode), not stdin input
+#       So we use --verbose for Claude instead
+TRANSCRIPT_FLAGS = {
+    'claude': '--verbose',  # Verbose output with detailed logging
+    'codex': '--json',  # Outputs newline-delimited JSON events (works with codex exec)
+    'gemini': '--output-format stream-json'  # Outputs JSONL stream
+}
+
 
 def generate_resource_finder_prompt(idea: Dict[str, Any], templates_dir: Path) -> str:
     """
@@ -196,11 +206,18 @@ def run_resource_finder(
         elif provider == "gemini":
             cmd += " --yolo"
 
+    # Add transcript/JSON output flags for structured logging
+    transcript_flag = TRANSCRIPT_FLAGS.get(provider, '')
+    if transcript_flag:
+        cmd += f" {transcript_flag}"
+
     log_file = logs_dir / f"resource_finder_{provider}.log"
+    transcript_file = logs_dir / f"resource_finder_{provider}_transcript.jsonl"
 
     print(f"▶️  Launching {provider} CLI agent...")
     print(f"   Command: {cmd}")
     print(f"   Log file: {log_file}")
+    print(f"   Transcript: {transcript_file}")
     print()
     print("=" * 80)
     print("RESOURCE FINDER OUTPUT (streaming)")
@@ -211,13 +228,18 @@ def run_resource_finder(
     env = os.environ.copy()
     env['PYTHONUNBUFFERED'] = '1'
 
+    # Disable IDE integration for Gemini CLI to avoid directory mismatch errors
+    # when running programmatically from different work directories
+    if provider == "gemini":
+        env['GEMINI_CLI_IDE_DISABLE'] = '1'
+
     # Execute agent
     success = False
     completion_marker = work_dir / ".resource_finder_complete"
     start_time = time.time()
 
     try:
-        with open(log_file, 'w') as log_f:
+        with open(log_file, 'w') as log_f, open(transcript_file, 'w') as transcript_f:
             # Start process in workspace directory
             process = subprocess.Popen(
                 shlex.split(cmd),
@@ -234,11 +256,14 @@ def run_resource_finder(
             process.stdin.write(prompt)
             process.stdin.close()
 
-            # Stream output
+            # Stream output to both log file and transcript file
+            # For Claude/Codex with JSON flags, the output IS the transcript
+            # For Gemini, the output is regular text but sessions are saved separately
             for line in iter(process.stdout.readline, ''):
                 if line:
                     print(line, end='')
                     log_f.write(line)
+                    transcript_f.write(line)
 
             # Wait for completion
             return_code = process.wait(timeout=timeout)
@@ -308,6 +333,7 @@ def run_resource_finder(
         'completion_marker': str(completion_marker) if completion_marker.exists() else None,
         'outputs': found_outputs,
         'log_file': str(log_file),
+        'transcript_file': str(transcript_file),
         'elapsed_time': time.time() - start_time
     }
 

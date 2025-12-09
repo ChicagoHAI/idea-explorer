@@ -355,11 +355,23 @@ class ResearchPipelineOrchestrator:
                 elif provider == "gemini":
                     cmd += " --yolo"
 
+            # Add transcript/verbose output flags for detailed logging
+            # These flags are passed through scribe to the underlying CLI
+            # Note: Claude's --output-format only works with -p mode, not stdin input
+            if provider == "claude":
+                cmd += " --verbose"
+            elif provider == "codex":
+                cmd += " --json"
+            elif provider == "gemini":
+                cmd += " --output-format stream-json"
+
             log_file = self.work_dir / "logs" / f"execution_{provider}.log"
+            transcript_file = self.work_dir / "logs" / f"execution_{provider}_transcript.jsonl"
 
             print(f"▶️  Launching scribe with {provider}...")
             print(f"   Command: {cmd}")
             print(f"   Log file: {log_file}")
+            print(f"   Transcript: {transcript_file}")
             print()
             print("=" * 80)
             print("EXPERIMENT RUNNER OUTPUT (streaming)")
@@ -375,7 +387,7 @@ class ResearchPipelineOrchestrator:
             success = False
             start_time = time.time()
 
-            with open(log_file, 'w') as log_f:
+            with open(log_file, 'w') as log_f, open(transcript_file, 'w') as transcript_f:
                 process = subprocess.Popen(
                     shlex.split(cmd),
                     stdin=subprocess.PIPE,
@@ -391,11 +403,14 @@ class ResearchPipelineOrchestrator:
                 process.stdin.write(session_instructions)
                 process.stdin.close()
 
-                # Stream output
+                # Stream output to both log file and transcript file
+                # For Claude/Codex with JSON flags, the output IS the transcript
+                # For Gemini, the output is regular text but sessions are saved separately
                 for line in iter(process.stdout.readline, ''):
                     if line:
                         print(line, end='')
                         log_f.write(line)
+                        transcript_f.write(line)
 
                 # Wait for completion
                 return_code = process.wait(timeout=timeout)
@@ -417,7 +432,8 @@ class ResearchPipelineOrchestrator:
                 'success': success,
                 'return_code': return_code,
                 'elapsed_time': elapsed,
-                'log_file': str(log_file)
+                'log_file': str(log_file),
+                'transcript_file': str(transcript_file)
             }
 
             self.state.complete_stage('experiment_runner', success, result)
