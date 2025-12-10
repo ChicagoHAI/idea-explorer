@@ -1,6 +1,6 @@
 # Idea-Explorer: Architecture & Roadmap
 
-> **TL;DR**: Idea-Explorer is an open-source framework for exploring research ideas with AI agents. This document explains how it works and where we're headed based on lessons learned from running weekly competitions.
+> **TL;DR**: Idea-Explorer is an open-source AI scientist for exploring research ideas with AI agents. This document explains how it works and where we're headed based on lessons learned from running weekly competitions.
 
 ---
 
@@ -22,7 +22,7 @@
 
 Idea-Explorer takes a specific stance on the role of AI in research: **agents should be exploration accelerators, not autonomous AI scientists.**
 
-We don't believe AI will replace human researchers. As articulated in [The Mirage of Autonomous AI Scientists](https://hypogenic.ai/blog/mirage-of-autonomous-ai-scientists), science is fundamentally about resource allocation—deciding what matters among infinite possibilities with limited time, attention, and funding. These choices can't be delegated to machines because they're inherently value-laden and require human accountability.
+We don't seek to replace human researchers. As articulated in [The Mirage of Autonomous AI Scientists](https://hypogenic.ai/blog/mirage-of-autonomous-ai-scientists), science is fundamentally about resource allocation—deciding what matters among infinite possibilities with limited time, attention, and funding. These choices can't be delegated to machines because they're inherently value-laden and require human accountability.
 
 Instead, we see AI agents as tools that help researchers:
 - **Quickly explore an idea's feasibility** before investing significant time
@@ -267,7 +267,7 @@ We've been running weekly competitions since November 2025, exploring 15+ resear
 
 ### Critical Limitations
 
-**The Meta-Intelligence Gap.** Agents don't know when to search vs. rely on training, when their approach is ungrounded, or which of many possible directions matters most. They can execute but can't judge. This is the hardest problem.
+**The Meta-Intelligence Gap.** Agents don't know when to search vs. rely on its own knowledge, when their approach is ungrounded, or which of many possible directions matters most. They can execute but can't judge. This is the hardest problem.
 
 **Synthetic Data Problem.** Multiple agents generated synthetic data instead of collecting real data. In one case, Codex with real datasets found significant effects while Claude with synthetic data found nothing—same hypothesis, different data quality, opposite conclusions.
 
@@ -325,7 +325,7 @@ Based on our learnings, we've identified five key challenges to address.
 - Create checklists for common pitfalls
 - Research: Can we detect when agents are "outside their expertise"?
 
-### Challenge 3: Small But Disruptive Mistakes
+### Challenge 3: Improving Reliability by Reducing and Fixing Small But Disruptive Mistakes
 
 **Problem**: Agents make trivial errors that interrupt exploration:
 - Files written to wrong locations
@@ -353,7 +353,7 @@ Based on our learnings, we've identified five key challenges to address.
 - Feedback integration: human corrections should inform future runs
 - Support for iterative refinement (human reviews output, agent revises)
 
-### Challenge 5: Better Experiment Execution
+### Challenge 5: Long-horizon Experiment Execution
 
 **Problem**: Even with good resources, experiment quality varies:
 - Agents explore one direction but may not pick the best one
@@ -400,8 +400,10 @@ We're looking for collaborators who resonate with the vision of AI as exploratio
 - Resource finding (integrating academic APIs, quality heuristics)
 - Evaluation systems (measuring research behavior quality)
 - Error handling (categorizing failures, building mitigations)
-- Human-AI interaction (feedback loops, checkpoints, iterative refinement)
+- Long-horizon capabilities (enabling longer and parallel experiments)
 - Domain templates (adding new domains, improving methodology guidance)
+- Human-AI interaction (feedback loops, checkpoints, iterative refinement)
+
 
 **Get started:**
 - Browse [open issues](https://github.com/ChicagoHAI/idea-explorer/issues)
