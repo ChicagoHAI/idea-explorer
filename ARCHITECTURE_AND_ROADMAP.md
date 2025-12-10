@@ -391,6 +391,17 @@ Currently, specific instructions prevent specific errors. But this creates a bia
 
 How should agent outputs be structured for human decision-making? How do we present multiple explored directions with trade-offs? Integration with [IdeaHub](https://hypogenic.ai/ideahub) for community selection is one avenue.
 
+### 5. Exploration Diversity vs. Reliability
+
+As we add more scaffolding to prevent errors, agents converge on similar exploration paths. This is the bias-variance tradeoff in agentic design: more specific instructions reduce errors but also reduce the diversity of approaches tried.
+
+This is particularly challenging because:
+- Different ideas need different diversity levels (concrete ideas may be fine with one path; open-ended ideas need multiple trials)
+- It's hard to evaluate what counts as "good diversity"
+- The tradeoff may be fundamental to current LLM architectures
+
+Possible directions: multi-agent ensembles with diverse personas, adaptive scaffolding based on idea openness, or mechanisms to encourage exploration of alternative hypotheses.
+
 ---
 
 ## How to Contribute
@@ -402,9 +413,9 @@ We're looking for collaborators who resonate with the vision of AI as exploratio
 - Evaluation systems (measuring research behavior quality)
 - Context management (memory strategies, preventing drift in long-horizon tasks)
 - Long-horizon reasoning (maintaining coherence across extended experiments)
+- Exploration diversity (balancing reliability with diverse approaches)
 - Domain templates (adding new domains, improving methodology guidance)
 - Human-AI interaction (feedback loops, checkpoints, iterative refinement)
-
 
 **Get started:**
 - Browse [open issues](https://github.com/ChicagoHAI/idea-explorer/issues)
