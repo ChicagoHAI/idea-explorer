@@ -42,41 +42,41 @@ Idea-Explorer uses a **multi-stage pipeline architecture** that separates resour
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         User (YAML Idea)                         │
+│                         User (YAML Idea)                        │
 └─────────────────────────────────────────────────────────────────┘
                                  │
                                  ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                   1. Idea Manager                                │
-│                   (Validation & Storage)                         │
+│                   1. Idea Manager                               │
+│                   (Validation & Storage)                        │
 └─────────────────────────────────────────────────────────────────┘
                                  │
                                  ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                   2. GitHub Manager                              │
-│                   (Create Workspace)                             │
+│                   2. GitHub Manager                             │
+│                   (Create Workspace)                            │
 └─────────────────────────────────────────────────────────────────┘
                                  │
                                  ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                   3. Pipeline Orchestrator                       │
+│                   3. Pipeline Orchestrator                      │
 │  ┌─────────────────────────────────────────────────────────────┐│
-│  │  Stage 1: Resource Finder Agent (45 min)                    ││
-│  │  - Literature review                                         ││
+│  │  Stage 1: Resource Finder Agent                             ││
+│  │  - Literature review                                        ││
 │  │  - Download papers, datasets, code                          ││
 │  │  → Output: papers/, datasets/, literature_review.md         ││
 │  └─────────────────────────────────────────────────────────────┘│
-│                          │                                       │
-│                          ▼                                       │
+│                          │                                      │
+│                          ▼                                      │
 │  ┌─────────────────────────────────────────────────────────────┐│
 │  │  Stage 2: Human Review (Optional)                           ││
 │  │  - Inspect gathered resources                               ││
 │  │  - Approve or abort                                         ││
 │  └─────────────────────────────────────────────────────────────┘│
-│                          │                                       │
-│                          ▼                                       │
+│                          │                                      │
+│                          ▼                                      │
 │  ┌─────────────────────────────────────────────────────────────┐│
-│  │  Stage 3: Experiment Runner Agent (3 hours)                 ││
+│  │  Stage 3: Experiment Runner Agent                           ││
 │  │  - Implementation & experimentation                         ││
 │  │  - Analysis & documentation                                 ││
 │  │  → Output: notebooks/, results/, REPORT.md                  ││
@@ -85,8 +85,8 @@ Idea-Explorer uses a **multi-stage pipeline architecture** that separates resour
                                  │
                                  ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                   4. Results Published                           │
-│                   (GitHub + Local Workspace)                     │
+│                   4. Results Published                          │
+│                   (GitHub + Local Workspace)                    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -271,7 +271,7 @@ We've been running weekly competitions since November 2025, exploring 15+ resear
 
 **Synthetic Data Problem.** Multiple agents generated synthetic data instead of collecting real data. In one case, Codex with real datasets found significant effects while Claude with synthetic data found nothing—same hypothesis, different data quality, opposite conclusions.
 
-**Prioritization Failure.** When Kosmos generated 108 literature review tasks for a single idea, it demonstrated capability without prioritization. Agents can't tell you which of those tasks actually matters.
+**Prioritization Failure.** Most existing works make the agents explore a wide range of tasks. For example, Kosmos generated 108 literature review tasks for a single idea, it demonstrated capability without prioritization. Agents can't tell you which of those tasks actually matters.
 
 **Sample Size Issues.** Agents often use 20-30 examples when statistical power requires hundreds. They don't have intuition for adequate sample sizes.
 
@@ -279,14 +279,15 @@ We've been running weekly competitions since November 2025, exploring 15+ resear
 
 **Stage-Specific Failures.** Different agents fail differently: Claude loses track of working directory, Codex gets stuck in rabbit holes during resource finding, Gemini doesn't follow full research instructions. These are trivial errors humans wouldn't make.
 
-### Key Insight: Agents as Exploration Accelerators
+### Key Insight: Idea-Explorer as Exploration Accelerator
 
-The current state of agents is:
-- **Not good enough** for publishable research
-- **Good for** making ideas more concrete and systematic
-- **Better than** LLM-as-judge reports or pure "AI scientist" outputs
+After testing multiple AI scientist systems (including [AI-Scientist](https://github.com/SakanaAI/AI-Scientist-v2), [AI-Researcher](https://github.com/HKUDS/AI-Researcher), and Kosmos), **we believe Idea-Explorer is the most useful for actually helping researchers explore ideas.** Here's why:
 
-Agents can help you think more systematically about your idea, identify potential issues early, and provide a starting point for deeper investigation. They're playgrounds for researchers, not replacements.
+- **Grounded in real experiments**: Agents run actual code on real datasets, producing concrete results you can inspect and build upon
+- **Good for** making ideas more concrete, thinking systematically, and providing a starting point for deeper investigation
+- **Honest about limitations**: Rather than generating polished-looking reports that may be untrustworthy, we focus on transparent exploration with clear artifacts
+
+Our long-term goal is for idea-explorer to produce work good enough to support publishable research, but we are not there yet. We believe the path forward isn't to optimize directly for paper-writing, but to first build reliable exploration tools that help researchers accelerate their work, identify potential issues early, and make informed decisions about what to pursue next.
 
 ---
 
@@ -299,12 +300,12 @@ Based on our learnings, we've identified five key challenges to address.
 **Problem**: Agents need good resources to pursue research ideas, but they:
 - Don't have good priors about what sources are reliable vs. unreliable
 - Don't search diversely enough
-- Don't know about/use existing academic tools
+- Don't leverage existing academic tools and APIs
 
 **Current State**: Resource finder can download papers and datasets, but quality varies.
 
 **Directions**:
-- Integrate existing tools: Semantic Scholar API, arXiv API, Papers with Code
+- Expand tool use capabilities: integrate Semantic Scholar API, arXiv API, existing paper finders
 - Provide source quality heuristics (citation count, venue reputation)
 - Encourage diverse search strategies (different keywords, related work traversal)
 - Let agents use existing libraries (scholarly, paperqa)
@@ -325,21 +326,21 @@ Based on our learnings, we've identified five key challenges to address.
 - Create checklists for common pitfalls
 - Research: Can we detect when agents are "outside their expertise"?
 
-### Challenge 3: Improving Reliability by Reducing and Fixing Small But Disruptive Mistakes
+### Challenge 3: Context Management and Working Memory
 
-**Problem**: Agents make trivial errors that interrupt exploration:
-- Files written to wrong locations
-- Getting stuck in rabbit holes
-- Not following full instructions
-- Incomplete outputs
+**Problem**: Agents struggle to maintain coherence during long-horizon tasks:
+- Losing track of working directory or task state (context drift)
+- Getting stuck in rabbit holes without recognizing they've drifted
+- Forgetting earlier instructions as context fills up
+- Incomplete outputs due to working memory limitations
 
 **Current State**: Solvable via careful instructions, but unclear how to generalize.
 
 **Directions**:
-- Better error recovery and automatic retry mechanisms
-- Validation checks at stage boundaries
+- Better context curation strategies to prevent drift
+- Validation checks at stage boundaries to catch errors early
 - More structured output requirements (completion markers, required files)
-- Research: Can we categorize common failure modes?
+- Research: Can we categorize common failure modes and build targeted mitigations?
 
 ### Challenge 4: Human Intervention & Feedback
 
@@ -378,9 +379,9 @@ These are harder problems that we don't have clear solutions for:
 
 What metrics capture research quality beyond task completion? How do we evaluate if an agent "did due diligence"? Current work like [MechEvalAgents](https://github.com/ChicagoHAI/MechEvalAgents) is exploring this space.
 
-### 2. Building Meta-Intelligence
+### 2. Metacognition and Self-Reflection
 
-Can agents learn when to search vs. rely on training? How do we teach "knowing what you don't know"? This likely can't be solved with prompting alone—it may require architectural changes or new training approaches.
+Can agents learn when to search vs. rely on training? How do we teach "knowing what you don't know"? This is fundamentally about metacognition—the ability to monitor and regulate one's own cognitive processes. Current agents lack self-reflection capabilities to recognize when they're outside their expertise or when their approach not grounded. This likely can't be solved with prompting alone—it may require architectural changes or new training approaches.
 
 ### 3. Generalizing Error Prevention
 
@@ -397,10 +398,10 @@ How should agent outputs be structured for human decision-making? How do we pres
 We're looking for collaborators who resonate with the vision of AI as exploration accelerators for human researchers.
 
 **Areas of interest:**
-- Resource finding (integrating academic APIs, quality heuristics)
+- Tool use and resource finding (integrating academic APIs, existing searching tools)
 - Evaluation systems (measuring research behavior quality)
-- Error handling (categorizing failures, building mitigations)
-- Long-horizon capabilities (enabling longer and parallel experiments)
+- Context management (memory strategies, preventing drift in long-horizon tasks)
+- Long-horizon reasoning (maintaining coherence across extended experiments)
 - Domain templates (adding new domains, improving methodology guidance)
 - Human-AI interaction (feedback loops, checkpoints, iterative refinement)
 
