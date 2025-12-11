@@ -22,15 +22,31 @@
 
 ### What AI Scientists Should Do
 
-AI Scientists should: find and prioritize relevant resources, design rigorous experiments grounded in real data, know their own limitations, collaborate with humans throughout the process, and report results honestly—including failures.
+Our goal is to build general AI Scientists that serve as effective partners of human scientists.
+They should
+* work in any domain of interest,
+* propose and reason about research directions,
+* find and prioritize relevant resources,
+* design rigorous experiments grounded in real data,
+* interpretate results appropriately and recognize inconclusive results,
+* explore alternative hypotheses and explanations,
+* effectively collaborate with humans at any stage of research,
+* produce reproducible and inspectable artifacts,
+* report experiments and results honestly, including failures.
 
 ### Why Current Approaches Fall Short
 
-Existing systems like [AI-Scientist](https://github.com/SakanaAI/AI-Scientist-v2), [AI-Researcher](https://github.com/HKUDS/AI-Researcher), and Kosmos optimize for paper-like outputs rather than rigorous research. They generate synthetic data when real data is needed, lack meta-intelligence to judge when they're off track, and are developed behind closed doors where failures aren't shared.
+Existing systems either focus on particular domains (e.g.,
+[AI-Scientist](https://github.com/SakanaAI/AI-Scientist-v2),
+[AI-Researcher](https://github.com/HKUDS/AI-Researcher) focusing on training ML models) or specific
+tasks (e.g., Kosmos for data analyses). They also optimize for paper-like
+outputs rather than rigorous research. They generate synthetic data when real data is needed, lack
+meta-intelligence to judge when they're off track, and are developed behind closed doors where
+failures aren't shared.
 
 ### Our Approach: Building This Together
 
-Idea-Explorer is our open, collaborative effort toward better AI Scientists. We're not there yet—and we're honest about it. We see human-AI collaboration as the path forward, not replacement. We build in public, run weekly experiments, share what works and what doesn't, and welcome contributors who want to tackle the [hard problems](#open-research-questions) with us.
+Idea-Explorer is our open, collaborative effort toward better AI Scientists. We build in public, run weekly experiments, share what works and what doesn't, and welcome contributors who want to tackle the [hard problems](#open-research-questions) with us.
 
 ---
 
