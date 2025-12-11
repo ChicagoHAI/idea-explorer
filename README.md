@@ -279,7 +279,7 @@ If you use Idea Explorer in research, please cite:
 ```bibtex
 @software{idea_explorer_2025,
   title={Idea Explorer: Autonomous Research Framework},
-  author={ChicagoHAI},
+  author={Haokun Liu, Chenhao Tan},
   year={2025},
   url={https://github.com/ChicagoHAI/idea-explorer}
 }
