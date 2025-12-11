@@ -1,11 +1,6 @@
 <div align="center">
 
-<!-- TODO: Add your logo here -->
-<!-- <img src="assets/logo.png" alt="Idea Explorer Logo" width="400"/> -->
-
-# Idea Explorer
-
-**Transform research ideas into comprehensive experiments with AI agents**
+<img src="assets/banner.png" alt="Idea Explorer - AI-Powered Research Acceleration" width="600"/>
 
 [![GitHub Stars](https://img.shields.io/github/stars/ChicagoHAI/idea-explorer?style=flat-square)](https://github.com/ChicagoHAI/idea-explorer)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg?style=flat-square)](https://www.python.org/downloads/)
