@@ -20,19 +20,17 @@
 
 ## Philosophy & Vision
 
-Idea-Explorer takes a specific stance on the role of AI in research: **agents should be exploration accelerators, not autonomous AI scientists.**
+### What AI Scientists Should Do
 
-We don't seek to replace human researchers. As articulated in [The Mirage of Autonomous AI Scientists](https://hypogenic.ai/blog/mirage-of-autonomous-ai-scientists), science is fundamentally about resource allocation—deciding what matters among infinite possibilities with limited time, attention, and funding. These choices can't be delegated to machines because they're inherently value-laden and require human accountability.
+AI Scientists should: find and prioritize relevant resources, design rigorous experiments grounded in real data, know their own limitations, collaborate with humans throughout the process, and report results honestly—including failures.
 
-Instead, we see AI agents as tools that help researchers:
-- **Quickly explore an idea's feasibility** before investing significant time
-- **Run preliminary experiments** to make ideas more concrete
-- **Gather and synthesize relevant resources** (papers, datasets, code)
-- **Identify potential issues** early in the research process
+### Why Current Approaches Fall Short
 
-The human remains the **selector** (deciding what to pursue) and **evaluator** (judging quality and significance). The agent handles **production** (gathering resources, writing code, running experiments).
+Existing systems like [AI-Scientist](https://github.com/SakanaAI/AI-Scientist-v2), [AI-Researcher](https://github.com/HKUDS/AI-Researcher), and Kosmos optimize for paper-like outputs rather than rigorous research. They generate synthetic data when real data is needed, lack meta-intelligence to judge when they're off track, and are developed behind closed doors where failures aren't shared.
 
-This means our success metric isn't "did the agent produce publishable research?" but rather "did the agent help the researcher understand their idea better and make informed decisions about next steps?"
+### Our Approach: Building This Together
+
+Idea-Explorer is our open, collaborative effort toward better AI Scientists. We're not there yet—and we're honest about it. We see human-AI collaboration as the path forward, not replacement. We build in public, run weekly experiments, share what works and what doesn't, and welcome contributors who want to tackle the [hard problems](#open-research-questions) with us.
 
 ---
 
@@ -131,7 +129,7 @@ Main execution entry point:
 - Loads idea from IdeaManager
 - Sets up GitHub workspace (or local directory)
 - Chooses execution mode (multi-agent pipeline or legacy monolithic)
-- Runs Scribe-based agent for experiment execution
+- Runs coding agent for experiment execution
 - Commits and pushes results to GitHub
 
 ### Prompt Generator (`src/templates/prompt_generator.py`)
