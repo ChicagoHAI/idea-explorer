@@ -5,8 +5,8 @@
 [![GitHub Stars](https://img.shields.io/github/stars/ChicagoHAI/idea-explorer?style=flat-square)](https://github.com/ChicagoHAI/idea-explorer)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg?style=flat-square)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg?style=flat-square)](LICENSE)
-[![X Follow](https://img.shields.io/badge/X-Follow-black?style=flat-square&logo=x)](https://x.com/YOUR_X_HANDLE)
-[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/YOUR_INVITE_CODE)
+[![X Follow](https://img.shields.io/badge/X-Follow-black?style=flat-square&logo=x)](https://x.com/ChicagoHAI)
+[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/BgkfTvBdbV)
 
 <!-- TODO: Replace YOUR_X_HANDLE and YOUR_INVITE_CODE with actual links -->
 
