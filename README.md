@@ -285,10 +285,6 @@ If you use Idea Explorer in research, please cite:
 }
 ```
 
-## Acknowledgments
-
-- Built on [Scribe](https://github.com/goodfire-ai/scribe) by Goodfire AI
-
 ## License
 
 Apache 2.0 - See [LICENSE](LICENSE) file
