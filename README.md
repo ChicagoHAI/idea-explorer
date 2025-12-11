@@ -8,13 +8,15 @@
 [![X Follow](https://img.shields.io/badge/X-Follow-black?style=flat-square&logo=x)](https://x.com/ChicagoHAI)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/BgkfTvBdbV)
 
-<!-- TODO: Replace YOUR_X_HANDLE and YOUR_INVITE_CODE with actual links -->
-
 </div>
 
 <hr>
 
 Idea Explorer is an autonomous research framework that takes structured research ideas and orchestrates AI agents to design, execute, analyze, and document experiments across diverse domains.
+
+<div align="center">
+<img src="assets/idea-explorer-6x.gif" alt="Idea Explorer Demo" width="700"/>
+</div>
 
 <details open>
 <summary><b>Key Features</b></summary>
@@ -299,6 +301,6 @@ Apache 2.0 - See [LICENSE](LICENSE) file
 python src/cli/submit.py ideas/examples/ml_regularization_test.yaml
 ```
 
-For questions and feedback, [open an issue](https://github.com/ChicagoHAI/idea-explorer/issues) or join our [Discord](https://discord.gg/YOUR_INVITE_CODE).
+For questions and feedback, [open an issue](https://github.com/ChicagoHAI/idea-explorer/issues) or join our [Discord](https://discord.gg/BgkfTvBdbV).
 
 </div>
