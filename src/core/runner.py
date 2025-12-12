@@ -5,7 +5,7 @@ This module orchestrates the execution of research by:
 1. Loading idea specifications
 2. Creating GitHub repository (optional)
 3. Generating prompts
-4. Launching agents via scribe
+4. Launching agents (raw CLI by default, scribe optional for notebooks)
 5. Committing and pushing results to GitHub
 """
 
@@ -30,6 +30,14 @@ try:
     GITHUB_AVAILABLE = True
 except ImportError:
     GITHUB_AVAILABLE = False
+
+
+# CLI commands for different providers (same as resource_finder.py)
+CLI_COMMANDS = {
+    'claude': 'claude',
+    'codex': 'codex exec',  # Non-interactive mode: read from stdin
+    'gemini': 'gemini'
+}
 
 
 class ResearchRunner:
@@ -89,7 +97,8 @@ class ResearchRunner:
                     multi_agent: bool = True,
                     pause_after_resources: bool = False,
                     skip_resource_finder: bool = False,
-                    resource_finder_timeout: int = 2700) -> Dict[str, Any]:
+                    resource_finder_timeout: int = 2700,
+                    use_scribe: bool = False) -> Dict[str, Any]:
         """
         Execute research for a given idea.
 
@@ -105,6 +114,7 @@ class ResearchRunner:
             pause_after_resources: Pause for human review after resource finding (default: False)
             skip_resource_finder: Skip resource finder stage (default: False)
             resource_finder_timeout: Timeout for resource finder in seconds (default: 45 min)
+            use_scribe: Use scribe for notebook integration (default: False, raw CLI)
 
         Returns:
             Dictionary with:
@@ -234,9 +244,11 @@ class ResearchRunner:
 
         # Create subdirectories
         (work_dir / "logs").mkdir(parents=True, exist_ok=True)
-        (work_dir / "notebooks").mkdir(parents=True, exist_ok=True)
         (work_dir / "results").mkdir(parents=True, exist_ok=True)
         (work_dir / "artifacts").mkdir(parents=True, exist_ok=True)
+        # Only create notebooks/ when using scribe
+        if use_scribe:
+            (work_dir / "notebooks").mkdir(parents=True, exist_ok=True)
 
         # Choose execution mode: multi-agent pipeline or legacy monolithic
         if multi_agent:
@@ -262,7 +274,8 @@ class ResearchRunner:
                     skip_resource_finder=skip_resource_finder,
                     resource_finder_timeout=resource_finder_timeout,
                     experiment_runner_timeout=timeout,
-                    full_permissions=full_permissions
+                    full_permissions=full_permissions,
+                    use_scribe=use_scribe
                 )
 
                 success = pipeline_result.get('success', False)
@@ -304,31 +317,42 @@ class ResearchRunner:
         print()
 
         # Prepare session instructions using the new template
-        session_instructions = generate_instructions(prompt=prompt, work_dir=str(work_dir))
+        session_instructions = generate_instructions(
+            prompt=prompt,
+            work_dir=str(work_dir),
+            use_scribe=use_scribe
+        )
 
         # Save session instructions
         session_file = work_dir / "logs" / "session_instructions.txt"
         with open(session_file, 'w', encoding='utf-8') as f:
             f.write(session_instructions)
 
-        print("▶️  Executing research with scribe...")
+        mode_str = "scribe (notebooks)" if use_scribe else "raw CLI"
+        print(f"▶️  Executing research in {mode_str} mode...")
         print(f"   Using provider: {provider}")
         print(f"   Timeout: {timeout} seconds")
         print()
 
-        # Execute via scribe
+        # Execute agent
         success = False
         try:
             # Set environment variables
             env = os.environ.copy()
-            env['SCRIBE_RUN_DIR'] = str(work_dir)
             env['PYTHONUNBUFFERED'] = '1'
+            if use_scribe:
+                env['SCRIBE_RUN_DIR'] = str(work_dir)
 
             # Prepare command
             log_file = work_dir / "logs" / f"execution_{provider}.log"
 
-            # Run scribe with the prompt and optional full permissions
-            cmd = f"scribe {provider}"
+            # Build command - raw CLI by default, scribe if requested
+            if use_scribe:
+                cmd = f"scribe {provider}"
+            else:
+                cmd = CLI_COMMANDS[provider]
+
+            # Add permission flags
             if full_permissions:
                 if provider == "codex":
                     cmd += " --yolo"
@@ -611,6 +635,11 @@ def main():
         default=2700,
         help="Timeout for resource finder in seconds (default: 2700 = 45 min)"
     )
+    parser.add_argument(
+        "--use-scribe",
+        action="store_true",
+        help="Use scribe for Jupyter notebook integration (default: raw CLI without notebooks)"
+    )
 
     args = parser.parse_args()
 
@@ -628,7 +657,8 @@ def main():
             multi_agent=not args.legacy_mode,
             pause_after_resources=args.pause_after_resources,
             skip_resource_finder=args.skip_resource_finder,
-            resource_finder_timeout=args.resource_finder_timeout
+            resource_finder_timeout=args.resource_finder_timeout,
+            use_scribe=args.use_scribe
         )
 
         print()

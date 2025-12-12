@@ -25,10 +25,10 @@ Idea Explorer is an autonomous research framework that takes structured research
 |---------|-------------|
 | **Minimal Input** | Just provide title, domain, and hypothesis - agents handle the rest |
 | **Agent-Driven Research** | Literature review, dataset search, baseline identification |
-| **Multi-Provider Support** | Works with Claude, Gemini, and Codex via scribe |
+| **Multi-Provider Support** | Works with Claude, Gemini, and Codex (raw CLI by default, notebooks optional) |
 | **Pragmatic Execution** | Creates resources when they don't exist, always proceeds |
 | **Domain-Agnostic** | ML, data science, AI, systems, theory, and more |
-| **Smart Documentation** | Auto-generates notebooks, reports, and code walkthroughs |
+| **Smart Documentation** | Auto-generates reports, code, and results |
 | **GitHub Integration** | Auto-creates repos and pushes results |
 
 </details>
@@ -113,9 +113,11 @@ ideas/
   completed/      <- Finished research
 
 workspace/<repo-name>/
-  notebooks/      <- Jupyter notebooks (plan, docs, code walkthrough)
+  src/            <- Python scripts for experiments (default mode)
   results/        <- Metrics, plots, models
-  logs/           <- Execution logs
+  logs/           <- Execution logs and transcripts
+  artifacts/      <- Models, checkpoints
+  notebooks/      <- Jupyter notebooks (only with --use-scribe)
   .idea-explorer/ <- Original idea spec
 ```
 
@@ -203,7 +205,8 @@ cd idea-explorer
 # 3. Install dependencies
 uv sync
 
-# 4. Install scribe (for Jupyter integration)
+# 4. (Optional) Install scribe for Jupyter notebook integration
+# Only needed if you want to use --use-scribe flag
 # Follow instructions at: https://github.com/goodfire-ai/scribe
 
 # 5. Configure environment
@@ -227,6 +230,19 @@ python src/core/runner.py <idea_id>
 #   --full-permissions              (allow agents to run without prompts)
 #   --no-github                     (run locally without GitHub)
 #   --github-org ORG                (specify GitHub org, default: ChicagoHAI)
+#   --use-scribe                    (enable Jupyter notebook integration)
+```
+
+### Execution Modes
+
+```bash
+# Default mode: Raw CLI (recommended)
+# Agents write Python scripts, simpler and more unified across providers
+python src/core/runner.py my_idea --full-permissions
+
+# Notebook mode: With scribe (optional)
+# Agents get Jupyter notebook access via MCP tools
+python src/core/runner.py my_idea --full-permissions --use-scribe
 ```
 
 ### Permission Modes
@@ -236,7 +252,7 @@ python src/core/runner.py <idea_id>
 python src/core/runner.py my_idea
 
 # Full autonomous mode (faster, no interruptions)
-python src/core/runner.py my_idea --provider codex --full-permissions
+python src/core/runner.py my_idea --full-permissions
 ```
 
 ### Evaluate Quality (Optional)
