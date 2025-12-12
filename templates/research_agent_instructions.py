@@ -5,18 +5,29 @@ This module generates the session instructions for the AI research agent.
 The instructions emphasize initial research, resource gathering, and systematic execution.
 """
 
-def generate_instructions(prompt: str, work_dir: str) -> str:
+def generate_instructions(prompt: str, work_dir: str, use_scribe: bool = False) -> str:
     """
     Generate comprehensive session instructions for the research agent.
 
     Args:
         prompt: The research task prompt (from prompt_generator)
         work_dir: Working directory path for the research
+        use_scribe: If True, include notebook instructions; if False, use Python scripts
 
     Returns:
         Complete session instructions string
     """
-    return f"""Start a new session for research execution.
+    # Code workflow instructions depend on whether we're using notebooks or scripts
+    if use_scribe:
+        session_start = "Start a new session for research execution."
+        code_workflow = "✓ Use Jupyter notebooks as needed for experiments and analysis"
+        code_reminder = "- Use Jupyter notebooks for experiments and analysis (saved in notebooks/ directory)"
+    else:
+        session_start = "Begin research execution."
+        code_workflow = "✓ Write Python scripts in src/ directory for experiments and analysis"
+        code_reminder = "- Write Python scripts (.py) in src/ for experiments (NOT Jupyter notebooks)"
+
+    return f"""{session_start}
 
 CRITICAL: Environment Setup
 ────────────────────────────────────────────────────────────────────────────────
@@ -203,7 +214,7 @@ Phase 2: Environment & Data Setup (10-20 min)
   → WHEN COMPLETE: Immediately proceed to Phase 3 (Implementation)
 
 Phase 3: Implementation (60-90 min)
-  ✓ Use Jupyter notebooks as needed for experiments and analysis
+  {code_workflow}
   ✓ Leverage code from code/ directory where applicable
   ✓ Implement baselines first (use/adapt existing implementations)
   ✓ Implement proposed method
@@ -279,7 +290,7 @@ Remember:
 - READ literature_review.md and resources.md first (they're in your current directory)
 - Use pre-downloaded datasets from datasets/ directory (relative to current directory)
 - Leverage code from code/ directory (relative to current directory)
-- Use Jupyter notebooks for experiments and analysis (saved in current directory)
+{code_reminder}
 - Use markdown files (.md) for documentation (saved in current directory)
 - Save outputs to organized directories: results/, figures/, logs/ (all relative)
 - All your work stays within this workspace directory

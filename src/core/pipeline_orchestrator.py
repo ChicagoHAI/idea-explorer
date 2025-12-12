@@ -4,7 +4,7 @@ Research Pipeline Orchestrator
 This module orchestrates the multi-agent research pipeline:
 1. Resource Finder Agent (CLI-based): Literature review, dataset/code gathering
 2. (Optional) Human review checkpoint
-3. Experiment Runner Agent (Scribe-based): Implementation, experimentation, analysis
+3. Experiment Runner Agent (CLI-based by default, Scribe optional): Implementation, experimentation, analysis
 
 The orchestrator manages agent execution flow, monitors completion, handles errors,
 and tracks pipeline state.
@@ -88,6 +88,14 @@ class PipelineState:
         return stage.get('status') == 'completed' and stage.get('success', False)
 
 
+# CLI commands for different providers (same as resource_finder.py)
+CLI_COMMANDS = {
+    'claude': 'claude',
+    'codex': 'codex exec',  # Non-interactive mode: read from stdin
+    'gemini': 'gemini'
+}
+
+
 class ResearchPipelineOrchestrator:
     """
     Orchestrates multi-agent research pipeline.
@@ -95,7 +103,7 @@ class ResearchPipelineOrchestrator:
     Pipeline stages:
     1. resource_finder: Gather papers, datasets, code (CLI agent)
     2. (optional) human_review: Wait for human approval
-    3. experiment_runner: Run experiments and analysis (Scribe agent)
+    3. experiment_runner: Run experiments and analysis (CLI agent by default, Scribe optional)
     """
 
     def __init__(self, work_dir: Path, templates_dir: Optional[Path] = None):
@@ -122,7 +130,8 @@ class ResearchPipelineOrchestrator:
         skip_resource_finder: bool = False,
         resource_finder_timeout: int = 2700,  # 45 min
         experiment_runner_timeout: int = 10800,  # 3 hours
-        full_permissions: bool = True
+        full_permissions: bool = True,
+        use_scribe: bool = False
     ) -> Dict[str, Any]:
         """
         Execute complete research pipeline.
@@ -135,6 +144,7 @@ class ResearchPipelineOrchestrator:
             resource_finder_timeout: Timeout for resource finder in seconds
             experiment_runner_timeout: Timeout for experiment runner in seconds
             full_permissions: Allow full permissions to agents
+            use_scribe: If True, use scribe for notebook integration (default: False, raw CLI)
 
         Returns:
             Dictionary with pipeline execution results
@@ -145,6 +155,7 @@ class ResearchPipelineOrchestrator:
         print("=" * 80)
         print(f"Work directory: {self.work_dir}")
         print(f"Provider: {provider}")
+        print(f"Use scribe (notebooks): {use_scribe}")
         print(f"Pause after resources: {pause_after_resources}")
         print(f"Skip resource finder: {skip_resource_finder}")
         print("=" * 80)
@@ -193,7 +204,8 @@ class ResearchPipelineOrchestrator:
                 idea=idea,
                 provider=provider,
                 timeout=experiment_runner_timeout,
-                full_permissions=full_permissions
+                full_permissions=full_permissions,
+                use_scribe=use_scribe
             )
 
             if results['stages']['experiment_runner']['success']:
@@ -301,9 +313,10 @@ class ResearchPipelineOrchestrator:
         idea: Dict[str, Any],
         provider: str,
         timeout: int,
-        full_permissions: bool
+        full_permissions: bool,
+        use_scribe: bool = False
     ) -> Dict[str, Any]:
-        """Run experiment runner stage (scribe-based)."""
+        """Run experiment runner stage (raw CLI by default, scribe optional)."""
         print()
         print("─" * 80)
         print("STAGE 3: EXPERIMENT RUNNER")
@@ -337,7 +350,8 @@ class ResearchPipelineOrchestrator:
             # Generate session instructions (resource-aware version)
             session_instructions = generate_instructions(
                 prompt=prompt,
-                work_dir=str(self.work_dir)
+                work_dir=str(self.work_dir),
+                use_scribe=use_scribe
             )
 
             # Save session instructions
@@ -345,8 +359,13 @@ class ResearchPipelineOrchestrator:
             with open(session_file, 'w', encoding='utf-8') as f:
                 f.write(session_instructions)
 
-            # Prepare scribe command
-            cmd = f"scribe {provider}"
+            # Prepare command - raw CLI by default, scribe if requested
+            if use_scribe:
+                cmd = f"scribe {provider}"
+            else:
+                cmd = CLI_COMMANDS[provider]
+
+            # Add permission flags
             if full_permissions:
                 if provider == "codex":
                     cmd += " --yolo"
@@ -356,7 +375,6 @@ class ResearchPipelineOrchestrator:
                     cmd += " --yolo"
 
             # Add transcript/verbose output flags for detailed logging
-            # These flags are passed through scribe to the underlying CLI
             # Note: Claude's --output-format only works with -p mode, not stdin input
             if provider == "claude":
                 cmd += " --verbose"
@@ -368,7 +386,8 @@ class ResearchPipelineOrchestrator:
             log_file = self.work_dir / "logs" / f"execution_{provider}.log"
             transcript_file = self.work_dir / "logs" / f"execution_{provider}_transcript.jsonl"
 
-            print(f"▶️  Launching scribe with {provider}...")
+            mode_str = "scribe (notebooks)" if use_scribe else "raw CLI"
+            print(f"▶️  Launching {provider} in {mode_str} mode...")
             print(f"   Command: {cmd}")
             print(f"   Log file: {log_file}")
             print(f"   Transcript: {transcript_file}")
@@ -380,10 +399,11 @@ class ResearchPipelineOrchestrator:
 
             # Set environment
             env = os.environ.copy()
-            env['SCRIBE_RUN_DIR'] = str(self.work_dir)
             env['PYTHONUNBUFFERED'] = '1'
+            if use_scribe:
+                env['SCRIBE_RUN_DIR'] = str(self.work_dir)
 
-            # Execute scribe
+            # Execute agent
             success = False
             start_time = time.time()
 
@@ -467,7 +487,8 @@ class ResearchPipelineOrchestrator:
         idea: Dict[str, Any],
         provider: str = "claude",
         pause_after_resources: bool = False,
-        full_permissions: bool = True
+        full_permissions: bool = True,
+        use_scribe: bool = False
     ) -> Dict[str, Any]:
         """
         Resume pipeline from last completed stage.
@@ -479,6 +500,7 @@ class ResearchPipelineOrchestrator:
             provider: AI provider
             pause_after_resources: Pause for human review
             full_permissions: Allow full permissions
+            use_scribe: If True, use scribe for notebook integration
 
         Returns:
             Pipeline execution results
@@ -511,5 +533,6 @@ class ResearchPipelineOrchestrator:
             provider=provider,
             pause_after_resources=pause_after_resources,
             skip_resource_finder=skip_resource_finder,
-            full_permissions=full_permissions
+            full_permissions=full_permissions,
+            use_scribe=use_scribe
         )
