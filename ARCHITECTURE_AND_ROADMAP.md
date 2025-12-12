@@ -1,0 +1,446 @@
+# Idea-Explorer: Architecture & Roadmap
+
+> **TL;DR**: Idea-Explorer is an open-source AI scientist for exploring research ideas with AI agents. This document explains how it works and where we're headed based on lessons learned from running weekly competitions.
+
+---
+
+## Table of Contents
+
+1. [Philosophy & Vision](#philosophy--vision)
+2. [Architecture Overview](#architecture-overview)
+3. [Core Components](#core-components)
+4. [Pipeline Flow](#pipeline-flow)
+5. [Template System](#template-system)
+6. [What We've Learned](#what-weve-learned)
+7. [Roadmap](#roadmap)
+8. [Open Research Questions](#open-research-questions)
+9. [How to Contribute](#how-to-contribute)
+
+---
+
+## Philosophy & Vision
+
+### What AI Scientists Should Do
+
+Our goal is to build general AI Scientists that serve as effective partners of human scientists.
+They should
+* work in any domain of interest,
+* propose and reason about research directions,
+* find and prioritize relevant resources,
+* design rigorous experiments grounded in real data,
+* interpretate results appropriately and recognize inconclusive results,
+* explore alternative hypotheses and explanations,
+* effectively collaborate with humans at any stage of research,
+* produce reproducible and inspectable artifacts,
+* report experiments and results honestly, including failures.
+
+### Why Current Approaches Fall Short
+
+Existing systems either focus on particular domains (e.g.,
+[AI-Scientist](https://github.com/SakanaAI/AI-Scientist-v2),
+[AI-Researcher](https://github.com/HKUDS/AI-Researcher) focusing on training ML models) or specific
+tasks (e.g., Kosmos for data analyses). They also optimize for paper-like
+outputs rather than rigorous research. They generate synthetic data when real data is needed, lack
+meta-intelligence to judge when they're off track, and are developed behind closed doors where
+failures aren't shared.
+
+### Our Approach: Building This Together
+
+Idea-Explorer is our open, collaborative effort toward better AI Scientists. We build in public, run weekly experiments, share what works and what doesn't, and welcome contributors who want to tackle the [hard problems](#open-research-questions) with us.
+
+---
+
+## Architecture Overview
+
+Idea-Explorer uses a **multi-stage pipeline architecture** that separates resource gathering from experimentation:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         User (YAML Idea)                        │
+└─────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   1. Idea Manager                               │
+│                   (Validation & Storage)                        │
+└─────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   2. GitHub Manager                             │
+│                   (Create Workspace)                            │
+└─────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   3. Pipeline Orchestrator                      │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │  Stage 1: Resource Finder Agent                             ││
+│  │  - Literature review                                        ││
+│  │  - Download papers, datasets, code                          ││
+│  │  → Output: papers/, datasets/, literature_review.md         ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                          │                                      │
+│                          ▼                                      │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │  Stage 2: Human Review (Optional)                           ││
+│  │  - Inspect gathered resources                               ││
+│  │  - Approve or abort                                         ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                          │                                      │
+│                          ▼                                      │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │  Stage 3: Experiment Runner Agent                           ││
+│  │  - Implementation & experimentation                         ││
+│  │  - Analysis & documentation                                 ││
+│  │  → Output: notebooks/, results/, REPORT.md                  ││
+│  └─────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   4. Results Published                          │
+│                   (GitHub + Local Workspace)                    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Key Design Decisions:**
+
+- **Workspace-first**: GitHub repos are created immediately on idea submission, providing a persistent home for all artifacts
+- **Pragmatic execution**: Agents create resources when they don't exist and always proceed rather than blocking
+- **Multi-provider support**: Works with Claude, Codex, and Gemini as agent backends
+- **Resumable**: Pipeline state is tracked and can resume from the last completed stage
+
+---
+
+## Core Components
+
+### Idea Manager (`src/core/idea_manager.py`)
+
+Handles idea lifecycle management:
+- **Validation**: Checks YAML against schema (required: title, domain, hypothesis)
+- **ID Generation**: Creates unique IDs from timestamp + title hash
+- **Status Tracking**: Moves ideas between `submitted/`, `in_progress/`, `completed/`
+- **Storage**: Maintains directory structure under `ideas/`
+
+### Pipeline Orchestrator (`src/core/pipeline_orchestrator.py`)
+
+Manages the multi-stage execution:
+- **Stage Management**: Runs resource finder, then experiment runner
+- **State Persistence**: Saves progress to `.idea-explorer/pipeline_state.json`
+- **Timeout Handling**: Configurable timeouts per stage (default: 45 min / 3 hours)
+- **Resume Capability**: Can restart from last completed stage
+
+### Resource Finder Agent (`src/agents/resource_finder.py`)
+
+Autonomous literature review and resource gathering:
+- Generates specialized resource-finder prompt from idea specification
+- Launches CLI agent (Claude/Codex/Gemini) with stdin pipe
+- Monitors for completion marker (`.resource_finder_complete`)
+- Outputs: `papers/`, `datasets/`, `code/`, `literature_review.md`, `resources.md`
+
+### Research Runner (`src/core/runner.py`)
+
+Main execution entry point:
+- Loads idea from IdeaManager
+- Sets up GitHub workspace (or local directory)
+- Chooses execution mode (multi-agent pipeline or legacy monolithic)
+- Runs coding agent for experiment execution
+- Commits and pushes results to GitHub
+
+### Prompt Generator (`src/templates/prompt_generator.py`)
+
+Composes research prompts from templates:
+- Loads base researcher template (universal methodology)
+- Loads domain-specific template (ML, AI, Data Science, etc.)
+- Renders Jinja2 templates with idea variables
+- Produces layered prompt: task section + base methodology + domain guidance
+
+### GitHub Manager (`src/core/github_manager.py`)
+
+Handles repository operations:
+- Creates repos in configured organization
+- Clones to local workspace
+- Commits and pushes results
+- Generates concise repo names from idea titles
+
+---
+
+## Pipeline Flow
+
+### 1. Submit an Idea
+
+```bash
+python src/cli/submit.py ideas/examples/ml_regularization_test.yaml
+```
+
+What happens:
+1. YAML validated against schema
+2. Unique idea_id generated
+3. Saved to `ideas/submitted/`
+4. GitHub repo created and cloned to `workspace/<repo-name>/`
+5. Initial metadata committed
+
+### 2. Run Research
+
+```bash
+python src/core/runner.py <idea_id> --provider claude --timeout 3600 --full-permissions
+```
+
+Options:
+- `--provider` (claude|codex|gemini): AI backend
+- `--timeout`: Experiment runner timeout in seconds
+- `--full-permissions`: Allow autonomous execution
+- `--pause-after-resources`: Stop for human review after resource gathering
+- `--skip-resource-finder`: Jump straight to experimentation
+
+### 3. Pipeline Execution
+
+**Stage 1: Resource Finder** (45 min default)
+- Agent searches for relevant papers, datasets, and code
+- Downloads and organizes resources
+- Creates `literature_review.md` synthesizing findings
+
+**Stage 2: Human Review** (Optional)
+- Inspect `papers/`, `datasets/`, `resources.md`
+- Approve to continue or abort
+
+**Stage 3: Experiment Runner** (3 hours default)
+- Agent follows 6-phase methodology:
+  1. Planning (hypothesis decomposition, resource review)
+  2. Environment setup (venv, dependencies)
+  3. Implementation (code, baselines)
+  4. Experimentation (run, collect results)
+  5. Analysis (statistical testing, interpretation)
+  6. Documentation (REPORT.md, README.md)
+
+### 4. Results
+
+Final workspace structure:
+```
+workspace/<repo-name>/
+├── .idea-explorer/idea.yaml      # Original idea spec
+├── papers/                       # Downloaded papers
+├── datasets/                     # Downloaded datasets
+├── code/                         # Cloned repositories
+├── notebooks/                    # Jupyter notebooks
+├── results/                      # Metrics, visualizations
+├── artifacts/                    # Models, checkpoints
+├── logs/                         # Execution logs
+├── REPORT.md                     # Comprehensive findings
+└── README.md                     # Quick overview
+```
+
+---
+
+## Template System
+
+Templates live in `templates/` and use Jinja2 rendering:
+
+**Base Template** (`base/researcher.txt`): Universal 6-phase research methodology applicable to any domain.
+
+**Domain Templates** (`domains/<domain>/core.txt`):
+- `artificial_intelligence`: LLM evaluation, prompt engineering, benchmarking
+- `machine_learning`: Training best practices, hyperparameter tuning, metrics
+- `data_science`: EDA, statistical testing, visualization
+- `systems`: Benchmarking, profiling, optimization
+- `theory`: Proof techniques, complexity analysis
+
+**Agent Templates** (`agents/resource_finder.txt`): Specialized instructions for the resource finder agent.
+
+Template composition:
+```
+┌─────────────────────────────────┐
+│  Task Section (idea-specific)   │
+├─────────────────────────────────┤
+│  Base Researcher Template       │
+│  (Universal methodology)        │
+├─────────────────────────────────┤
+│  Domain-Specific Template       │
+│  (e.g., ML/AI/Data Science)     │
+└─────────────────────────────────┘
+```
+
+---
+
+## What We've Learned
+
+We've been running weekly competitions since November 2025, exploring 15+ research ideas across 45+ agent runs. Here's what we've observed.
+
+### What Agents Do Well
+
+**Data curation with smart filtering.** When Codex filtered ChaosNLI for high human disagreement (`gini < 0.45`), it demonstrated genuine understanding of dataset structure—not just downloading data, but selecting appropriate subsets.
+
+**Statistical rigor and faithful reporting.** Agents run proper tests with multiple comparisons correction. When experiments refute hypotheses, they report this honestly rather than spinning results.
+
+**Contextual reasoning.** Despite instructions preferring "state-of-the-art models," agents chose GPT-2 for interpretability research because they correctly reasoned that activation access requires open-weight models. This shows appropriate contextual judgment.
+
+**Resource finding and model training.** After our resource finder update, agents successfully download relevant papers, find datasets on HuggingFace, and even run finetuning experiments automatically.
+
+**Exploring one direction of an idea.** Agents can take a hypothesis and pursue it to a conclusion with reasonable experimental design.
+
+### Critical Limitations
+
+**The Meta-Intelligence Gap.** Agents don't know when to search vs. rely on its own knowledge, when their approach is ungrounded, or which of many possible directions matters most. They can execute but can't judge. This is the hardest problem.
+
+**Synthetic Data Problem.** Multiple agents generated synthetic data instead of collecting real data. In one case, Codex with real datasets found significant effects while Claude with synthetic data found nothing—same hypothesis, different data quality, opposite conclusions.
+
+**Prioritization Failure.** Most existing works make the agents explore a wide range of tasks. For example, Kosmos generated 108 literature review tasks for a single idea, it demonstrated capability without prioritization. Agents can't tell you which of those tasks actually matters.
+
+**Sample Size Issues.** Agents often use 20-30 examples when statistical power requires hundreds. They don't have intuition for adequate sample sizes.
+
+**Ungrounded Experimental Designs.** Some agent outputs look sophisticated but lack scientific grounding—e.g., "multi-agent systems" that are just independent answers aggregated, missing fundamental aspects of how the field actually studies these problems.
+
+**Stage-Specific Failures.** Different agents fail differently: Claude loses track of working directory, Codex gets stuck in rabbit holes during resource finding, Gemini doesn't follow full research instructions. These are trivial errors humans wouldn't make.
+
+### Key Insight: Idea-Explorer as Exploration Accelerator
+
+After testing multiple AI scientist systems (including [AI-Scientist](https://github.com/SakanaAI/AI-Scientist-v2), [AI-Researcher](https://github.com/HKUDS/AI-Researcher), and Kosmos), **we believe Idea-Explorer is the most useful for actually helping researchers explore ideas.** Here's why:
+
+- **Grounded in real experiments**: Agents run actual code on real datasets, producing concrete results you can inspect and build upon
+- **Good for** making ideas more concrete, thinking systematically, and providing a starting point for deeper investigation
+- **Honest about limitations**: Rather than generating polished-looking reports that may be untrustworthy, we focus on transparent exploration with clear artifacts
+
+Our long-term goal is for idea-explorer to produce work good enough to support publishable research, but we are not there yet. We believe the path forward isn't to optimize directly for paper-writing, but to first build reliable exploration tools that help researchers accelerate their work, identify potential issues early, and make informed decisions about what to pursue next.
+
+---
+
+## Roadmap
+
+Based on our learnings, we've identified five key challenges to address.
+
+### Challenge 1: Dynamic Resource Finding
+
+**Problem**: Agents need good resources to pursue research ideas, but they:
+- Don't have good priors about what sources are reliable vs. unreliable
+- Don't search diversely enough
+- Don't leverage existing academic tools and APIs
+
+**Current State**: Resource finder can download papers and datasets, but quality varies.
+
+**Directions**:
+- Expand tool use capabilities: integrate Semantic Scholar API, arXiv API, existing paper finders
+- Provide source quality heuristics (citation count, venue reputation)
+- Encourage diverse search strategies (different keywords, related work traversal)
+- Let agents use existing libraries (scholarly, paperqa)
+
+### Challenge 2: Research Meta-Knowledge
+
+**Problem**: Agents lack understanding of research standards:
+- When is synthetic data acceptable vs. when must you use real data?
+- What sample sizes are needed for statistical power?
+- What constitutes a well-grounded experimental design?
+- When should you seek external sources?
+
+**Current State**: Some methodology guidance in templates, but agents still make ungrounded choices.
+
+**Directions**:
+- Embed research methodology guidelines in domain templates
+- Add explicit decision points ("Do you have real data? If not, justify why synthetic is appropriate")
+- Create checklists for common pitfalls
+- Research: Can we detect when agents are "outside their expertise"?
+
+### Challenge 3: Context Management and Working Memory
+
+**Problem**: Agents struggle to maintain coherence during long-horizon tasks:
+- Losing track of working directory or task state (context drift)
+- Getting stuck in rabbit holes without recognizing they've drifted
+- Forgetting earlier instructions as context fills up
+- Incomplete outputs due to working memory limitations
+
+**Current State**: Solvable via careful instructions, but unclear how to generalize.
+
+**Directions**:
+- Better context curation strategies to prevent drift
+- Validation checks at stage boundaries to catch errors early
+- More structured output requirements (completion markers, required files)
+- Research: Can we categorize common failure modes and build targeted mitigations?
+
+### Challenge 4: Human Intervention & Feedback
+
+**Problem**: Agents may take wrong turns that waste compute; no mechanism for mid-run correction.
+
+**Current State**: Optional pause-after-resources checkpoint, but limited feedback integration.
+
+**Directions**:
+- More checkpoint opportunities during exploration
+- Allow human steering without restarting entire pipeline
+- Feedback integration: human corrections should inform future runs
+- Support for iterative refinement (human reviews output, agent revises)
+
+### Challenge 5: Long-horizon Experiment Execution
+
+**Problem**: Even with good resources, experiment quality varies:
+- Agents explore one direction but may not pick the best one
+- Limited ablation and significance testing
+- Don't know when results are inconclusive vs. definitive
+
+**Current State**: Agents can run experiments and report, but scientific rigor varies.
+
+**Directions**:
+- Encourage exploration of multiple directions, not just one
+- Better templates for ablation studies and statistical testing
+- Explicit uncertainty quantification in conclusions
+- Present trade-offs between directions for human selection
+
+---
+
+## Open Research Questions
+
+These are harder problems that we don't have clear solutions for:
+
+### 1. Measuring "Good Research Behavior"
+
+What metrics capture research quality beyond task completion? How do we evaluate if an agent "did due diligence"? Current work like [MechEvalAgents](https://github.com/ChicagoHAI/MechEvalAgents) is exploring this space.
+
+### 2. Metacognition and Self-Reflection
+
+Can agents learn when to search vs. rely on training? How do we teach "knowing what you don't know"? This is fundamentally about metacognition—the ability to monitor and regulate one's own cognitive processes. Current agents lack self-reflection capabilities to recognize when they're outside their expertise or when their approach not grounded. This likely can't be solved with prompting alone—it may require architectural changes or new training approaches.
+
+### 3. Generalizing Error Prevention
+
+Currently, specific instructions prevent specific errors. But this creates a bias-variance tradeoff: more specific instructions mean less flexibility. How do we achieve robust behavior across diverse ideas and domains?
+
+### 4. Supporting Human Selector/Evaluator Roles
+
+How should agent outputs be structured for human decision-making? How do we present multiple explored directions with trade-offs? Integration with [IdeaHub](https://hypogenic.ai/ideahub) for community selection is one avenue.
+
+### 5. Exploration Diversity vs. Reliability
+
+As we add more scaffolding to prevent errors, agents converge on similar exploration paths. This is the bias-variance tradeoff in agentic design: more specific instructions reduce errors but also reduce the diversity of approaches tried.
+
+This is particularly challenging because:
+- Different ideas need different diversity levels (concrete ideas may be fine with one path; open-ended ideas need multiple trials)
+- It's hard to evaluate what counts as "good diversity"
+- The tradeoff may be fundamental to current LLM architectures
+
+Possible directions: multi-agent ensembles with diverse personas, adaptive scaffolding based on idea openness, or mechanisms to encourage exploration of alternative hypotheses.
+
+---
+
+## How to Contribute
+
+We're looking for collaborators who resonate with the vision of AI as exploration accelerators for human researchers.
+
+**Areas of interest:**
+- Tool use and resource finding (integrating academic APIs, existing searching tools)
+- Evaluation systems (measuring research behavior quality)
+- Context management (memory strategies, preventing drift in long-horizon tasks)
+- Long-horizon reasoning (maintaining coherence across extended experiments)
+- Exploration diversity (balancing reliability with diverse approaches)
+- Domain templates (adding new domains, improving methodology guidance)
+- Human-AI interaction (feedback loops, checkpoints, iterative refinement)
+
+**Get started:**
+- Browse [open issues](https://github.com/ChicagoHAI/idea-explorer/issues)
+- Read the [weekly competition results](https://hypogenic.ai/blog) for context on current limitations
+- Try running the system on your own research ideas
+
+**Contact:**
+- Email: haokunliu@uchicago.edu
+- GitHub: [ChicagoHAI/idea-explorer](https://github.com/ChicagoHAI/idea-explorer)
+- IdeaHub: [hypogenic.ai/ideahub](https://hypogenic.ai/ideahub)
+
+---
+
+*Last updated: December 2025*
