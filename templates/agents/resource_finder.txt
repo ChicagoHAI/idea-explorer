@@ -45,6 +45,43 @@ For example:
 - Create literature_review.md → saves in workspace/literature_review.md
 
 ═══════════════════════════════════════════════════════════════════════════════
+                    IMPORTANT: CONTEXT WINDOW MANAGEMENT
+═══════════════════════════════════════════════════════════════════════════════
+
+Academic PDFs are LARGE (50-100KB per paper when converted to text). To avoid
+"Prompt is too long" errors, follow these guidelines:
+
+1. PROCESS PAPERS ONE AT A TIME:
+   - Read one paper
+   - Write notes to literature_review.md
+   - THEN move to the next paper
+   - Do NOT accumulate multiple papers' content before writing notes
+
+2. READ SELECTIVELY:
+   - Focus on abstract, introduction, methods, and results sections
+   - Skip appendices, references, and supplementary material
+   - For PDFs, prefer extracting specific pages rather than full document
+   - Example with pdfplumber:
+     ```python
+     import pdfplumber
+     with pdfplumber.open("papers/paper.pdf") as pdf:
+         # Read only first 5 pages (abstract through methods)
+         text = ""
+         for page in pdf.pages[:5]:
+             text += (page.extract_text() or "") + "\n"
+         print(text)
+     ```
+
+3. WRITE NOTES IMMEDIATELY:
+   - After reading each paper, write findings to literature_review.md
+   - Include enough detail that you (or experiment runner) rarely need to re-read
+   - Good notes: methodology, datasets, baselines, key results, code links
+
+4. USE APIs WHEN POSSIBLE:
+   - ArXiv API and Semantic Scholar provide abstracts without reading PDFs
+   - Abstracts are often sufficient for literature review purposes
+
+═══════════════════════════════════════════════════════════════════════════════
                      RESOURCE FINDER METHODOLOGY
 ═══════════════════════════════════════════════════════════════════════════════
 

@@ -92,7 +92,8 @@ class GitHubManager:
                            title: str,
                            description: Optional[str] = None,
                            private: bool = False,
-                           domain: Optional[str] = None) -> Dict[str, Any]:
+                           domain: Optional[str] = None,
+                           provider: Optional[str] = None) -> Dict[str, Any]:
         """
         Create a new repository in the organization for research.
 
@@ -102,6 +103,8 @@ class GitHubManager:
             description: Repository description
             private: Whether to make repo private (default: False/public)
             domain: Research domain (optional, helps with naming)
+            provider: AI provider (claude, gemini, codex) - if specified, uses
+                     provider suffix instead of hash for repo naming
 
         Returns:
             Dictionary with repo information:
@@ -111,7 +114,7 @@ class GitHubManager:
             - local_path: Local path where repo will be cloned
         """
         # Generate a concise repo name using LLM
-        repo_name = self._generate_repo_name(title, domain, idea_id)
+        repo_name = self._generate_repo_name(title, domain, idea_id, provider=provider)
 
         # Create description (must be single line, no newlines allowed by GitHub)
         if description is None:
@@ -374,7 +377,8 @@ class GitHubManager:
             print(f"   Continuing with local version...")
             return False
 
-    def _generate_repo_name(self, title: str, domain: Optional[str], idea_id: str) -> str:
+    def _generate_repo_name(self, title: str, domain: Optional[str], idea_id: str,
+                            provider: Optional[str] = None) -> str:
         """
         Generate a concise repository name using GPT-4o-mini.
 
@@ -382,13 +386,18 @@ class GitHubManager:
             title: Research title
             domain: Research domain (optional)
             idea_id: Fallback identifier
+            provider: AI provider (claude, gemini, codex) - if specified, uses
+                     provider suffix instead of hash for uniqueness
 
         Returns:
-            Repository name (short slug + 4-char hash)
+            Repository name:
+            - With provider: {slug}-{provider} (e.g., "llms-expose-science-claude")
+            - Without provider: {slug}-{4-char-hash} (e.g., "llms-expose-science-67cb")
         """
         import hashlib
 
         # Generate short hash from idea_id for uniqueness (first 4 chars)
+        # Only used if provider is not specified
         short_hash = hashlib.md5(idea_id.encode()).hexdigest()[:4]
 
         try:
@@ -451,10 +460,13 @@ Output ONLY the repository name, nothing else."""
                 else:
                     slug = slug[:25]
 
-            # Combine slug with short hash for uniqueness
-            repo_name = f"{slug}-{short_hash}"
-
-            print(f"   ✨ Generated repo name: {repo_name} (from: '{response.choices[0].message.content.strip()}')")
+            # Combine slug with suffix (provider or hash)
+            if provider:
+                repo_name = f"{slug}-{provider}"
+                print(f"   ✨ Generated repo name: {repo_name} (provider: {provider})")
+            else:
+                repo_name = f"{slug}-{short_hash}"
+                print(f"   ✨ Generated repo name: {repo_name} (from: '{response.choices[0].message.content.strip()}')")
             return repo_name
 
         except Exception as e:
