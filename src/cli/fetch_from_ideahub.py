@@ -378,11 +378,32 @@ def main():
     )
     parser.add_argument(
         "--github-org",
-        default="ChicagoHAI",
-        help="GitHub organization name (default: ChicagoHAI)"
+        default=os.getenv('GITHUB_ORG', 'ChicagoHAI'),
+        help="GitHub organization name (default: from GITHUB_ORG env var or ChicagoHAI)"
+    )
+    parser.add_argument(
+        "--provider",
+        choices=["claude", "gemini", "codex"],
+        default=None,
+        help="AI provider for repo naming ({slug}-{provider}) and --run execution"
+    )
+    parser.add_argument(
+        "--run",
+        action="store_true",
+        help="Immediately run research after submission (requires --submit)"
+    )
+    parser.add_argument(
+        "--full-permissions",
+        action="store_true",
+        help="Allow full permissions to CLI agents (claude: --dangerously-skip-permissions, others: --yolo)"
     )
 
     args = parser.parse_args()
+
+    # Validate --run requires --submit
+    if args.run and not args.submit:
+        print("❌ Error: --run requires --submit flag")
+        sys.exit(1)
 
     # Validate URL
     if not args.url.startswith('http'):
@@ -446,7 +467,8 @@ def main():
                     title=title,
                     description=description,
                     private=False,
-                    domain=domain
+                    domain=domain,
+                    provider=args.provider
                 )
 
                 github_repo_url = repo_info['repo_url']
@@ -496,21 +518,63 @@ def main():
                 print(f"\n⚠️  GITHUB_TOKEN not set")
                 print("   Set it in .env file or export GITHUB_TOKEN=your_token")
 
-        # Final instructions
-        print("\n" + "=" * 80)
-        print("NEXT STEPS")
-        print("=" * 80)
+        # Optionally run research immediately
+        if args.run:
+            print("\n" + "=" * 80)
+            print("RUNNING RESEARCH")
+            print("=" * 80)
 
-        if workspace_path:
-            print(f"\n1. (Optional) Add resources to workspace:")
-            print(f"   cd {workspace_path}")
-            print(f"   # Add datasets, documents, etc.")
-            print(f"\n2. Run the research:")
-            print(f"   python src/core/runner.py {idea_id}")
-            print(f"\n   Results will be pushed to: {github_repo_url}")
-        else:
-            print(f"\nRun the research:")
-            print(f"  python src/core/runner.py {idea_id}")
+            try:
+                from core.runner import ResearchRunner
+
+                runner = ResearchRunner(
+                    use_github=not args.no_github,
+                    github_org=args.github_org
+                )
+
+                provider = args.provider or "claude"
+                print(f"\n🤖 Starting research with provider: {provider}")
+
+                result = runner.run_research(
+                    idea_id=idea_id,
+                    provider=provider,
+                    timeout=3600,
+                    full_permissions=args.full_permissions,
+                    multi_agent=True
+                )
+
+                print("\n" + "=" * 80)
+                if result.get('success'):
+                    print("✅ RESEARCH COMPLETED SUCCESSFULLY")
+                else:
+                    print("⚠️  RESEARCH COMPLETED (with issues)")
+                print(f"   Location: {result['work_dir']}")
+                if result.get('github_url'):
+                    print(f"   GitHub: {result['github_url']}")
+                print("=" * 80)
+
+            except Exception as e:
+                print(f"\n❌ Research execution failed: {e}")
+                print(f"   You can retry with: python src/core/runner.py {idea_id}")
+
+        # Final instructions (only show if we didn't already run)
+        if not args.run:
+            print("\n" + "=" * 80)
+            print("NEXT STEPS")
+            print("=" * 80)
+
+            if workspace_path:
+                print(f"\n1. (Optional) Add resources to workspace:")
+                print(f"   cd {workspace_path}")
+                print(f"   # Add datasets, documents, etc.")
+                provider_str = f" --provider {args.provider}" if args.provider else ""
+                print(f"\n2. Run the research:")
+                print(f"   python src/core/runner.py {idea_id}{provider_str}")
+                print(f"\n   Results will be pushed to: {github_repo_url}")
+            else:
+                provider_str = f" --provider {args.provider}" if args.provider else ""
+                print(f"\nRun the research:")
+                print(f"  python src/core/runner.py {idea_id}{provider_str}")
     else:
         print(f"\nTo submit this idea:")
         print(f"  python src/cli/submit.py {output_path}")
