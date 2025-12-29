@@ -1,4 +1,7 @@
 # Idea Explorer .gitignore
+ideas/*
+!ideas/examples/
+!ideas/schema.yaml
 
 # Environment variables
 .env

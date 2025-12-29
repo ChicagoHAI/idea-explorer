@@ -22,6 +22,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.idea_manager import IdeaManager
+from core.config_loader import ConfigLoader
 from templates.prompt_generator import PromptGenerator
 from templates.research_agent_instructions import generate_instructions
 
@@ -63,8 +64,12 @@ class ResearchRunner:
             project_root = Path(__file__).parent.parent.parent
 
         self.project_root = Path(project_root)
-        self.runs_dir = self.project_root / "runs"
-        self.runs_dir.mkdir(exist_ok=True)
+
+        # Use workspace directory from config (config/workspace.yaml)
+        config_loader = ConfigLoader()
+        self.runs_dir = config_loader.get_workspace_parent_dir()
+        if config_loader.should_auto_create_workspace():
+            self.runs_dir.mkdir(parents=True, exist_ok=True)
 
         self.idea_manager = IdeaManager(self.project_root / "ideas")
         self.prompt_generator = PromptGenerator(self.project_root / "templates")
@@ -189,7 +194,8 @@ class ResearchRunner:
                         title=title,
                         description=idea_spec.get('hypothesis', ''),
                         private=False,  # Public by default
-                        domain=domain
+                        domain=domain,
+                        provider=provider
                     )
 
                     github_url = repo_info['repo_url']
@@ -569,13 +575,19 @@ def main():
     """CLI entry point for runner."""
     import argparse
 
-    # Load .env file if it exists
+    # Load environment variables from .env.local or .env
     try:
         from dotenv import load_dotenv
-        env_file = Path(__file__).parent.parent.parent / ".env"
-        if env_file.exists():
+        project_root = Path(__file__).parent.parent.parent
+        env_local = project_root / ".env.local"
+        env_file = project_root / ".env"
+
+        if env_local.exists():
+            load_dotenv(env_local)
+            print("✓ Loaded environment from .env.local")
+        elif env_file.exists():
             load_dotenv(env_file)
-            print("✓ Loaded environment from .env file")
+            print("✓ Loaded environment from .env")
     except ImportError:
         # python-dotenv not installed, that's okay
         pass
