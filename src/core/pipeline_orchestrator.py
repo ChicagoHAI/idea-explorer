@@ -329,6 +329,7 @@ class ResearchPipelineOrchestrator:
         import subprocess
         import shlex
         import os
+        from core.security import sanitize_text
 
         try:
             # Generate prompt (without Phase 0, resource-aware)
@@ -423,14 +424,15 @@ class ResearchPipelineOrchestrator:
                 process.stdin.write(session_instructions)
                 process.stdin.close()
 
-                # Stream output to both log file and transcript file
+                # Stream output to both log file and transcript file (sanitized for security)
                 # For Claude/Codex with JSON flags, the output IS the transcript
                 # For Gemini, the output is regular text but sessions are saved separately
                 for line in iter(process.stdout.readline, ''):
                     if line:
-                        print(line, end='')
-                        log_f.write(line)
-                        transcript_f.write(line)
+                        sanitized_line = sanitize_text(line)
+                        print(sanitized_line, end='')
+                        log_f.write(sanitized_line)
+                        transcript_f.write(sanitized_line)
 
                 # Wait for completion
                 return_code = process.wait(timeout=timeout)
