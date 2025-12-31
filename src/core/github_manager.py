@@ -15,6 +15,8 @@ import subprocess
 import shlex
 from datetime import datetime
 
+from core.security import sanitize_logs_directory
+
 try:
     from github import Github, GithubException, Auth
     PYGITHUB_AVAILABLE = True
@@ -244,6 +246,13 @@ class GitHubManager:
                 with repo.config_writer() as git_config:
                     git_config.set_value("user", "name", "Idea Explorer")
                     git_config.set_value("user", "email", "idea-explorer@chicagohai.org")
+
+            # Sanitize log files before adding (remove any leaked API keys)
+            logs_dir = Path(repo_path) / "logs"
+            if logs_dir.exists():
+                sanitized_count = sanitize_logs_directory(logs_dir)
+                if sanitized_count > 0:
+                    print(f"   ✓ Sanitized {sanitized_count} log file(s)")
 
             # Add all files
             repo.git.add(A=True)

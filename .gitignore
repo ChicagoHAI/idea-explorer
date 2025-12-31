@@ -54,10 +54,14 @@ runs/
 workspace/
 notebooks/
 
-# Temporary files
+# Temporary files and logs (may contain sensitive data)
 *.log
 *.tmp
 .cache/
+**/logs/*.jsonl
+**/logs/session_instructions.txt
+**/logs/research_prompt.txt
+**/logs/resource_finder_prompt.txt
 
 # OS
 Thumbs.db

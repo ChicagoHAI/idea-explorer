@@ -14,8 +14,14 @@ from typing import Optional, Dict, Any
 import subprocess
 import shlex
 import os
+import sys
 import time
 from datetime import datetime
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from core.security import sanitize_text
 
 
 # CLI commands for different providers
@@ -256,14 +262,15 @@ def run_resource_finder(
             process.stdin.write(prompt)
             process.stdin.close()
 
-            # Stream output to both log file and transcript file
+            # Stream output to both log file and transcript file (sanitized for security)
             # For Claude/Codex with JSON flags, the output IS the transcript
             # For Gemini, the output is regular text but sessions are saved separately
             for line in iter(process.stdout.readline, ''):
                 if line:
-                    print(line, end='')
-                    log_f.write(line)
-                    transcript_f.write(line)
+                    sanitized_line = sanitize_text(line)
+                    print(sanitized_line, end='')
+                    log_f.write(sanitized_line)
+                    transcript_f.write(sanitized_line)
 
             # Wait for completion
             return_code = process.wait(timeout=timeout)

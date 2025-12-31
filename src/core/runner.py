@@ -23,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.idea_manager import IdeaManager
 from core.config_loader import ConfigLoader
+from core.security import sanitize_text
 from templates.prompt_generator import PromptGenerator
 from templates.research_agent_instructions import generate_instructions
 
@@ -392,11 +393,12 @@ class ResearchRunner:
                 process.stdin.write(session_instructions)
                 process.stdin.close()
 
-                # Stream output
+                # Stream output (sanitized for security)
                 for line in iter(process.stdout.readline, ''):
                     if line:
-                        print(line, end='')
-                        log_f.write(line)
+                        sanitized_line = sanitize_text(line)
+                        print(sanitized_line, end='')
+                        log_f.write(sanitized_line)
 
                 # Wait for completion
                 return_code = process.wait(timeout=timeout)
