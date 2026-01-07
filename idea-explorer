@@ -1,0 +1,21 @@
+#!/bin/bash
+# =============================================================================
+# idea-explorer - Simple CLI for containerized idea-explorer
+#
+# This wrapper script makes using the containerized version as simple as
+# running the native Python scripts.
+#
+# Usage:
+#   ./idea-explorer fetch <url>              # Fetch from IdeaHub
+#   ./idea-explorer submit <idea.yaml>       # Submit an idea
+#   ./idea-explorer run <id> [options]       # Run research
+#   ./idea-explorer shell                    # Interactive shell
+#   ./idea-explorer build                    # Build container
+#   ./idea-explorer help                     # Show help
+#
+# =============================================================================
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Delegate to the internal run.sh script
+exec "$SCRIPT_DIR/docker/run.sh" "$@"

@@ -1,0 +1,85 @@
+version: "3.8"
+
+# =============================================================================
+# idea-explorer Docker Compose Configuration
+#
+# Usage:
+#   docker compose up -d          # Start in background
+#   docker compose exec idea-explorer bash  # Interactive shell
+#   docker compose down           # Stop container
+#
+# For Podman:
+#   podman-compose up -d
+#   podman-compose exec idea-explorer bash
+#   podman-compose down
+# =============================================================================
+
+services:
+  idea-explorer:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        CUDA_VERSION: "12.6.3"
+        UBUNTU_VERSION: "22.04"
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+
+    image: chicagohai/idea-explorer:latest
+    container_name: idea-explorer
+
+    # GPU support (NVIDIA Container Toolkit required)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    # Environment configuration
+    env_file:
+      - .env
+
+    environment:
+      - PYTHONUNBUFFERED=1
+      - IDEA_EXPLORER_WORKSPACE=/workspaces
+
+    # Volume mounts for persistent storage
+    volumes:
+      # Workspace directory for research outputs (read-write)
+      - ./workspaces:/workspaces:rw
+      # Ideas directory for submissions (read-write)
+      - ./ideas:/app/ideas:rw
+      # Logs directory (read-write)
+      - ./logs:/app/logs:rw
+      # Configuration files (read-only)
+      - ./config:/app/config:ro
+      # Optional: SSH keys for private GitHub repos
+      # - ~/.ssh:/home/researcher/.ssh:ro
+
+    # Interactive mode for research sessions
+    stdin_open: true
+    tty: true
+
+    # Working directory
+    working_dir: /workspaces
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    # Network
+    networks:
+      - research-net
+
+networks:
+  research-net:
+    driver: bridge
