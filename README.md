@@ -46,7 +46,7 @@ cp .env.example .env
 
 # 1. One-liner: Fetch, submit, and run immediately
 uv run python src/cli/fetch_from_ideahub.py https://hypogenic.ai/ideahub/idea/HGVv4Z0ALWVHZ9YsstWT \
-    --submit --run --provider claude --full-permissions
+    --submit --run --provider <YOUR_CLI> --full-permissions
 ```
 
 The `--full-permissions` flag enables autonomous execution without permission prompts.
@@ -69,7 +69,7 @@ git add . && git commit -m "Add research resources" && git push
 
 # 3. Run the research
 cd ../..
-python src/core/runner.py <idea_id> --full-permissions
+python src/core/runner.py <idea_id> --provider <YOUR_CLI> --full-permissions
 
 # 4. Results automatically pushed to GitHub
 ```
@@ -271,11 +271,11 @@ python src/core/runner.py <idea_id>
 ```bash
 # Default mode: Raw CLI (recommended)
 # Agents write Python scripts, simpler and more unified across providers
-python src/core/runner.py my_idea --full-permissions
+python src/core/runner.py my_idea --provider <YOUR_CLI> --full-permissions
 
 # Notebook mode: With scribe (optional)
 # Agents get Jupyter notebook access via MCP tools
-python src/core/runner.py my_idea --full-permissions --use-scribe
+python src/core/runner.py my_idea --provider <YOUR_CLI> --full-permissions --use-scribe
 ```
 
 ### Permission Modes
@@ -285,7 +285,7 @@ python src/core/runner.py my_idea --full-permissions --use-scribe
 python src/core/runner.py my_idea
 
 # Full autonomous mode (faster, no interruptions)
-python src/core/runner.py my_idea --full-permissions
+python src/core/runner.py my_idea --provider <YOUR_CLI> --full-permissions
 ```
 
 ### Evaluate Quality (Optional)
