@@ -146,10 +146,35 @@ class ConfigLoader:
         """
         Get workspace configuration.
 
+        Falls back to workspace.yaml.example template if workspace.yaml doesn't exist.
+        This allows users to customize their local config without pushing to git.
+
         Returns:
             Workspace config dictionary
         """
-        return self.load_config('workspace')
+        config_path = self.config_dir / "workspace.yaml"
+        template_path = self.config_dir / "workspace.yaml.example"
+
+        # Check cache first
+        if 'workspace' in self._cache:
+            return self._cache['workspace']
+
+        # Try loading user config first
+        if config_path.exists():
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+            self._cache['workspace'] = config
+            return config
+
+        # Fall back to template
+        if template_path.exists():
+            with open(template_path, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+            self._cache['workspace'] = config
+            return config
+
+        # Fallback defaults if neither file exists
+        return {'workspace': {'parent_dir': 'workspace', 'auto_create': True, 'permissions': 0o755}}
 
     def get_workspace_parent_dir(self) -> Path:
         """

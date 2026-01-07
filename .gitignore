@@ -6,6 +6,9 @@ ideas/*
 # Environment variables
 .env
 .env.local
+
+# Local config overrides (use .example templates)
+config/workspace.yaml
 mechinterp_playground/
 .claude
 
@@ -52,7 +55,9 @@ ENV/
 # Research outputs (keep in workspace and GitHub repos)
 runs/
 workspace/
+workspaces/
 notebooks/
+logs/
 
 # Temporary files and logs (may contain sensitive data)
 *.log
