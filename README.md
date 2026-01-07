@@ -53,7 +53,7 @@ cp .env.docker.example .env
 
 # 3. Run! Fetch from IdeaHub and execute
 ./idea-explorer fetch https://hypogenic.ai/ideahub/idea/HGVv4Z0ALWVHZ9YsstWT \
-    --submit --run --provider claude --full-permissions
+    --submit --run --provider <YOUR_CLI> --full-permissions
 ```
 
 The `--full-permissions` flag enables autonomous execution without permission prompts.
@@ -78,7 +78,7 @@ uv run python src/cli/fetch_from_ideahub.py https://hypogenic.ai/ideahub/idea/HG
 ```bash
 # Docker
 ./idea-explorer submit ideas/examples/ml_regularization_test.yaml
-./idea-explorer run <idea_id> --provider claude --full-permissions
+./idea-explorer run <idea_id> --provider <YOUR_CLI>  --full-permissions
 
 # Native
 uv run python src/cli/submit.py ideas/examples/ml_regularization_test.yaml
@@ -297,10 +297,10 @@ The `workspace.yaml` file is gitignored, so your local settings won't be pushed.
 
 ```bash
 # Docker (recommended)
-./idea-explorer run <idea_id> --provider claude --full-permissions
+./idea-explorer run <idea_id> --provider <YOUR_CLI> --full-permissions
 
 # Native
-uv run python src/core/runner.py <idea_id> --provider claude --full-permissions
+uv run python src/core/runner.py <idea_id> --provider <YOUR_CLI> --full-permissions
 ```
 
 **Available options:**
@@ -334,11 +334,11 @@ uv run python src/core/runner.py <id> [options]
 ```bash
 # Default mode: Raw CLI (recommended)
 # Agents write Python scripts, simpler and more unified across providers
-./idea-explorer run my_idea --provider claude --full-permissions
+./idea-explorer run my_idea --provider <YOUR_CLI> --full-permissions
 
 # Notebook mode: With scribe (optional, native only)
 # Agents get Jupyter notebook access via MCP tools
-uv run python src/core/runner.py my_idea --provider claude --full-permissions --use-scribe
+uv run python src/core/runner.py my_idea --provider <YOUR_CLI> --full-permissions --use-scribe
 ```
 
 ### Permission Modes
@@ -348,7 +348,7 @@ uv run python src/core/runner.py my_idea --provider claude --full-permissions --
 ./idea-explorer run my_idea
 
 # Full autonomous mode (faster, no interruptions)
-./idea-explorer run my_idea --provider claude --full-permissions
+./idea-explorer run my_idea --provider <YOUR_CLI> --full-permissions
 ```
 
 ### Evaluate Quality (Optional)
@@ -407,14 +407,16 @@ Apache 2.0 - See [LICENSE](LICENSE) file
 
 <div align="center">
 
-**Ready to automate your research?**
+**Ready to explore your research ideas?**
 
 ```bash
 # Docker (recommended)
 ./idea-explorer submit ideas/examples/ml_regularization_test.yaml
+./idea-explorer run <idea_id> --provider <YOUR_CLI> --full-permissions
 
 # Native
 uv run python src/cli/submit.py ideas/examples/ml_regularization_test.yaml
+uv run python src/core/runner.py <idea_id> --provider <YOUR_CLI> --full-permissions
 ```
 
 For questions and feedback, [open an issue](https://github.com/ChicagoHAI/idea-explorer/issues) or join our [Discord](https://discord.gg/BgkfTvBdbV).
