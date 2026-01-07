@@ -1,16 +1,17 @@
 # Workspace Configuration
-# This file defines workspace location and related settings
+# Copy this file to workspace.yaml to customize settings
+# (workspace.yaml is gitignored, so your local changes won't be pushed)
 
 # Workspace directory configuration
 workspace:
   # Parent directory for all research workspaces
   # Can be:
-  # - Absolute path: /data/hypogenicai/workspaces
+  # - Absolute path: /home/user/research-workspaces
   # - Relative to idea-explorer root: workspace
   # - Environment variable: ${IDEA_EXPLORER_WORKSPACE}
   #
-  # Default: /data/hypogenicai/workspaces (outside idea-explorer to avoid contamination)
-  parent_dir: "/data/hypogenicai/workspaces"
+  # Default: workspace (relative to project root, already gitignored)
+  parent_dir: "workspace"
 
   # Whether to create workspace parent directory if it doesn't exist
   auto_create: true

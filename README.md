@@ -36,20 +36,20 @@ Idea Explorer is an autonomous research framework that takes structured research
 <details>
 <summary><b>Quick Start</b></summary>
 
-### Option A: Fetch from IdeaHub
+### Option A: Fetch from IdeaHub (Recommended)
 
 ```bash
 # 0. Setup (one-time)
 uv sync  # Install dependencies with uv
 cp .env.example .env
-# Edit .env and add your GITHUB_TOKEN and OPENAI_API_KEY
+# Edit .env - see Configuration section below for details
 
-# 1. Fetch an idea from IdeaHub and auto-submit
-python src/cli/fetch_from_ideahub.py https://hypogenic.ai/ideahub/idea/HGVv4Z0ALWVHZ9YsstWT --submit
-
-# 2. Run the research
-python src/core/runner.py <idea_id>
+# 1. One-liner: Fetch, submit, and run immediately
+uv run python src/cli/fetch_from_ideahub.py https://hypogenic.ai/ideahub/idea/HGVv4Z0ALWVHZ9YsstWT \
+    --submit --run --provider claude --full-permissions
 ```
+
+The `--full-permissions` flag enables autonomous execution without permission prompts.
 
 ### Option B: Create Your Own Idea
 
@@ -57,7 +57,7 @@ python src/core/runner.py <idea_id>
 # 0. Setup (one-time)
 uv sync
 cp .env.example .env
-# Edit .env and add your GITHUB_TOKEN
+# Edit .env - see Configuration section below for details
 
 # 1. Submit a research idea (creates GitHub repo & workspace)
 python src/cli/submit.py ideas/examples/ml_regularization_test.yaml
@@ -69,7 +69,7 @@ git add . && git commit -m "Add research resources" && git push
 
 # 3. Run the research
 cd ../..
-python src/core/runner.py <idea_id>
+python src/core/runner.py <idea_id> --full-permissions
 
 # 4. Results automatically pushed to GitHub
 ```
@@ -211,8 +211,41 @@ uv sync
 
 # 5. Configure environment
 cp .env.example .env
-# Edit .env and add your GITHUB_TOKEN and AI provider API keys
+# Edit .env and add your API keys (see Configuration section below)
 ```
+
+</details>
+
+<details>
+<summary><b>Configuration</b></summary>
+
+### Environment Variables (.env)
+
+Copy `.env.example` to `.env` and configure:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GITHUB_TOKEN` | Yes | GitHub Personal Access Token. [Generate here](https://github.com/settings/tokens) with `repo` and `write:org` scopes |
+| `OPENAI_API_KEY` | Yes* | For IdeaHub integration. [Generate here](https://platform.openai.com/api-keys). *Not needed if not using IdeaHub |
+| `GITHUB_ORG` | No | Your GitHub organization (default: ChicagoHAI) |
+| `ANTHROPIC_API_KEY` | No | For Claude provider |
+| `GOOGLE_API_KEY` | No | For Gemini provider |
+
+### Workspace Configuration
+
+Research workspaces are created in the directory specified by `config/workspace.yaml`.
+
+**Default:** `workspace/` in the project root (already gitignored, works out of the box)
+
+**To customize:** Copy `config/workspace.yaml.example` to `config/workspace.yaml` and edit `parent_dir`:
+
+```yaml
+workspace:
+  parent_dir: "/path/to/your/workspaces"  # Your custom path
+  auto_create: true
+```
+
+The `workspace.yaml` file is gitignored, so your local settings won't be pushed.
 
 </details>
 
@@ -229,7 +262,7 @@ python src/core/runner.py <idea_id>
 #   --timeout SECONDS               (default: 3600)
 #   --full-permissions              (allow agents to run without prompts)
 #   --no-github                     (run locally without GitHub)
-#   --github-org ORG                (specify GitHub org, default: ChicagoHAI)
+#   --github-org ORG                (uses GITHUB_ORG env var, or ChicagoHAI)
 #   --use-scribe                    (enable Jupyter notebook integration)
 ```
 

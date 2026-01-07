@@ -620,8 +620,8 @@ def main():
     )
     parser.add_argument(
         "--github-org",
-        default="ChicagoHAI",
-        help="GitHub organization name (default: ChicagoHAI)"
+        default=os.getenv('GITHUB_ORG', 'ChicagoHAI'),
+        help="GitHub organization name (default: from GITHUB_ORG env var or ChicagoHAI)"
     )
     parser.add_argument(
         "--full-permissions",
