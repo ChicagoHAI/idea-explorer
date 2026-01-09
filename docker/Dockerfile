@@ -4,6 +4,7 @@
 
 ARG CUDA_VERSION=12.6.3
 ARG UBUNTU_VERSION=22.04
+ARG UV_VERSION=0.5.11
 
 # =============================================================================
 # Stage 1: Builder - Install all dependencies
@@ -54,10 +55,17 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && npm install -g npm@latest \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv package manager
-ENV UV_VERSION=0.5.11
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.local/bin:${PATH}"
+# Copy uv from official image (best practice)
+COPY --from=ghcr.io/astral-sh/uv:0.5.11 /uv /usr/local/bin/uv
+
+# uv environment settings
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+ENV UV_PYTHON_INSTALL_DIR=/python
+ENV UV_PYTHON_PREFERENCE=only-managed
+
+# Install Python via uv (same as local: uv python install 3.12)
+RUN uv python install 3.12
 
 # Install AI CLI tools globally via npm
 RUN npm install -g @anthropic-ai/claude-code \
@@ -66,15 +74,18 @@ RUN npm install -g @anthropic-ai/claude-code \
 
 # Create app directory and copy dependency files first (for better layer caching)
 WORKDIR /app
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml uv.lock README.md ./
+
+# Create minimal src directory structure for hatchling
+RUN mkdir -p src
 
 # Create virtual environment and install Python dependencies
-RUN uv venv /app/.venv \
-    && . /app/.venv/bin/activate \
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv venv /app/.venv \
     && uv sync --frozen --no-dev
 
 # =============================================================================
-# Stage 2: Runtime - Minimal production image
+# Stage 2: Runtime - Production image with uv available for agents
 # =============================================================================
 FROM nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION} AS runtime
 
@@ -99,23 +110,30 @@ COPY --from=builder /usr/lib/node_modules /usr/lib/node_modules
 RUN ln -sf /usr/lib/node_modules/npm/bin/npm-cli.js /usr/bin/npm \
     && ln -sf /usr/lib/node_modules/npm/bin/npx-cli.js /usr/bin/npx
 
-# Create symlinks for CLI tools
-RUN ln -sf /usr/lib/node_modules/@anthropic-ai/claude-code/cli.js /usr/bin/claude \
-    && ln -sf /usr/lib/node_modules/@openai/codex/bin/codex.js /usr/bin/codex \
-    && ln -sf /usr/lib/node_modules/@google/gemini-cli/bin/gemini.js /usr/bin/gemini \
-    && chmod +x /usr/bin/claude /usr/bin/codex /usr/bin/gemini
+# Copy CLI tool binaries (npm creates these during global install)
+COPY --from=builder /usr/bin/claude /usr/bin/claude
+COPY --from=builder /usr/bin/codex /usr/bin/codex
+COPY --from=builder /usr/bin/gemini /usr/bin/gemini
 
-# Copy uv from builder
-COPY --from=builder /root/.local/bin/uv /usr/local/bin/
+# Copy uv for agents to use (they need to manage their own environments)
+COPY --from=ghcr.io/astral-sh/uv:0.5.11 /uv /usr/local/bin/uv
+
+# Copy Python installation from builder (installed by uv)
+COPY --from=builder /python /python
 
 # Copy Python virtual environment from builder
 COPY --from=builder /app/.venv /app/.venv
 
-# Set up Python path
-ENV PATH="/app/.venv/bin:${PATH}"
+# Set up paths - IMPORTANT: this makes python and uv available
+ENV PATH="/app/.venv/bin:/python/bin:/usr/local/bin:${PATH}"
+ENV UV_PYTHON_INSTALL_DIR=/python
+ENV UV_PYTHON_PREFERENCE=only-managed
 ENV VIRTUAL_ENV="/app/.venv"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
+ENV UV_COMPILE_BYTECODE=1
+# Add /app to PYTHONPATH so 'templates' and 'src' modules can be imported
+ENV PYTHONPATH="/app:${PYTHONPATH}"
 
 # Create non-root user for security (with configurable UID/GID)
 ARG UID=1000
@@ -135,8 +153,9 @@ RUN mkdir -p /app/ideas/submitted /app/ideas/in_progress /app/ideas/completed \
     /app/logs /app/runs \
     && chown -R researcher:researcher /app
 
-# Make entrypoint executable
-RUN chmod +x /app/docker/entrypoint.sh
+# Fix permissions for running as any user (needed when using --user flag)
+# Make all directories and files readable/executable by everyone
+RUN chmod -R a+rX /app
 
 # Switch to non-root user
 USER researcher
@@ -146,8 +165,8 @@ RUN git config --global user.email "researcher@idea-explorer" \
     && git config --global user.name "Idea Explorer" \
     && git config --global init.defaultBranch main
 
-# Create CLI tool configuration directories
-RUN mkdir -p ~/.config/claude ~/.config/codex ~/.config/gemini ~/.cache
+# Create CLI tool configuration directories and uv cache
+RUN mkdir -p ~/.config/claude ~/.config/codex ~/.config/gemini ~/.cache/uv
 
 # Set environment variable for workspace location
 ENV IDEA_EXPLORER_WORKSPACE=/workspaces

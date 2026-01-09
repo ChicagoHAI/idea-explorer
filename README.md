@@ -218,7 +218,13 @@ cp .env.docker.example .env
 
 # 3. Build container
 ./idea-explorer build
+
+# 4. Login to CLI tools (one-time, if needed)
+./idea-explorer login
+# Inside the container, run: claude, codex, or gemini to authenticate
 ```
+
+**CLI Authentication:** If you're already logged into Claude/Codex/Gemini on your host machine, credentials are automatically mounted into containers. Only run `./idea-explorer login` if you haven't authenticated these CLI tools before.
 
 **Prerequisites for GPU support:**
 

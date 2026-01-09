@@ -6,6 +6,18 @@
 
 set -e
 
+# Ensure PATH includes Python venv, uv-managed Python, and uv (in case not inherited from Dockerfile ENV)
+export PATH="/app/.venv/bin:/python/bin:/usr/local/bin:${PATH}"
+
+# Ensure PYTHONPATH includes /app for module imports
+export PYTHONPATH="/app:${PYTHONPATH}"
+
+# Handle running as arbitrary user (e.g., with --user flag)
+# If HOME is not writable, use /tmp as home
+if [ ! -w "${HOME:-/}" ]; then
+    export HOME=/tmp
+fi
+
 # Color output for better visibility
 RED='\033[0;31m'
 GREEN='\033[0;32m'
