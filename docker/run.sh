@@ -90,10 +90,38 @@ get_cli_credential_mounts() {
 }
 
 # -----------------------------------------------------------------------------
+# Get workspace directory from config
+# Reads workspace.yaml (or falls back to workspace.yaml.example)
+# -----------------------------------------------------------------------------
+get_workspace_dir() {
+    local config_file="$PROJECT_ROOT/config/workspace.yaml"
+    local template_file="$PROJECT_ROOT/config/workspace.yaml.example"
+    local parent_dir=""
+
+    # Try user config first, then template
+    if [ -f "$config_file" ]; then
+        parent_dir=$(grep -E '^\s*parent_dir:' "$config_file" | sed 's/.*parent_dir:\s*["'\'']\?\([^"'\'']*\)["'\'']\?.*/\1/' | tr -d ' ')
+    elif [ -f "$template_file" ]; then
+        parent_dir=$(grep -E '^\s*parent_dir:' "$template_file" | sed 's/.*parent_dir:\s*["'\'']\?\([^"'\'']*\)["'\'']\?.*/\1/' | tr -d ' ')
+    fi
+
+    # Default to ./workspaces if not found or empty
+    if [ -z "$parent_dir" ]; then
+        parent_dir="$PROJECT_ROOT/workspaces"
+    # Handle relative paths (make them relative to project root)
+    elif [[ "$parent_dir" != /* ]]; then
+        parent_dir="$PROJECT_ROOT/$parent_dir"
+    fi
+
+    echo "$parent_dir"
+}
+
+# -----------------------------------------------------------------------------
 # Ensure directories exist
 # -----------------------------------------------------------------------------
 ensure_directories() {
-    mkdir -p "$PROJECT_ROOT/workspaces"
+    local workspace_dir=$(get_workspace_dir)
+    mkdir -p "$workspace_dir"
     mkdir -p "$PROJECT_ROOT/logs"
 }
 
@@ -132,14 +160,17 @@ cmd_shell() {
     local gpu_flags=$(get_gpu_flags)
     local user_flags=$(get_user_flags)
     local credential_mounts=$(get_cli_credential_mounts)
+    local workspace_dir=$(get_workspace_dir)
 
     echo -e "${BLUE}Starting interactive shell...${NC}"
+    echo -e "${BLUE}Workspace:${NC} $workspace_dir -> /workspaces"
 
     eval "docker run -it --rm \
         $gpu_flags \
         $user_flags \
         --env-file \"$PROJECT_ROOT/.env\" \
-        -v \"$PROJECT_ROOT/workspaces:/workspaces\" \
+        -e IDEA_EXPLORER_WORKSPACE=/workspaces \
+        -v \"$workspace_dir:/workspaces\" \
         -v \"$PROJECT_ROOT/ideas:/app/ideas\" \
         -v \"$PROJECT_ROOT/logs:/app/logs\" \
         -v \"$PROJECT_ROOT/config:/app/config:ro\" \
@@ -164,14 +195,17 @@ cmd_fetch() {
     local gpu_flags=$(get_gpu_flags)
     local user_flags=$(get_user_flags)
     local credential_mounts=$(get_cli_credential_mounts)
+    local workspace_dir=$(get_workspace_dir)
 
     echo -e "${BLUE}Fetching from IdeaHub...${NC}"
+    echo -e "${BLUE}Workspace:${NC} $workspace_dir -> /workspaces"
 
     eval "docker run -it --rm \
         $gpu_flags \
         $user_flags \
         --env-file \"$PROJECT_ROOT/.env\" \
-        -v \"$PROJECT_ROOT/workspaces:/workspaces\" \
+        -e IDEA_EXPLORER_WORKSPACE=/workspaces \
+        -v \"$workspace_dir:/workspaces\" \
         -v \"$PROJECT_ROOT/ideas:/app/ideas\" \
         -v \"$PROJECT_ROOT/logs:/app/logs\" \
         -v \"$PROJECT_ROOT/config:/app/config:ro\" \
@@ -212,13 +246,17 @@ cmd_submit() {
         local mount_flag=""
     fi
 
+    local workspace_dir=$(get_workspace_dir)
+
     echo -e "${BLUE}Submitting research idea...${NC}"
+    echo -e "${BLUE}Workspace:${NC} $workspace_dir -> /workspaces"
 
     eval "docker run -it --rm \
         $gpu_flags \
         $user_flags \
         --env-file \"$PROJECT_ROOT/.env\" \
-        -v \"$PROJECT_ROOT/workspaces:/workspaces\" \
+        -e IDEA_EXPLORER_WORKSPACE=/workspaces \
+        -v \"$workspace_dir:/workspaces\" \
         -v \"$PROJECT_ROOT/ideas:/app/ideas\" \
         -v \"$PROJECT_ROOT/logs:/app/logs\" \
         -v \"$PROJECT_ROOT/config:/app/config:ro\" \
@@ -244,14 +282,17 @@ cmd_run() {
     local gpu_flags=$(get_gpu_flags)
     local user_flags=$(get_user_flags)
     local credential_mounts=$(get_cli_credential_mounts)
+    local workspace_dir=$(get_workspace_dir)
 
     echo -e "${BLUE}Running research exploration...${NC}"
+    echo -e "${BLUE}Workspace:${NC} $workspace_dir -> /workspaces"
 
     eval "docker run -it --rm \
         $gpu_flags \
         $user_flags \
         --env-file \"$PROJECT_ROOT/.env\" \
-        -v \"$PROJECT_ROOT/workspaces:/workspaces\" \
+        -e IDEA_EXPLORER_WORKSPACE=/workspaces \
+        -v \"$workspace_dir:/workspaces\" \
         -v \"$PROJECT_ROOT/ideas:/app/ideas\" \
         -v \"$PROJECT_ROOT/logs:/app/logs\" \
         -v \"$PROJECT_ROOT/config:/app/config:ro\" \
