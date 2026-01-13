@@ -10,8 +10,8 @@ workspace:
   # - Relative to idea-explorer root: workspace
   # - Environment variable: ${IDEA_EXPLORER_WORKSPACE}
   #
-  # Default: workspace (relative to project root, already gitignored)
-  parent_dir: "workspace"
+  # Default: workspaces (relative to project root, already gitignored)
+  parent_dir: "workspaces"
 
   # Whether to create workspace parent directory if it doesn't exist
   auto_create: true

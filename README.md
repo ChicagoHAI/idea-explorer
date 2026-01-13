@@ -4,6 +4,7 @@
 
 [![GitHub Stars](https://img.shields.io/github/stars/ChicagoHAI/idea-explorer?style=flat-square)](https://github.com/ChicagoHAI/idea-explorer)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg?style=flat-square)](https://www.python.org/downloads/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](docker/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg?style=flat-square)](LICENSE)
 [![X Follow](https://img.shields.io/badge/X-Follow-black?style=flat-square&logo=x)](https://x.com/ChicagoHAI)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/n65caV7NhC)
@@ -36,7 +37,30 @@ Idea Explorer is an autonomous research framework that takes structured research
 <details>
 <summary><b>Quick Start</b></summary>
 
-### Option A: Fetch from IdeaHub (Recommended)
+### Option A: Docker (Recommended)
+
+Docker provides an isolated, reproducible environment with GPU support.
+
+```bash
+# 1. Clone and setup
+git clone https://github.com/ChicagoHAI/idea-explorer
+cd idea-explorer
+cp .env.docker.example .env
+# Edit .env with your API keys (ANTHROPIC_API_KEY, OPENAI_API_KEY, etc.)
+
+# 2. Build container (one-time)
+./idea-explorer build
+
+# 3. Run! Fetch from IdeaHub and execute
+./idea-explorer fetch https://hypogenic.ai/ideahub/idea/HGVv4Z0ALWVHZ9YsstWT \
+    --submit --run --provider <YOUR_CLI> --full-permissions
+```
+
+The `--full-permissions` flag enables autonomous execution without permission prompts.
+
+### Option B: Native Installation
+
+For users who prefer running directly on their system without containers.
 
 ```bash
 # 0. Setup (one-time)
@@ -49,29 +73,16 @@ uv run python src/cli/fetch_from_ideahub.py https://hypogenic.ai/ideahub/idea/HG
     --submit --run --provider <YOUR_CLI> --full-permissions
 ```
 
-The `--full-permissions` flag enables autonomous execution without permission prompts.
-
-### Option B: Create Your Own Idea
+### Create Your Own Idea
 
 ```bash
-# 0. Setup (one-time)
-uv sync
-cp .env.example .env
-# Edit .env - see Configuration section below for details
+# Docker
+./idea-explorer submit ideas/examples/ml_regularization_test.yaml
+./idea-explorer run <idea_id> --provider <YOUR_CLI>  --full-permissions
 
-# 1. Submit a research idea (creates GitHub repo & workspace)
-python src/cli/submit.py ideas/examples/ml_regularization_test.yaml
-
-# 2. (Optional) Add resources to workspace
-cd workspace/<repo-name>
-# Add datasets, documents, code, etc.
-git add . && git commit -m "Add research resources" && git push
-
-# 3. Run the research
-cd ../..
-python src/core/runner.py <idea_id> --provider <YOUR_CLI> --full-permissions
-
-# 4. Results automatically pushed to GitHub
+# Native
+uv run python src/cli/submit.py ideas/examples/ml_regularization_test.yaml
+uv run python src/core/runner.py <idea_id> --provider <YOUR_CLI> --full-permissions
 ```
 
 </details>
@@ -194,6 +205,38 @@ See `ideas/schema.yaml` for full specification.
 <details>
 <summary><b>Installation</b></summary>
 
+### Option A: Docker (Recommended)
+
+```bash
+# 1. Clone repository
+git clone https://github.com/ChicagoHAI/idea-explorer
+cd idea-explorer
+
+# 2. Configure environment
+cp .env.docker.example .env
+# Edit .env and add your API keys
+
+# 3. Build container
+./idea-explorer build
+
+# 4. Login to CLI tools (one-time, if needed)
+./idea-explorer login
+# Inside the container, run: claude, codex, or gemini to authenticate
+```
+
+**CLI Authentication:** If you're already logged into Claude/Codex/Gemini on your host machine, credentials are automatically mounted into containers. Only run `./idea-explorer login` if you haven't authenticated these CLI tools before.
+
+**Prerequisites for GPU support:**
+
+```bash
+# Install NVIDIA Container Toolkit
+sudo apt install nvidia-container-toolkit
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+```
+
+### Option B: Native Installation
+
 ```bash
 # 1. Install uv (if not already installed)
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -255,15 +298,37 @@ The `workspace.yaml` file is gitignored, so your local settings won't be pushed.
 ### Running Research
 
 ```bash
-python src/core/runner.py <idea_id>
+# Docker (recommended)
+./idea-explorer run <idea_id> --provider <YOUR_CLI> --full-permissions
 
-# Options:
-#   --provider claude|gemini|codex  (default: claude)
-#   --timeout SECONDS               (default: 3600)
-#   --full-permissions              (allow agents to run without prompts)
-#   --no-github                     (run locally without GitHub)
-#   --github-org ORG                (uses GITHUB_ORG env var, or ChicagoHAI)
-#   --use-scribe                    (enable Jupyter notebook integration)
+# Native
+uv run python src/core/runner.py <idea_id> --provider <YOUR_CLI> --full-permissions
+```
+
+**Available options:**
+| Option | Description |
+|--------|-------------|
+| `--provider claude\|gemini\|codex` | AI provider (default: claude) |
+| `--timeout SECONDS` | Execution timeout (default: 3600) |
+| `--full-permissions` | Allow agents to run without prompts |
+| `--no-github` | Run locally without GitHub integration |
+| `--github-org ORG` | GitHub organization (default: GITHUB_ORG env var) |
+| `--use-scribe` | Enable Jupyter notebook integration |
+
+### Common Commands
+
+```bash
+# Docker
+./idea-explorer fetch <url>              # Fetch from IdeaHub
+./idea-explorer fetch <url> --submit     # Fetch and submit
+./idea-explorer submit <idea.yaml>       # Submit an idea
+./idea-explorer run <id> [options]       # Run research
+./idea-explorer shell                    # Interactive shell
+
+# Native
+uv run python src/cli/fetch_from_ideahub.py <url>
+uv run python src/cli/submit.py <idea.yaml>
+uv run python src/core/runner.py <id> [options]
 ```
 
 ### Execution Modes
@@ -271,21 +336,21 @@ python src/core/runner.py <idea_id>
 ```bash
 # Default mode: Raw CLI (recommended)
 # Agents write Python scripts, simpler and more unified across providers
-python src/core/runner.py my_idea --provider <YOUR_CLI> --full-permissions
+./idea-explorer run my_idea --provider <YOUR_CLI> --full-permissions
 
-# Notebook mode: With scribe (optional)
+# Notebook mode: With scribe (optional, native only)
 # Agents get Jupyter notebook access via MCP tools
-python src/core/runner.py my_idea --provider <YOUR_CLI> --full-permissions --use-scribe
+uv run python src/core/runner.py my_idea --provider <YOUR_CLI> --full-permissions --use-scribe
 ```
 
 ### Permission Modes
 
 ```bash
 # With permission prompts (default, safer)
-python src/core/runner.py my_idea
+./idea-explorer run my_idea
 
 # Full autonomous mode (faster, no interruptions)
-python src/core/runner.py my_idea --provider <YOUR_CLI> --full-permissions
+./idea-explorer run my_idea --provider <YOUR_CLI> --full-permissions
 ```
 
 ### Evaluate Quality (Optional)
@@ -344,10 +409,16 @@ Apache 2.0 - See [LICENSE](LICENSE) file
 
 <div align="center">
 
-**Ready to automate your research?**
+**Ready to explore your research ideas?**
 
 ```bash
-python src/cli/submit.py ideas/examples/ml_regularization_test.yaml
+# Docker (recommended)
+./idea-explorer submit ideas/examples/ml_regularization_test.yaml
+./idea-explorer run <idea_id> --provider <YOUR_CLI> --full-permissions
+
+# Native
+uv run python src/cli/submit.py ideas/examples/ml_regularization_test.yaml
+uv run python src/core/runner.py <idea_id> --provider <YOUR_CLI> --full-permissions
 ```
 
 For questions and feedback, [open an issue](https://github.com/ChicagoHAI/idea-explorer/issues) or join our [Discord](https://discord.gg/BgkfTvBdbV).

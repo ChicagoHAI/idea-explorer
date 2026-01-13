@@ -1,0 +1,96 @@
+# =============================================================================
+# Docker Build Context Exclusions
+# Files and directories to exclude from the Docker build context
+# =============================================================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+.venv
+venv
+env
+*.egg-info
+.eggs
+dist
+build
+*.egg
+
+# IDE and editors
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings
+
+# Environment and secrets (IMPORTANT: never include in build)
+.env
+.env.*
+!.env.docker.example
+*.pem
+*.key
+credentials.json
+
+# Logs and temporary files
+*.log
+logs/
+*.tmp
+*.temp
+.cache
+
+# Generated research outputs
+runs/
+workspace/
+workspaces/
+*.ipynb_checkpoints
+.ipynb_checkpoints
+
+# Large files
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.rar
+*.7z
+
+# Models and data (too large for build context)
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+*.h5
+*.hdf5
+data/
+datasets/
+
+# Documentation (optional - include if needed)
+# docs/
+
+# Test artifacts
+.pytest_cache
+.coverage
+htmlcov
+.tox
+.nox
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Scribe directory (if present)
+scribe/

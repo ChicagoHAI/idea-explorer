@@ -89,8 +89,9 @@ class PipelineState:
 
 
 # CLI commands for different providers (same as resource_finder.py)
+# Note: For claude, we use '-p' (print mode) to enable streaming JSON output
 CLI_COMMANDS = {
-    'claude': 'claude',
+    'claude': 'claude -p',  # Print mode enables streaming JSON output with stdin
     'codex': 'codex exec',  # Non-interactive mode: read from stdin
     'gemini': 'gemini'
 }
@@ -375,10 +376,10 @@ class ResearchPipelineOrchestrator:
                 elif provider == "gemini":
                     cmd += " --yolo"
 
-            # Add transcript/verbose output flags for detailed logging
-            # Note: Claude's --output-format only works with -p mode, not stdin input
+            # Add streaming JSON output flags for detailed logging
+            # All providers now output streaming JSON for consistent transcript format
             if provider == "claude":
-                cmd += " --verbose"
+                cmd += " --verbose --output-format stream-json"  # Streaming JSON (requires -p and --verbose)
             elif provider == "codex":
                 cmd += " --json"
             elif provider == "gemini":

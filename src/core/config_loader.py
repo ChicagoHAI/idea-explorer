@@ -174,27 +174,37 @@ class ConfigLoader:
             return config
 
         # Fallback defaults if neither file exists
-        return {'workspace': {'parent_dir': 'workspace', 'auto_create': True, 'permissions': 0o755}}
+        return {'workspace': {'parent_dir': 'workspaces', 'auto_create': True, 'permissions': 0o755}}
 
     def get_workspace_parent_dir(self) -> Path:
         """
         Get the workspace parent directory path.
 
-        Supports:
+        Priority (highest to lowest):
+        1. IDEA_EXPLORER_WORKSPACE environment variable (for Docker override)
+        2. Config file value (workspace.yaml)
+        3. Default: 'workspaces' relative to project root
+
+        Config file supports:
         - Absolute paths: /data/hypogenicai/workspaces
-        - Relative paths: workspace (relative to project root)
-        - Environment variables: ${IDEA_EXPLORER_WORKSPACE}
+        - Relative paths: workspaces (relative to project root)
+        - Environment variable syntax: ${IDEA_EXPLORER_WORKSPACE}
 
         Returns:
             Resolved Path object for workspace parent directory
         """
-        config = self.get_workspace_config()
-        parent_dir = config.get('workspace', {}).get('parent_dir', 'workspace')
+        # Check for environment variable override first (used in Docker containers)
+        env_workspace = os.getenv('IDEA_EXPLORER_WORKSPACE')
+        if env_workspace:
+            return Path(env_workspace)
 
-        # Handle environment variable substitution
+        config = self.get_workspace_config()
+        parent_dir = config.get('workspace', {}).get('parent_dir', 'workspaces')
+
+        # Handle environment variable substitution in config value
         if parent_dir.startswith('${') and parent_dir.endswith('}'):
             env_var = parent_dir[2:-1]
-            parent_dir = os.getenv(env_var, 'workspace')
+            parent_dir = os.getenv(env_var, 'workspaces')
 
         parent_path = Path(parent_dir)
 

@@ -26,18 +26,18 @@ from core.security import sanitize_text
 
 # CLI commands for different providers
 # Note: For codex, we use 'exec' subcommand for non-interactive mode (stdin pipe)
+# Note: For claude, we use '-p' (print mode) to enable streaming JSON output
 CLI_COMMANDS = {
-    'claude': 'claude',
+    'claude': 'claude -p',  # Print mode enables streaming JSON output with stdin
     'codex': 'codex exec',  # Non-interactive mode: read from stdin
     'gemini': 'gemini'
 }
 
 # CLI flags for verbose/structured transcript output
 # These enable capturing detailed conversation transcripts for logging
-# Note: Claude's --output-format only works with -p (print mode), not stdin input
-#       So we use --verbose for Claude instead
+# All providers now output streaming JSON for consistent transcript format
 TRANSCRIPT_FLAGS = {
-    'claude': '--verbose',  # Verbose output with detailed logging
+    'claude': '--verbose --output-format stream-json',  # Streaming JSON (requires -p and --verbose)
     'codex': '--json',  # Outputs newline-delimited JSON events (works with codex exec)
     'gemini': '--output-format stream-json'  # Outputs JSONL stream
 }
