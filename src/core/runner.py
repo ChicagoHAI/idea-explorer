@@ -35,8 +35,9 @@ except ImportError:
 
 
 # CLI commands for different providers (same as resource_finder.py)
+# Note: For claude, we use '-p' (print mode) to enable streaming JSON output
 CLI_COMMANDS = {
-    'claude': 'claude',
+    'claude': 'claude -p',  # Print mode enables streaming JSON output with stdin
     'codex': 'codex exec',  # Non-interactive mode: read from stdin
     'gemini': 'gemini'
 }
@@ -367,6 +368,14 @@ class ResearchRunner:
                     cmd += " --dangerously-skip-permissions"
                 elif provider == "gemini":
                     cmd += " --yolo"
+
+            # Add streaming JSON output flags for detailed logging
+            if provider == "claude":
+                cmd += " --verbose --output-format stream-json"  # Streaming JSON (requires -p and --verbose)
+            elif provider == "codex":
+                cmd += " --json"
+            elif provider == "gemini":
+                cmd += " --output-format stream-json"
 
             print(f"   Command: {cmd}")
             print(f"   Log file: {log_file}")
