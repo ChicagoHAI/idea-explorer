@@ -4,14 +4,9 @@ version: "3.8"
 # idea-explorer Docker Compose Configuration
 #
 # Usage:
-#   docker compose up -d          # Start in background
-#   docker compose exec idea-explorer bash  # Interactive shell
-#   docker compose down           # Stop container
-#
-# For Podman:
-#   podman-compose up -d
-#   podman-compose exec idea-explorer bash
-#   podman-compose down
+#   docker compose up -d                     # Start in background
+#   docker compose exec idea-explorer bash   # Interactive shell
+#   docker compose down                      # Stop container
 # =============================================================================
 
 services:

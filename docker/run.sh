@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
-# idea-explorer Docker/Podman Runner
-# Unified script that auto-detects container runtime and handles GPU passthrough
+# idea-explorer Docker Runner
+# Handles GPU passthrough and credential mounting for containerized execution
 # =============================================================================
 
 set -e
@@ -19,35 +19,14 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 # -----------------------------------------------------------------------------
-# Detect container runtime (Docker or Podman)
+# Check Docker is available
 # -----------------------------------------------------------------------------
-detect_runtime() {
-    if command -v podman &> /dev/null; then
-        RUNTIME="podman"
-        # Check if podman-compose or podman compose is available
-        if command -v podman-compose &> /dev/null; then
-            COMPOSE_CMD="podman-compose"
-        elif podman compose version &> /dev/null 2>&1; then
-            COMPOSE_CMD="podman compose"
-        else
-            COMPOSE_CMD=""
-        fi
-    elif command -v docker &> /dev/null; then
-        RUNTIME="docker"
-        if docker compose version &> /dev/null 2>&1; then
-            COMPOSE_CMD="docker compose"
-        elif command -v docker-compose &> /dev/null; then
-            COMPOSE_CMD="docker-compose"
-        else
-            COMPOSE_CMD=""
-        fi
-    else
-        echo -e "${RED}Error: Neither docker nor podman found${NC}"
-        echo "Please install Docker or Podman to use idea-explorer containers."
+check_docker() {
+    if ! command -v docker &> /dev/null; then
+        echo -e "${RED}Error: Docker not found${NC}"
+        echo "Please install Docker to use idea-explorer containers."
         exit 1
     fi
-
-    echo -e "${BLUE}Using container runtime:${NC} $RUNTIME"
 }
 
 # -----------------------------------------------------------------------------
@@ -58,59 +37,15 @@ get_user_flags() {
 }
 
 # -----------------------------------------------------------------------------
-# Check if GPU support is available
-# -----------------------------------------------------------------------------
-check_gpu_available() {
-    if [ "$RUNTIME" = "podman" ]; then
-        # Podman: Check if CDI spec exists
-        [ -f /etc/cdi/nvidia.yaml ] || [ -f /var/run/cdi/nvidia.yaml ]
-    else
-        # Docker: Check if nvidia runtime is configured
-        docker info 2>/dev/null | grep -qi nvidia
-    fi
-}
-
-# -----------------------------------------------------------------------------
-# Get GPU flags based on runtime (auto-detects availability)
+# Get GPU flags (auto-detects availability)
 # -----------------------------------------------------------------------------
 get_gpu_flags() {
-    if [ "$RUNTIME" = "podman" ]; then
-        # Podman uses CDI (Container Device Interface) for GPU access
-        if [ -f /etc/cdi/nvidia.yaml ] || [ -f /var/run/cdi/nvidia.yaml ]; then
-            echo "--device nvidia.com/gpu=all --security-opt label=disable"
-        else
-            echo -e "${YELLOW}Note: Running without GPU (NVIDIA CDI spec not found)${NC}" >&2
-            echo -e "      To enable GPU: sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml" >&2
-            echo "--security-opt label=disable"
-        fi
+    if docker info 2>/dev/null | grep -qi nvidia; then
+        echo "--gpus all"
     else
-        # Docker uses --gpus flag
-        if check_gpu_available; then
-            echo "--gpus all"
-        else
-            echo -e "${YELLOW}Note: Running without GPU (nvidia-container-toolkit not configured)${NC}" >&2
-            echo -e "      To enable GPU: sudo apt install nvidia-container-toolkit && sudo nvidia-ctk runtime configure --runtime=docker && sudo systemctl restart docker" >&2
-            echo ""
-        fi
-    fi
-}
-
-# -----------------------------------------------------------------------------
-# Get volume flags based on runtime
-# -----------------------------------------------------------------------------
-get_volume_flags() {
-    if [ "$RUNTIME" = "podman" ]; then
-        # Podman: Use :Z for SELinux relabeling
-        echo "-v \"$PROJECT_ROOT/workspaces:/workspaces:Z\" \
-              -v \"$PROJECT_ROOT/ideas:/app/ideas:Z\" \
-              -v \"$PROJECT_ROOT/logs:/app/logs:Z\" \
-              -v \"$PROJECT_ROOT/config:/app/config:ro,Z\""
-    else
-        # Docker: Standard volume mounts
-        echo "-v \"$PROJECT_ROOT/workspaces:/workspaces\" \
-              -v \"$PROJECT_ROOT/ideas:/app/ideas\" \
-              -v \"$PROJECT_ROOT/logs:/app/logs\" \
-              -v \"$PROJECT_ROOT/config:/app/config:ro\""
+        echo -e "${YELLOW}Note: Running without GPU (nvidia-container-toolkit not configured)${NC}" >&2
+        echo -e "      To enable GPU: sudo apt install nvidia-container-toolkit && sudo nvidia-ctk runtime configure --runtime=docker && sudo systemctl restart docker" >&2
+        echo ""
     fi
 }
 
@@ -126,22 +61,21 @@ get_cli_credential_mounts() {
 
     # Claude Code credentials (~/.claude/)
     if [ -d "$HOME/.claude" ]; then
-        mounts="$mounts -v \"$HOME/.claude:/tmp/.claude${RUNTIME_VOL_SUFFIX}\""
+        mounts="$mounts -v \"$HOME/.claude:/tmp/.claude\""
         echo -e "  ${GREEN}[OK]${NC} Mounting Claude credentials" >&2
         found_any=true
     fi
 
     # Codex credentials (~/.codex/)
     if [ -d "$HOME/.codex" ]; then
-        mounts="$mounts -v \"$HOME/.codex:/tmp/.codex${RUNTIME_VOL_SUFFIX}\""
+        mounts="$mounts -v \"$HOME/.codex:/tmp/.codex\""
         echo -e "  ${GREEN}[OK]${NC} Mounting Codex credentials" >&2
         found_any=true
     fi
 
-    # Gemini CLI credentials (~/.config/gemini/)
-    if [ -d "$HOME/.config/gemini" ]; then
-        # Also need to create the parent .config directory structure
-        mounts="$mounts -v \"$HOME/.config/gemini:/tmp/.config/gemini${RUNTIME_VOL_SUFFIX}\""
+    # Gemini CLI credentials (~/.gemini/)
+    if [ -d "$HOME/.gemini" ]; then
+        mounts="$mounts -v \"$HOME/.gemini:/tmp/.gemini\""
         echo -e "  ${GREEN}[OK]${NC} Mounting Gemini credentials" >&2
         found_any=true
     fi
@@ -184,7 +118,7 @@ check_env_file() {
 cmd_build() {
     echo -e "${BLUE}Building idea-explorer container image...${NC}"
     cd "$PROJECT_ROOT"
-    $RUNTIME build -t "$IMAGE_NAME" -f docker/Dockerfile .
+    docker build -t "$IMAGE_NAME" -f docker/Dockerfile .
     echo -e "${GREEN}Build complete!${NC}"
 }
 
@@ -201,15 +135,14 @@ cmd_shell() {
 
     echo -e "${BLUE}Starting interactive shell...${NC}"
 
-    eval "$RUNTIME run -it --rm \
+    eval "docker run -it --rm \
         $gpu_flags \
         $user_flags \
         --env-file \"$PROJECT_ROOT/.env\" \
-        -v \"$PROJECT_ROOT/workspaces:/workspaces${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$PROJECT_ROOT/workspaces:/data/hypogenicai/workspaces${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$PROJECT_ROOT/ideas:/app/ideas${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$PROJECT_ROOT/logs:/app/logs${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$PROJECT_ROOT/config:/app/config:ro${RUNTIME_VOL_SUFFIX}\" \
+        -v \"$PROJECT_ROOT/workspaces:/workspaces\" \
+        -v \"$PROJECT_ROOT/ideas:/app/ideas\" \
+        -v \"$PROJECT_ROOT/logs:/app/logs\" \
+        -v \"$PROJECT_ROOT/config:/app/config:ro\" \
         $credential_mounts \
         -w /workspaces \
         \"$IMAGE_NAME\" \
@@ -234,15 +167,14 @@ cmd_fetch() {
 
     echo -e "${BLUE}Fetching from IdeaHub...${NC}"
 
-    eval "$RUNTIME run -it --rm \
+    eval "docker run -it --rm \
         $gpu_flags \
         $user_flags \
         --env-file \"$PROJECT_ROOT/.env\" \
-        -v \"$PROJECT_ROOT/workspaces:/workspaces${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$PROJECT_ROOT/workspaces:/data/hypogenicai/workspaces${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$PROJECT_ROOT/ideas:/app/ideas${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$PROJECT_ROOT/logs:/app/logs${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$PROJECT_ROOT/config:/app/config:ro${RUNTIME_VOL_SUFFIX}\" \
+        -v \"$PROJECT_ROOT/workspaces:/workspaces\" \
+        -v \"$PROJECT_ROOT/ideas:/app/ideas\" \
+        -v \"$PROJECT_ROOT/logs:/app/logs\" \
+        -v \"$PROJECT_ROOT/config:/app/config:ro\" \
         $credential_mounts \
         -w /app \
         \"$IMAGE_NAME\" \
@@ -272,7 +204,7 @@ cmd_submit() {
         # Absolute path - mount the parent directory
         local idea_dir=$(dirname "$idea_file")
         local idea_name=$(basename "$idea_file")
-        local mount_flag="-v \"$idea_dir:/input:ro${RUNTIME_VOL_SUFFIX}\""
+        local mount_flag="-v \"$idea_dir:/input:ro\""
         local idea_path="/input/$idea_name"
     else
         # Relative path - assume it's in ideas/ directory
@@ -282,15 +214,14 @@ cmd_submit() {
 
     echo -e "${BLUE}Submitting research idea...${NC}"
 
-    eval "$RUNTIME run -it --rm \
+    eval "docker run -it --rm \
         $gpu_flags \
         $user_flags \
         --env-file \"$PROJECT_ROOT/.env\" \
-        -v \"$PROJECT_ROOT/workspaces:/workspaces${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$PROJECT_ROOT/workspaces:/data/hypogenicai/workspaces${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$PROJECT_ROOT/ideas:/app/ideas${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$PROJECT_ROOT/logs:/app/logs${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$PROJECT_ROOT/config:/app/config:ro${RUNTIME_VOL_SUFFIX}\" \
+        -v \"$PROJECT_ROOT/workspaces:/workspaces\" \
+        -v \"$PROJECT_ROOT/ideas:/app/ideas\" \
+        -v \"$PROJECT_ROOT/logs:/app/logs\" \
+        -v \"$PROJECT_ROOT/config:/app/config:ro\" \
         $credential_mounts \
         $mount_flag \
         -w /app \
@@ -316,15 +247,14 @@ cmd_run() {
 
     echo -e "${BLUE}Running research exploration...${NC}"
 
-    eval "$RUNTIME run -it --rm \
+    eval "docker run -it --rm \
         $gpu_flags \
         $user_flags \
         --env-file \"$PROJECT_ROOT/.env\" \
-        -v \"$PROJECT_ROOT/workspaces:/workspaces${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$PROJECT_ROOT/workspaces:/data/hypogenicai/workspaces${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$PROJECT_ROOT/ideas:/app/ideas${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$PROJECT_ROOT/logs:/app/logs${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$PROJECT_ROOT/config:/app/config:ro${RUNTIME_VOL_SUFFIX}\" \
+        -v \"$PROJECT_ROOT/workspaces:/workspaces\" \
+        -v \"$PROJECT_ROOT/ideas:/app/ideas\" \
+        -v \"$PROJECT_ROOT/logs:/app/logs\" \
+        -v \"$PROJECT_ROOT/config:/app/config:ro\" \
         $credential_mounts \
         -w /app \
         \"$IMAGE_NAME\" \
@@ -335,37 +265,21 @@ cmd_run() {
 # Docker Compose operations
 # -----------------------------------------------------------------------------
 cmd_up() {
-    if [ -z "$COMPOSE_CMD" ]; then
-        echo -e "${RED}Error: No compose command available${NC}"
-        echo "Install docker-compose or podman-compose"
-        exit 1
-    fi
-
     check_env_file
     cd "$PROJECT_ROOT"
-    $COMPOSE_CMD up -d
+    docker compose up -d
     echo -e "${GREEN}Container started in background${NC}"
 }
 
 cmd_down() {
-    if [ -z "$COMPOSE_CMD" ]; then
-        echo -e "${RED}Error: No compose command available${NC}"
-        exit 1
-    fi
-
     cd "$PROJECT_ROOT"
-    $COMPOSE_CMD down
+    docker compose down
     echo -e "${GREEN}Container stopped${NC}"
 }
 
 cmd_logs() {
-    if [ -z "$COMPOSE_CMD" ]; then
-        echo -e "${RED}Error: No compose command available${NC}"
-        exit 1
-    fi
-
     cd "$PROJECT_ROOT"
-    $COMPOSE_CMD logs -f
+    docker compose logs -f
 }
 
 # -----------------------------------------------------------------------------
@@ -388,18 +302,17 @@ cmd_login() {
 
     # For login, we need write access to credential directories
     # Create them on host if they don't exist
-    mkdir -p "$HOME/.claude" "$HOME/.codex" "$HOME/.config/gemini"
+    mkdir -p "$HOME/.claude" "$HOME/.codex" "$HOME/.gemini"
 
     local gpu_flags=$(get_gpu_flags)
 
     # Note: No --user flag for login - we run as the container user to write credentials
-    # But we mount with :rw so credentials persist to host
-    eval "$RUNTIME run -it --rm \
+    eval "docker run -it --rm \
         $gpu_flags \
         --env-file \"$PROJECT_ROOT/.env\" \
-        -v \"$HOME/.claude:/tmp/.claude${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$HOME/.codex:/tmp/.codex${RUNTIME_VOL_SUFFIX}\" \
-        -v \"$HOME/.config/gemini:/tmp/.config/gemini${RUNTIME_VOL_SUFFIX}\" \
+        -v \"$HOME/.claude:/tmp/.claude\" \
+        -v \"$HOME/.codex:/tmp/.codex\" \
+        -v \"$HOME/.gemini:/tmp/.gemini\" \
         -w /tmp \
         \"$IMAGE_NAME\" \
         bash"
@@ -410,7 +323,7 @@ cmd_login() {
 # -----------------------------------------------------------------------------
 cmd_help() {
     echo ""
-    echo -e "${BLUE}idea-explorer Container Runner${NC}"
+    echo -e "${BLUE}idea-explorer Docker Runner${NC}"
     echo ""
     echo "Usage: $0 <command> [arguments]"
     echo ""
@@ -441,15 +354,8 @@ cmd_help() {
 # Main
 # -----------------------------------------------------------------------------
 
-# Detect runtime first
-detect_runtime
-
-# Set volume suffix for SELinux (Podman only)
-if [ "$RUNTIME" = "podman" ]; then
-    RUNTIME_VOL_SUFFIX=":Z"
-else
-    RUNTIME_VOL_SUFFIX=""
-fi
+# Check Docker is available
+check_docker
 
 # Parse command
 ACTION="${1:-help}"

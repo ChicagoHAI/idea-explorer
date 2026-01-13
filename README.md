@@ -37,9 +37,9 @@ Idea Explorer is an autonomous research framework that takes structured research
 <details>
 <summary><b>Quick Start</b></summary>
 
-### Option A: Docker/Podman (Recommended)
+### Option A: Docker (Recommended)
 
-Docker provides an isolated, reproducible environment with GPU support. Works with both Docker and Podman.
+Docker provides an isolated, reproducible environment with GPU support.
 
 ```bash
 # 1. Clone and setup
@@ -205,7 +205,7 @@ See `ideas/schema.yaml` for full specification.
 <details>
 <summary><b>Installation</b></summary>
 
-### Option A: Docker/Podman (Recommended)
+### Option A: Docker (Recommended)
 
 ```bash
 # 1. Clone repository
@@ -229,14 +229,10 @@ cp .env.docker.example .env
 **Prerequisites for GPU support:**
 
 ```bash
-# Docker: Install NVIDIA Container Toolkit
+# Install NVIDIA Container Toolkit
 sudo apt install nvidia-container-toolkit
 sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
-
-# Podman: Generate CDI specification
-sudo apt install nvidia-container-toolkit
-sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
 ```
 
 ### Option B: Native Installation

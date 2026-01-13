@@ -114,7 +114,7 @@ check_gpu() {
                 done
         else
             echo -e "  ${YELLOW}[WARN]${NC} nvidia-smi failed - GPU may not be accessible"
-            echo "         Ensure --gpus all (Docker) or --device nvidia.com/gpu=all (Podman) is used"
+            echo "         Ensure --gpus all flag is used when running the container"
         fi
     else
         echo -e "  ${YELLOW}[WARN]${NC} nvidia-smi not available"
