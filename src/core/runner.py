@@ -105,7 +105,10 @@ class ResearchRunner:
                     pause_after_resources: bool = False,
                     skip_resource_finder: bool = False,
                     resource_finder_timeout: int = 2700,
-                    use_scribe: bool = False) -> Dict[str, Any]:
+                    use_scribe: bool = False,
+                    write_paper: bool = False,
+                    paper_style: str = "neurips",
+                    paper_timeout: int = 3600) -> Dict[str, Any]:
         """
         Execute research for a given idea.
 
@@ -122,6 +125,9 @@ class ResearchRunner:
             skip_resource_finder: Skip resource finder stage (default: False)
             resource_finder_timeout: Timeout for resource finder in seconds (default: 45 min)
             use_scribe: Use scribe for notebook integration (default: False, raw CLI)
+            write_paper: Generate paper draft after experiments (default: False)
+            paper_style: Paper template style (neurips, icml, acl)
+            paper_timeout: Timeout for paper writing in seconds
 
         Returns:
             Dictionary with:
@@ -258,6 +264,9 @@ class ResearchRunner:
         if use_scribe:
             (work_dir / "notebooks").mkdir(parents=True, exist_ok=True)
 
+        # Copy helper scripts to workspace
+        self._copy_workspace_resources(work_dir)
+
         # Choose execution mode: multi-agent pipeline or legacy monolithic
         if multi_agent:
             print()
@@ -287,6 +296,29 @@ class ResearchRunner:
                 )
 
                 success = pipeline_result.get('success', False)
+
+                # Paper writing stage (optional)
+                if write_paper and success:
+                    print()
+                    print("=" * 80)
+                    print("📝 STAGE 3: Paper Writing")
+                    print("=" * 80)
+                    print()
+
+                    from agents.paper_writer import run_paper_writer
+
+                    paper_result = run_paper_writer(
+                        work_dir=work_dir,
+                        provider=provider,
+                        style=paper_style,
+                        timeout=paper_timeout,
+                        full_permissions=full_permissions
+                    )
+
+                    if paper_result.get('success'):
+                        print(f"\n✅ Paper generated: {paper_result['paper_dir']}/main.tex")
+                    else:
+                        print(f"\n⚠️  Paper generation failed (research still succeeded)")
 
             except Exception as e:
                 print(f"\n❌ Pipeline error: {e}")
@@ -486,6 +518,39 @@ https://github.com/ChicagoHAI/idea-explorer
             'success': success
         }
 
+    def _copy_workspace_resources(self, work_dir: Path):
+        """
+        Copy helper scripts and resources to workspace.
+
+        Args:
+            work_dir: Working directory for research
+        """
+        import shutil
+
+        # Copy helper scripts
+        scripts_src = self.project_root / "templates" / "scripts"
+        scripts_dst = work_dir / "scripts"
+
+        if scripts_src.exists():
+            scripts_dst.mkdir(exist_ok=True)
+            for script in scripts_src.glob("*.py"):
+                shutil.copy(script, scripts_dst)
+            print(f"   Copied helper scripts to scripts/")
+
+        # Copy Claude Code skills to .claude/skills/
+        skills_src = self.project_root / "templates" / "skills"
+        skills_dst = work_dir / ".claude" / "skills"
+
+        if skills_src.exists():
+            skills_dst.mkdir(parents=True, exist_ok=True)
+            for skill_dir in skills_src.iterdir():
+                if skill_dir.is_dir():
+                    dst_skill_dir = skills_dst / skill_dir.name
+                    if dst_skill_dir.exists():
+                        shutil.rmtree(dst_skill_dir)
+                    shutil.copytree(skill_dir, dst_skill_dir)
+            print(f"   Copied Claude Code skills to .claude/skills/")
+
     def _organize_outputs(self, run_dir: Path):
         """
         Organize research outputs into appropriate directories.
@@ -663,6 +728,23 @@ def main():
         action="store_true",
         help="Use scribe for Jupyter notebook integration (default: raw CLI without notebooks)"
     )
+    parser.add_argument(
+        "--write-paper",
+        action="store_true",
+        help="Generate paper draft after experiments complete"
+    )
+    parser.add_argument(
+        "--paper-style",
+        default="neurips",
+        choices=["neurips", "icml", "acl"],
+        help="Paper style template (default: neurips)"
+    )
+    parser.add_argument(
+        "--paper-timeout",
+        type=int,
+        default=3600,
+        help="Timeout for paper writing in seconds (default: 3600 = 60 min)"
+    )
 
     args = parser.parse_args()
 
@@ -681,7 +763,10 @@ def main():
             pause_after_resources=args.pause_after_resources,
             skip_resource_finder=args.skip_resource_finder,
             resource_finder_timeout=args.resource_finder_timeout,
-            use_scribe=args.use_scribe
+            use_scribe=args.use_scribe,
+            write_paper=args.write_paper,
+            paper_style=args.paper_style,
+            paper_timeout=args.paper_timeout
         )
 
         print()

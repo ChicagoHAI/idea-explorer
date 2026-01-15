@@ -290,7 +290,9 @@ Location: {run_dir}
             lines.append("## BACKGROUND\n")
 
             if 'description' in background and background['description']:
-                lines.append(f"{background['description']}\n")
+                lines.append("### User-Provided Instructions and Context:\n")
+                lines.append(f">>> {background['description']} <<<\n")
+                lines.append("(Note: Follow any specific instructions above with high priority)\n")
 
             if 'papers' in background and background['papers']:
                 lines.append("### Relevant Papers:\n")

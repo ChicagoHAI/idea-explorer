@@ -5,6 +5,45 @@ This module generates the session instructions for the AI research agent.
 The instructions emphasize initial research, resource gathering, and systematic execution.
 """
 
+import re
+
+
+def extract_user_instructions(prompt: str) -> str:
+    """
+    Extract user-provided instructions from the prompt.
+
+    Looks for content in the "User-Provided Instructions and Context" section
+    or any content marked with >>> <<< delimiters.
+
+    Args:
+        prompt: The research task prompt
+
+    Returns:
+        Extracted user instructions, or empty string if none found
+    """
+    # Look for explicitly marked user instructions section
+    pattern = r'###\s*User-Provided Instructions and Context:\s*\n>>>\s*(.*?)\s*<<<'
+    match = re.search(pattern, prompt, re.DOTALL | re.IGNORECASE)
+    if match:
+        instructions = match.group(1).strip()
+        # Only return if there's substantial content (not just whitespace)
+        if instructions and len(instructions) > 20:
+            return instructions
+
+    # Also check for description content that looks like instructions
+    # (contains action words like "run", "test", "implement", "use", etc.)
+    desc_pattern = r'description:\s*["\']?(.*?)["\']?\s*(?:\n|$)'
+    desc_match = re.search(desc_pattern, prompt, re.DOTALL | re.IGNORECASE)
+    if desc_match:
+        desc = desc_match.group(1).strip()
+        # Check if description contains actionable instructions
+        action_words = ['run', 'test', 'implement', 'use', 'focus', 'try', 'ensure', 'make sure', 'should', 'must']
+        if any(word in desc.lower() for word in action_words) and len(desc) > 50:
+            return desc
+
+    return ""
+
+
 def generate_instructions(prompt: str, work_dir: str, use_scribe: bool = False) -> str:
     """
     Generate comprehensive session instructions for the research agent.
@@ -17,6 +56,30 @@ def generate_instructions(prompt: str, work_dir: str, use_scribe: bool = False) 
     Returns:
         Complete session instructions string
     """
+    # Extract user instructions if present
+    user_instructions = extract_user_instructions(prompt)
+
+    # Build priority section only if user instructions exist
+    priority_section = ""
+    if user_instructions:
+        priority_section = f'''
+════════════════════════════════════════════════════════════════════════════════
+⚠️  HIGHEST PRIORITY: USER-PROVIDED INSTRUCTIONS
+════════════════════════════════════════════════════════════════════════════════
+
+The idea submitter has provided SPECIFIC INSTRUCTIONS that MUST take precedence
+over the general research workflow. Read carefully and follow these:
+
+{user_instructions}
+
+────────────────────────────────────────────────────────────────────────────────
+IMPORTANT: The above instructions from the user have HIGHER PRIORITY than the
+general workflow steps below. If there is any conflict between user instructions
+and the general workflow, ALWAYS follow the user's instructions.
+────────────────────────────────────────────────────────────────────────────────
+
+'''
+
     # Code workflow instructions depend on whether we're using notebooks or scripts
     if use_scribe:
         session_start = "Start a new session for research execution."
@@ -28,7 +91,7 @@ def generate_instructions(prompt: str, work_dir: str, use_scribe: bool = False) 
         code_reminder = "- Write Python scripts (.py) in src/ for experiments (NOT Jupyter notebooks)"
 
     return f"""{session_start}
-
+{priority_section}
 CRITICAL: Environment Setup
 ────────────────────────────────────────────────────────────────────────────────
 You MUST create a fresh isolated environment for this project. DO NOT use the
@@ -92,6 +155,40 @@ WHY: Using an isolated environment ensures:
 - Fast package installation with uv (10-100x faster than pip)
 - Automatic dependency tracking with pyproject.toml
 - Clean, reproducible research setup
+
+════════════════════════════════════════════════════════════════════════════════
+
+GPU DETECTION AND UTILIZATION
+────────────────────────────────────────────────────────────────────────────────
+
+At the START of your session, check for GPU availability:
+
+1. Run GPU detection:
+   nvidia-smi --query-gpu=name,memory.total,memory.free --format=csv 2>/dev/null || echo "NO_GPU"
+
+2. If GPUs are available:
+   - Use GPU-accelerated libraries (PyTorch with CUDA, TensorFlow-GPU)
+   - Set appropriate batch sizes based on GPU memory:
+     * 8GB: batch_size=16-32
+     * 16GB: batch_size=32-64
+     * 24GB+: batch_size=64-128
+   - Enable mixed precision training for faster execution:
+     # PyTorch
+     from torch.cuda.amp import autocast, GradScaler
+     scaler = GradScaler()
+
+     # TensorFlow
+     tf.keras.mixed_precision.set_global_policy('mixed_float16')
+
+3. If NO GPU available:
+   - Use CPU-optimized settings
+   - Reduce model sizes if needed (e.g., use smaller transformer models)
+   - Consider using smaller datasets for feasibility
+
+4. Document GPU usage in REPORT.md:
+   - GPU model and memory
+   - Batch sizes used
+   - Training time comparisons
 
 ════════════════════════════════════════════════════════════════════════════════
 
@@ -193,10 +290,14 @@ BEFORE YOU START: Review Pre-Gathered Resources (5-10 min)
 
   → WHEN COMPLETE: Immediately proceed to Phase 1 (Planning)
 
-Phase 1: Detailed Planning (15-30 min)
+Phase 1: Motivation & Planning (20-40 min)
+  ✓ FIRST: Write "Motivation & Novelty Assessment" section in planning.md
+    - Why this research matters (problem and impact)
+    - What gap it fills (based on literature review)
+    - Why each experiment is necessary
   ✓ Review pre-gathered resources (literature_review.md, resources.md)
   ✓ Create experimental plan leveraging available datasets and code
-  ✓ Design experiments with specific steps
+  ✓ Design experiments with specific steps (justify each experiment)
   ✓ Choose baselines and metrics based on literature review
   ✓ Plan timeline and resource allocation
   ✓ Document plan in planning.md (2-3 pages maximum)
