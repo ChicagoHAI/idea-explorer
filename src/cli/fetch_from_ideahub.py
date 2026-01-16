@@ -385,7 +385,12 @@ def main():
         "--provider",
         choices=["claude", "gemini", "codex"],
         default=None,
-        help="AI provider for repo naming ({slug}-{provider}) and --run execution"
+        help="AI provider for repo naming and --run execution"
+    )
+    parser.add_argument(
+        "--no-hash",
+        action="store_true",
+        help="Skip random hash in repo name (use {slug}-{provider} instead of {slug}-{hash}-{provider}). Use when only one person runs the idea."
     )
     parser.add_argument(
         "--run",
@@ -397,12 +402,34 @@ def main():
         action="store_true",
         help="Allow full permissions to CLI agents (claude: --dangerously-skip-permissions, others: --yolo)"
     )
+    parser.add_argument(
+        "--write-paper",
+        action="store_true",
+        help="Generate paper draft after experiments complete (requires --run)"
+    )
+    parser.add_argument(
+        "--paper-style",
+        default="neurips",
+        choices=["neurips", "icml", "acl"],
+        help="Paper style template (default: neurips)"
+    )
+    parser.add_argument(
+        "--paper-timeout",
+        type=int,
+        default=3600,
+        help="Timeout for paper writing in seconds (default: 3600)"
+    )
 
     args = parser.parse_args()
 
     # Validate --run requires --submit
     if args.run and not args.submit:
         print("❌ Error: --run requires --submit flag")
+        sys.exit(1)
+
+    # Validate --write-paper requires --run
+    if args.write_paper and not args.run:
+        print("❌ Error: --write-paper requires --run flag")
         sys.exit(1)
 
     # Validate URL
@@ -468,7 +495,8 @@ def main():
                     description=description,
                     private=False,
                     domain=domain,
-                    provider=args.provider
+                    provider=args.provider,
+                    no_hash=args.no_hash
                 )
 
                 github_repo_url = repo_info['repo_url']
@@ -540,7 +568,10 @@ def main():
                     provider=provider,
                     timeout=3600,
                     full_permissions=args.full_permissions,
-                    multi_agent=True
+                    multi_agent=True,
+                    write_paper=args.write_paper,
+                    paper_style=args.paper_style,
+                    paper_timeout=args.paper_timeout
                 )
 
                 print("\n" + "=" * 80)

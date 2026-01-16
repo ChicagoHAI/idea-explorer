@@ -59,6 +59,17 @@ def main():
         default=os.getenv('GITHUB_ORG', 'ChicagoHAI'),
         help="GitHub organization name (default: from GITHUB_ORG env var or ChicagoHAI)"
     )
+    parser.add_argument(
+        "--provider",
+        choices=["claude", "gemini", "codex"],
+        default=None,
+        help="AI provider for repo naming (e.g., {slug}-{hash}-claude)"
+    )
+    parser.add_argument(
+        "--no-hash",
+        action="store_true",
+        help="Skip random hash in repo name (use {slug}-{provider} instead of {slug}-{hash}-{provider})"
+    )
 
     args = parser.parse_args()
 
@@ -130,7 +141,9 @@ def main():
                         title=title,
                         description=description,
                         private=False,
-                        domain=domain
+                        domain=domain,
+                        provider=args.provider,
+                        no_hash=args.no_hash
                     )
 
                     github_repo_url = repo_info['repo_url']

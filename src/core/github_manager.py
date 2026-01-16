@@ -95,7 +95,8 @@ class GitHubManager:
                            description: Optional[str] = None,
                            private: bool = False,
                            domain: Optional[str] = None,
-                           provider: Optional[str] = None) -> Dict[str, Any]:
+                           provider: Optional[str] = None,
+                           no_hash: bool = False) -> Dict[str, Any]:
         """
         Create a new repository in the organization for research.
 
@@ -105,8 +106,8 @@ class GitHubManager:
             description: Repository description
             private: Whether to make repo private (default: False/public)
             domain: Research domain (optional, helps with naming)
-            provider: AI provider (claude, gemini, codex) - if specified, uses
-                     provider suffix instead of hash for repo naming
+            provider: AI provider (claude, gemini, codex)
+            no_hash: If True, skip random hash in repo name (use when only one person runs the idea)
 
         Returns:
             Dictionary with repo information:
@@ -116,7 +117,7 @@ class GitHubManager:
             - local_path: Local path where repo will be cloned
         """
         # Generate a concise repo name using LLM
-        repo_name = self._generate_repo_name(title, domain, idea_id, provider=provider)
+        repo_name = self._generate_repo_name(title, domain, idea_id, provider=provider, no_hash=no_hash)
 
         # Create description (must be single line, no newlines allowed by GitHub)
         if description is None:
@@ -387,7 +388,8 @@ class GitHubManager:
             return False
 
     def _generate_repo_name(self, title: str, domain: Optional[str], idea_id: str,
-                            provider: Optional[str] = None) -> str:
+                            provider: Optional[str] = None,
+                            no_hash: bool = False) -> str:
         """
         Generate a concise repository name using GPT-4o-mini.
 
@@ -395,19 +397,19 @@ class GitHubManager:
             title: Research title
             domain: Research domain (optional)
             idea_id: Fallback identifier
-            provider: AI provider (claude, gemini, codex) - if specified, uses
-                     provider suffix instead of hash for uniqueness
+            provider: AI provider (claude, gemini, codex)
+            no_hash: If True, skip random hash suffix (use when only one person runs the idea)
 
         Returns:
             Repository name:
-            - With provider: {slug}-{provider} (e.g., "llms-expose-science-claude")
-            - Without provider: {slug}-{4-char-hash} (e.g., "llms-expose-science-67cb")
+            - Default: {slug}-{random}-{provider} (e.g., "llms-expose-science-a3f2-claude")
+            - With no_hash: {slug}-{provider} (e.g., "llms-expose-science-claude")
+            - Without provider: {slug}-{random} (e.g., "llms-expose-science-a3f2")
         """
-        import hashlib
+        import secrets
 
-        # Generate short hash from idea_id for uniqueness (first 4 chars)
-        # Only used if provider is not specified
-        short_hash = hashlib.md5(idea_id.encode()).hexdigest()[:4]
+        # Generate random 4-char hex for uniqueness across different runs
+        random_suffix = secrets.token_hex(2)  # 4 hex chars
 
         try:
             import openai
@@ -469,12 +471,16 @@ Output ONLY the repository name, nothing else."""
                 else:
                     slug = slug[:25]
 
-            # Combine slug with suffix (provider or hash)
+            # Combine slug with suffix (random hash and/or provider)
             if provider:
-                repo_name = f"{slug}-{provider}"
-                print(f"   ✨ Generated repo name: {repo_name} (provider: {provider})")
+                if no_hash:
+                    repo_name = f"{slug}-{provider}"
+                    print(f"   ✨ Generated repo name: {repo_name} (provider: {provider}, no hash)")
+                else:
+                    repo_name = f"{slug}-{random_suffix}-{provider}"
+                    print(f"   ✨ Generated repo name: {repo_name} (provider: {provider})")
             else:
-                repo_name = f"{slug}-{short_hash}"
+                repo_name = f"{slug}-{random_suffix}"
                 print(f"   ✨ Generated repo name: {repo_name} (from: '{response.choices[0].message.content.strip()}')")
             return repo_name
 
