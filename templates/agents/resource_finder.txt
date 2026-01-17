@@ -51,8 +51,37 @@ For example:
 Academic PDFs are LARGE (50-100KB per paper when converted to text). To avoid
 "Prompt is too long" errors, follow these guidelines:
 
+0. PAPER LENGTH PRE-CHECK (MANDATORY):
+   Before reading ANY PDF, ALWAYS check its size first:
+
+   a) Check file size:
+      ls -lh papers/paper.pdf  # If >500KB, use chunked reading
+
+   b) For large papers (>500KB or >10 pages), use this Python chunked approach:
+      ```python
+      import pdfplumber
+      with pdfplumber.open("papers/paper.pdf") as pdf:
+          total_pages = len(pdf.pages)
+          print(f"Paper has {total_pages} pages")
+
+          # Read in chunks of 3 pages max
+          for i in range(0, min(total_pages, 9), 3):
+              chunk_text = ""
+              for page in pdf.pages[i:i+3]:
+                  chunk_text += (page.extract_text() or "") + "\n"
+              # Process chunk, write notes immediately
+              print(f"--- Pages {i+1}-{min(i+3, total_pages)} ---")
+              print(chunk_text[:2000])  # Preview chunk
+              # Write notes for this chunk before reading more
+              # Then clear chunk_text before next iteration
+      ```
+
+   c) NEVER read more than 3 pages at once
+   d) Write notes to literature_review.md after EACH chunk
+   e) Focus on: Abstract (p1), Introduction (p1-2), Methods (p3-5), Results (p5-7)
+
 1. PROCESS PAPERS ONE AT A TIME:
-   - Read one paper
+   - Read one paper (using chunked reading for large papers)
    - Write notes to literature_review.md
    - THEN move to the next paper
    - Do NOT accumulate multiple papers' content before writing notes
@@ -61,7 +90,7 @@ Academic PDFs are LARGE (50-100KB per paper when converted to text). To avoid
    - Focus on abstract, introduction, methods, and results sections
    - Skip appendices, references, and supplementary material
    - For PDFs, prefer extracting specific pages rather than full document
-   - Example with pdfplumber:
+   - Example with pdfplumber (for small papers only):
      ```python
      import pdfplumber
      with pdfplumber.open("papers/paper.pdf") as pdf:
@@ -103,6 +132,41 @@ OUTPUT DELIVERABLES (all saved in current workspace):
 ═══════════════════════════════════════════════════════════════════════════════
                         PHASE 1: LITERATURE SEARCH
 ═══════════════════════════════════════════════════════════════════════════════
+
+PAPER FINDER (Primary Method - Use First)
+─────────────────────────────────────────────────────────────────────────────
+
+For quality literature review and proper academic citations, ALWAYS try the
+paper-finder service first. It provides relevance-ranked results that manual
+search cannot match.
+
+    python scripts/find_papers.py "your research topic"
+
+Example:
+    python scripts/find_papers.py "hypothesis generation with large language models"
+
+Options:
+    --mode fast      Quick search (~30 seconds, default)
+    --mode diligent  Thorough search (~3 minutes, recommended for comprehensive review)
+
+The script returns relevance-ranked papers with:
+- Title, authors, year, citations
+- Abstract (already extracted - saves time reading PDFs)
+- URL for download
+- Relevance score (0-3, focus on papers with score >= 2)
+
+WHY PAPER-FINDER MATTERS:
+- Academic papers require comprehensive literature review
+- Relevance ranking ensures you find the most important papers
+- Abstracts are pre-extracted, reducing context window usage
+- Better citations lead to better papers
+
+IF PAPER-FINDER IS UNAVAILABLE:
+If the script reports "service not running", you must still conduct thorough
+literature review using manual search. This is more time-consuming but necessary.
+Proceed to the manual search steps below.
+
+─────────────────────────────────────────────────────────────────────────────
 
 STEP 1: Identify Research Area and Keywords
 ─────────────────────────────────────────────────────────────────────────────
