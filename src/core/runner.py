@@ -108,7 +108,8 @@ class ResearchRunner:
                     use_scribe: bool = False,
                     write_paper: bool = False,
                     paper_style: str = "neurips",
-                    paper_timeout: int = 3600) -> Dict[str, Any]:
+                    paper_timeout: int = 3600,
+                    no_hash: bool = False) -> Dict[str, Any]:
         """
         Execute research for a given idea.
 
@@ -203,7 +204,8 @@ class ResearchRunner:
                         description=idea_spec.get('hypothesis', ''),
                         private=False,  # Public by default
                         domain=domain,
-                        provider=provider
+                        provider=provider,
+                        no_hash=no_hash
                     )
 
                     github_url = repo_info['repo_url']
@@ -316,7 +318,7 @@ class ResearchRunner:
                     )
 
                     if paper_result.get('success'):
-                        print(f"\n✅ Paper generated: {paper_result['paper_dir']}/main.tex")
+                        print(f"\n✅ Paper generated: {paper_result['draft_dir']}/main.tex")
                     else:
                         print(f"\n⚠️  Paper generation failed (research still succeeded)")
 
@@ -682,6 +684,11 @@ def main():
         help="AI provider to use (default: claude)"
     )
     parser.add_argument(
+        "--no-hash",
+        action="store_true",
+        help="Skip random hash in repo name if creating a new repo (use {slug}-{provider} instead of {slug}-{hash}-{provider})"
+    )
+    parser.add_argument(
         "--timeout",
         type=int,
         default=3600,
@@ -766,7 +773,8 @@ def main():
             use_scribe=args.use_scribe,
             write_paper=args.write_paper,
             paper_style=args.paper_style,
-            paper_timeout=args.paper_timeout
+            paper_timeout=args.paper_timeout,
+            no_hash=args.no_hash
         )
 
         print()
