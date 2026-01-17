@@ -2,7 +2,8 @@
 Paper Writer Agent
 
 Generates academic paper drafts from experiment results.
-Uses NeurIPS style by default.
+The agent handles LaTeX file creation and compilation.
+Style files are copied from templates/paper_styles/ to the workspace.
 """
 
 from pathlib import Path
@@ -25,6 +26,9 @@ def generate_paper_writer_prompt(
     """
     Generate prompt for paper writing agent.
 
+    This is a convenience wrapper that uses PromptGenerator internally.
+    The actual prompt template is stored in templates/agents/paper_writer.txt.
+
     Args:
         work_dir: Workspace directory with experiment results
         style: Paper style (neurips, icml, acl)
@@ -32,104 +36,43 @@ def generate_paper_writer_prompt(
     Returns:
         Complete prompt string for paper writing
     """
-    # Load experiment results
-    report_path = work_dir / "REPORT.md"
-    planning_path = work_dir / "planning.md"
-    lit_review_path = work_dir / "literature_review.md"
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from templates.prompt_generator import PromptGenerator
 
-    report_content = report_path.read_text() if report_path.exists() else "No REPORT.md found"
-    planning_content = planning_path.read_text() if planning_path.exists() else "No planning.md found"
-    lit_review_content = lit_review_path.read_text() if lit_review_path.exists() else "No literature_review.md found"
+    generator = PromptGenerator()
+    return generator.generate_paper_writer_prompt(work_dir, style)
 
-    return f'''You are an academic paper writer. Generate a complete {style.upper()} style paper
-based on the experiment results provided.
 
-════════════════════════════════════════════════════════════════════════════════
-                            EXPERIMENT REPORT
-════════════════════════════════════════════════════════════════════════════════
+def _copy_style_files(draft_dir: Path, style: str):
+    """
+    Copy LaTeX style files to paper draft directory.
 
-{report_content}
+    The agent runs in a separate workspace without access to idea-explorer's
+    templates, so we copy the style files (e.g., neurips_2025.sty) there.
 
-════════════════════════════════════════════════════════════════════════════════
-                            RESEARCH PLAN
-════════════════════════════════════════════════════════════════════════════════
+    Args:
+        draft_dir: Directory where paper will be written
+        style: Paper style (neurips, icml, acl)
+    """
+    import shutil
 
-{planning_content}
+    # Style files location - look for Styles subfolder with official files
+    styles_dir = Path(__file__).parent.parent.parent / "templates" / "paper_styles"
+    style_dir = styles_dir / style / "Styles"
 
-════════════════════════════════════════════════════════════════════════════════
-                          LITERATURE REVIEW
-════════════════════════════════════════════════════════════════════════════════
+    # Fallback to direct style directory if Styles subfolder doesn't exist
+    if not style_dir.exists():
+        style_dir = styles_dir / style
 
-{lit_review_content}
-
-════════════════════════════════════════════════════════════════════════════════
-                          PAPER REQUIREMENTS
-════════════════════════════════════════════════════════════════════════════════
-
-Generate a complete academic paper with the following structure:
-
-1. TITLE
-   - Clear, specific, informative
-   - Should convey main finding or contribution
-
-2. ABSTRACT (150-250 words)
-   - Problem statement
-   - Approach
-   - Key results
-   - Significance
-
-3. INTRODUCTION
-   - Research problem and motivation
-   - Gap in existing work
-   - Our contribution (be specific)
-   - Paper organization
-
-4. RELATED WORK
-   - Organized by theme/approach
-   - Position our work relative to prior work
-   - Cite papers from literature review
-
-5. METHODOLOGY
-   - Clear description of approach
-   - Experimental setup
-   - Datasets used
-   - Evaluation metrics
-   - Baselines
-
-6. RESULTS
-   - Present results with tables and figures
-   - Statistical analysis
-   - Comparison to baselines
-   - Ablation studies (if applicable)
-
-7. DISCUSSION
-   - Interpretation of results
-   - Limitations
-   - Broader implications
-
-8. CONCLUSION
-   - Summary of contributions
-   - Key findings
-   - Future work
-
-9. REFERENCES
-   - BibTeX format
-   - All cited papers
-
-OUTPUT FORMAT:
-- Write in LaTeX format
-- Use NeurIPS style (\\documentclass[final]{{neurips_2025}})
-- Include all necessary packages
-- Save as paper/main.tex
-- Save references as paper/references.bib
-
-QUALITY REQUIREMENTS:
-- Academic tone throughout
-- Claims supported by data
-- Proper citations
-- Clear figures and tables
-- No placeholder text
-'''
+    if style_dir.exists():
+        for f in style_dir.glob("*"):
+            if f.is_file():
+                shutil.copy(f, draft_dir)
+        print(f"   Copied {style} style files to {draft_dir}")
+    else:
+        print(f"   Warning: Style directory {style_dir} not found")
+        print(f"   Agent will need to create paper without template style files")
 
 
 def run_paper_writer(
@@ -141,6 +84,13 @@ def run_paper_writer(
 ) -> Dict[str, Any]:
     """
     Run paper writing agent.
+
+    The agent handles all aspects of paper generation:
+    - Creating directory structure (paper_draft/sections/, figures/, etc.)
+    - Writing LaTeX files
+    - Compiling to PDF
+
+    Style files are copied to the workspace before the agent runs.
 
     Args:
         work_dir: Workspace with experiment results
@@ -157,11 +107,9 @@ def run_paper_writer(
     print(f"   Provider: {provider}")
     print(f"   Workspace: {work_dir}")
 
-    # Create paper draft directory
+    # Create paper draft directory and copy style files
     draft_dir = work_dir / "paper_draft"
     draft_dir.mkdir(exist_ok=True)
-
-    # Copy style files
     _copy_style_files(draft_dir, style)
 
     # Generate prompt
@@ -220,8 +168,8 @@ def run_paper_writer(
 
         success = return_code == 0
         if success:
-            print(f"\n✅ Paper generated successfully!")
-            print(f"   Output: {draft_dir}/main.tex")
+            print(f"\n✅ Paper writer agent completed!")
+            print(f"   Output directory: {draft_dir}")
         else:
             print(f"\n❌ Paper generation failed with code {return_code}")
 
@@ -249,82 +197,6 @@ def run_paper_writer(
             'log_file': str(log_file),
             'error': str(e)
         }
-
-
-def _copy_style_files(draft_dir: Path, style: str):
-    """Copy LaTeX style files to paper draft directory."""
-    import shutil
-
-    # Style files location - look for Styles subfolder with official files
-    styles_dir = Path(__file__).parent.parent.parent / "templates" / "paper_styles"
-    style_dir = styles_dir / style / "Styles"
-
-    # Fallback to direct style directory if Styles subfolder doesn't exist
-    if not style_dir.exists():
-        style_dir = styles_dir / style
-
-    if style_dir.exists():
-        for f in style_dir.glob("*"):
-            if f.is_file():
-                shutil.copy(f, draft_dir)
-        print(f"   Copied {style} style files to {draft_dir}")
-    else:
-        print(f"   Warning: Style directory {style_dir} not found")
-        print(f"   Creating minimal template...")
-        _create_minimal_template(draft_dir, style)
-
-
-def _create_minimal_template(draft_dir: Path, style: str):
-    """Create minimal LaTeX template if style files not found."""
-    template = r"""\documentclass[final]{neurips_2025}
-
-\usepackage{booktabs}
-\usepackage{graphicx}
-\usepackage{amsmath}
-\usepackage{hyperref}
-\usepackage{natbib}
-
-\title{Paper Title Here}
-
-\author{
-  Author Name \\
-  Institution \\
-  \texttt{email@example.com}
-}
-
-\begin{document}
-
-\maketitle
-
-\begin{abstract}
-Abstract goes here.
-\end{abstract}
-
-\section{Introduction}
-Introduction goes here.
-
-\section{Related Work}
-Related work goes here.
-
-\section{Method}
-Method goes here.
-
-\section{Experiments}
-Experiments go here.
-
-\section{Results}
-Results go here.
-
-\section{Conclusion}
-Conclusion goes here.
-
-\bibliography{references}
-\bibliographystyle{plainnat}
-
-\end{document}
-"""
-    (draft_dir / "main.tex").write_text(template)
-    (draft_dir / "references.bib").write_text("% BibTeX references go here\n")
 
 
 if __name__ == "__main__":
