@@ -93,7 +93,15 @@ Idea-Explorer uses a **multi-stage pipeline architecture** that separates resour
 │  │  Stage 3: Experiment Runner Agent                           ││
 │  │  - Implementation & experimentation                         ││
 │  │  - Analysis & documentation                                 ││
-│  │  → Output: notebooks/, results/, REPORT.md                  ││
+│  │  → Output: src/, results/, REPORT.md                        ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                          │                                      │
+│                          ▼                                      │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │  Stage 4: Paper Writer Agent (Optional, --write-paper)      ││
+│  │  - Generate LaTeX paper from results                        ││
+│  │  - Compile to PDF                                           ││
+│  │  → Output: paper_draft/main.tex, paper_draft/main.pdf       ││
 │  └─────────────────────────────────────────────────────────────┘│
 └─────────────────────────────────────────────────────────────────┘
                                  │
@@ -138,6 +146,18 @@ Autonomous literature review and resource gathering:
 - Launches CLI agent (Claude/Codex/Gemini) with stdin pipe
 - Monitors for completion marker (`.resource_finder_complete`)
 - Outputs: `papers/`, `datasets/`, `code/`, `literature_review.md`, `resources.md`
+
+### Paper Writer Agent (`src/agents/paper_writer.py`)
+
+Generates academic papers from experiment results:
+- Reads experiment outputs (REPORT.md, planning.md, literature_review.md)
+- Generates paper following specified style (NeurIPS, ICML, ACL)
+- Creates modular LaTeX project structure:
+  - `paper_draft/main.tex` - Main file importing sections
+  - `paper_draft/sections/` - Individual section files
+  - `paper_draft/figures/`, `tables/`, `appendix/`
+- Compiles to PDF using pdflatex/bibtex
+- Verifies output structure and compilation success
 
 ### Research Runner (`src/core/runner.py`)
 
@@ -214,6 +234,16 @@ Options:
   5. Analysis (statistical testing, interpretation)
   6. Documentation (REPORT.md, README.md)
 
+**Stage 4: Paper Writer** (Optional, 1 hour default)
+- Enabled with `--write-paper` flag
+- Reads experiment outputs (REPORT.md, planning.md, literature_review.md)
+- Generates modular LaTeX paper:
+  - `paper_draft/main.tex` with `\input{}` for each section
+  - `paper_draft/sections/` with individual .tex files
+  - `paper_draft/references.bib`
+- Compiles to PDF (requires texlive in environment)
+- Supports styles: NeurIPS (default), ICML, ACL
+
 ### 4. Results
 
 Final workspace structure:
@@ -223,10 +253,16 @@ workspace/<repo-name>/
 ├── papers/                       # Downloaded papers
 ├── datasets/                     # Downloaded datasets
 ├── code/                         # Cloned repositories
-├── notebooks/                    # Jupyter notebooks
+├── src/                          # Experiment Python scripts
 ├── results/                      # Metrics, visualizations
 ├── artifacts/                    # Models, checkpoints
 ├── logs/                         # Execution logs
+├── notebooks/                    # Jupyter notebooks (with --use-scribe)
+├── paper_draft/                  # LaTeX paper (with --write-paper)
+│   ├── main.tex                  # Main document
+│   ├── sections/                 # Individual section files
+│   ├── figures/                  # Generated figures
+│   └── references.bib            # Bibliography
 ├── REPORT.md                     # Comprehensive findings
 └── README.md                     # Quick overview
 ```
@@ -235,31 +271,102 @@ workspace/<repo-name>/
 
 ## Template System
 
-Templates live in `templates/` and use Jinja2 rendering:
+Templates live in `templates/` and use Jinja2 rendering. The `PromptGenerator` class (`src/templates/prompt_generator.py`) is the central hub for all prompt generation.
 
-**Base Template** (`base/researcher.txt`): Universal 6-phase research methodology applicable to any domain.
+### Template Directory Structure
 
-**Domain Templates** (`domains/<domain>/core.txt`):
-- `artificial_intelligence`: LLM evaluation, prompt engineering, benchmarking
-- `machine_learning`: Training best practices, hyperparameter tuning, metrics
-- `data_science`: EDA, statistical testing, visualization
-- `systems`: Benchmarking, profiling, optimization
-- `theory`: Proof techniques, complexity analysis
-
-**Agent Templates** (`agents/resource_finder.txt`): Specialized instructions for the resource finder agent.
-
-Template composition:
 ```
-┌─────────────────────────────────┐
-│  Task Section (idea-specific)   │
-├─────────────────────────────────┤
-│  Base Researcher Template       │
-│  (Universal methodology)        │
-├─────────────────────────────────┤
-│  Domain-Specific Template       │
-│  (e.g., ML/AI/Data Science)     │
-└─────────────────────────────────┘
+templates/
+├── agents/                         # Agent-specific prompts
+│   ├── session_instructions.txt    # Experiment runner workflow (phases 1-6)
+│   ├── resource_finder.txt         # Resource gathering agent
+│   └── paper_writer.txt            # Paper writing agent
+│
+├── base/
+│   └── researcher.txt              # Universal research methodology
+│
+├── domains/                        # Domain-specific guidance
+│   ├── artificial_intelligence/core.txt
+│   ├── machine_learning/core.txt
+│   ├── data_science/core.txt
+│   └── ...
+│
+├── evaluation/                     # Critic/review prompts
+│   ├── code_quality.txt
+│   ├── scientific_rigor.txt
+│   └── reproducibility.txt
+│
+├── paper_styles/                   # LaTeX templates
+│   └── neurips/Styles/             # NeurIPS 2025 style files
+│
+└── research_agent_instructions.py  # Wrapper for backward compatibility
 ```
+
+### Prompt Generation Flow
+
+The three main agents use different prompt compositions:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         PROMPT GENERATION FLOW                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  RESOURCE FINDER                EXPERIMENT RUNNER           PAPER WRITER   │
+│  ─────────────────              ─────────────────           ────────────── │
+│                                                                             │
+│  ┌─────────────────┐           ┌─────────────────┐        ┌─────────────┐ │
+│  │ Idea context    │           │ Research prompt │        │ Experiment  │ │
+│  │ (title, hypo,   │           │ (from generate_ │        │ outputs     │ │
+│  │  domain, etc.)  │           │  research_      │        │ (REPORT.md, │ │
+│  └────────┬────────┘           │  prompt())      │        │ planning,   │ │
+│           │                    └────────┬────────┘        │ lit review) │ │
+│           ▼                             │                 └──────┬──────┘ │
+│  ┌─────────────────┐                    ▼                        │        │
+│  │ agents/         │           ┌─────────────────┐               ▼        │
+│  │ resource_       │           │ base/           │        ┌─────────────┐ │
+│  │ finder.txt      │           │ researcher.txt  │        │ agents/     │ │
+│  └────────┬────────┘           │ + domains/      │        │ paper_      │ │
+│           │                    │ <domain>/core   │        │ writer.txt  │ │
+│           ▼                    └────────┬────────┘        └──────┬──────┘ │
+│  generate_resource_                     │                        │        │
+│  finder_prompt()                        ▼                        ▼        │
+│                                ┌─────────────────┐        generate_paper_ │
+│                                │ agents/         │        writer_prompt() │
+│                                │ session_        │                        │
+│                                │ instructions    │                        │
+│                                │ .txt            │                        │
+│                                └────────┬────────┘                        │
+│                                         │                                 │
+│                                         ▼                                 │
+│                                generate_session_                          │
+│                                instructions()                             │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Key Methods in PromptGenerator
+
+| Method | Purpose | Template(s) Used |
+|--------|---------|------------------|
+| `generate_research_prompt()` | Creates task description from idea | `base/researcher.txt` + `domains/*/core.txt` |
+| `generate_session_instructions()` | Wraps with execution workflow | `agents/session_instructions.txt` |
+| `generate_resource_finder_prompt()` | Resource gathering instructions | `agents/resource_finder.txt` |
+| `generate_paper_writer_prompt()` | Paper writing instructions | `agents/paper_writer.txt` |
+
+### Customizing Templates
+
+To modify agent behavior, edit the corresponding template file:
+
+| What to Customize | File to Edit |
+|-------------------|--------------|
+| Experiment phases (1-6) | `templates/agents/session_instructions.txt` |
+| Paper structure and format | `templates/agents/paper_writer.txt` |
+| Resource finding behavior | `templates/agents/resource_finder.txt` |
+| Research methodology | `templates/base/researcher.txt` |
+| Domain-specific guidance | `templates/domains/<domain>/core.txt` |
+| LaTeX paper style | `templates/paper_styles/<style>/` |
+
+Templates use Jinja2 syntax for variable interpolation (e.g., `{{ prompt }}`, `{{ work_dir }}`).
 
 ---
 
@@ -443,4 +550,4 @@ We're looking for collaborators who resonate with the vision of AI as exploratio
 
 ---
 
-*Last updated: December 2025*
+*Last updated: January 2026*

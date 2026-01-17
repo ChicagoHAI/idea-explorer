@@ -1,0 +1,359 @@
+{{ session_start }}
+{{ priority_section }}
+CRITICAL: Environment Setup
+────────────────────────────────────────────────────────────────────────────────
+You MUST create a fresh isolated environment for this project. DO NOT use the
+idea-explorer environment or any existing environment.
+
+REQUIRED STEPS (in order):
+
+1. Create a fresh virtual environment using uv:
+   uv venv
+
+2. Initialize project dependencies file:
+   Create pyproject.toml to manage dependencies in THIS workspace only:
+
+   cat > pyproject.toml << 'EOF'
+   [project]
+   name = "research-workspace"
+   version = "0.1.0"
+   description = "Research workspace for experiments"
+   requires-python = ">=3.10"
+   dependencies = []
+
+   [build-system]
+   requires = ["hatchling"]
+   build-backend = "hatchling.build"
+   EOF
+
+   CRITICAL: This ensures uv won't search parent directories for pyproject.toml
+   and contaminate the idea-explorer environment!
+
+3. Activate the environment:
+   source .venv/bin/activate
+
+4. For package installations, use this priority order:
+
+   FIRST CHOICE - uv add (manages pyproject.toml automatically):
+   uv add <package-name>
+
+   Examples:
+   - uv add numpy pandas matplotlib
+   - uv add torch transformers
+   - uv add scikit-learn scipy
+
+   SECOND CHOICE - if uv add doesn't work:
+   uv pip install <package-name>
+   pip freeze > requirements.txt
+
+   LAST RESORT - if uv fails entirely:
+   pip install <package-name>
+   pip freeze > requirements.txt
+
+   NEVER use conda or conda install!
+
+5. Dependency Management:
+   - Using 'uv add' automatically updates pyproject.toml
+   - Verify dependencies with: cat pyproject.toml
+   - If you used pip, also maintain: pip freeze > requirements.txt
+   - This ensures reproducibility of the research environment
+
+WHY: Using an isolated environment ensures:
+- No pollution of the idea-explorer environment
+- Fast package installation with uv (10-100x faster than pip)
+- Automatic dependency tracking with pyproject.toml
+- Clean, reproducible research setup
+
+════════════════════════════════════════════════════════════════════════════════
+
+GPU DETECTION AND UTILIZATION
+────────────────────────────────────────────────────────────────────────────────
+
+At the START of your session, check for GPU availability:
+
+1. Run GPU detection:
+   nvidia-smi --query-gpu=name,memory.total,memory.free --format=csv 2>/dev/null || echo "NO_GPU"
+
+2. If GPUs are available:
+   - Use GPU-accelerated libraries (PyTorch with CUDA, TensorFlow-GPU)
+   - Set appropriate batch sizes based on GPU memory:
+     * 8GB: batch_size=16-32
+     * 16GB: batch_size=32-64
+     * 24GB+: batch_size=64-128
+   - Enable mixed precision training for faster execution:
+     # PyTorch
+     from torch.cuda.amp import autocast, GradScaler
+     scaler = GradScaler()
+
+     # TensorFlow
+     tf.keras.mixed_precision.set_global_policy('mixed_float16')
+
+3. If NO GPU available:
+   - Use CPU-optimized settings
+   - Reduce model sizes if needed (e.g., use smaller transformer models)
+   - Consider using smaller datasets for feasibility
+
+4. Document GPU usage in REPORT.md:
+   - GPU model and memory
+   - Batch sizes used
+   - Training time comparisons
+
+════════════════════════════════════════════════════════════════════════════════
+
+CRITICAL: Resources Have Been Pre-Gathered
+────────────────────────────────────────────────────────────────────────────────
+IMPORTANT: A separate resource-finding agent has already gathered research
+resources for you. Your workspace contains:
+
+- literature_review.md: Comprehensive literature review and synthesis
+- resources.md: Catalog of all available datasets, papers, and code
+- papers/: Downloaded research papers (PDFs)
+- datasets/: Downloaded datasets ready to use (locally available, not in git)
+- code/: Cloned repositories with baseline implementations
+
+NOTE: The datasets/ directory contains a .gitignore that excludes large data files
+from git commits. The data is available locally for your experiments, and
+datasets/README.md contains download instructions for reproducibility.
+
+READ THESE RESOURCES FIRST before starting your experimental design!
+They contain valuable information about:
+- Standard approaches in this research area
+- Available datasets and their characteristics
+- Baseline methods to compare against
+- Evaluation metrics commonly used
+- Code you can adapt or build upon
+
+IMPORTANT PHILOSOPHY: This is a fully-automated research system. Your goal is to
+run meaningful experiments that test the hypothesis using the resources provided.
+
+WHAT "FULLY-AUTOMATED" MEANS:
+✓ Complete ALL phases (1-6) in a SINGLE CONTINUOUS SESSION
+✓ Make reasonable decisions autonomously without waiting for user input
+✓ Move immediately from one phase to the next
+✓ Use the pre-gathered resources effectively
+✓ Document decisions, but keep moving forward
+✓ Deliver REPORT.md with actual experimental results at the end
+
+YOU WILL NOT GET ADDITIONAL INSTRUCTIONS between phases.
+This prompt contains everything you need. Execute it completely from start to finish.
+
+════════════════════════════════════════════════════════════════════════════════
+
+CRITICAL: For LLM/AI Research - Use Real Models, Not Simulations
+────────────────────────────────────────────────────────────────────────────────
+
+IF your research involves LLM behavior, agents, prompting, or AI capabilities:
+
+✓ YOU MUST use REAL LLM APIs:
+  - GPT-4.1 or GPT-5, or other real models
+  - You can also use openrouter, there is openrouter key in environment variable.
+  - Use actual API calls to test behavior
+  - Measure real model outputs, not simulated behavior
+  - If you are not sure how to prompt and send API calls, search online.
+
+✗ DO NOT create "simulated LLM agents":
+  - Don't fake LLM behavior with predefined rules
+  - Don't make up confidence scores or calibration behavior
+  - Simulated LLMs have NO scientific value for LLM research
+
+WHY THIS MATTERS:
+- Real LLMs behave in complex, emergent ways that can't be simulated
+- Research on fake agents doesn't generalize to real systems
+- API calls are affordable and fast (100s of calls = $5-50)
+- You have freedom to use resources needed for quality research
+
+EXAMPLES:
+
+✓ CORRECT: "Test if chain-of-thought improves calibration"
+  → Download TruthfulQA dataset
+  → Prompt Claude/GPT with and without CoT
+  → Measure actual calibration metrics
+  → Statistical comparison
+
+✗ WRONG: "Test if chain-of-thought improves calibration"
+  → Create simulated agent with confidence = 0.7 + noise
+  → Make up 50 questions
+  → Run simulation
+  → This is NOT research!
+
+If you find yourself about to create "simulated LLM agents," STOP and use real APIs instead.
+
+════════════════════════════════════════════════════════════════════════════════
+
+Execute the following research task:
+
+{{ prompt }}
+
+════════════════════════════════════════════════════════════════════════════════
+
+EXECUTION WORKFLOW (FOLLOW THIS SEQUENCE - DO NOT STOP BETWEEN PHASES):
+────────────────────────────────────────────────────────────────────────────────
+
+BEFORE YOU START: Review Pre-Gathered Resources (5-10 min)
+  ✓ READ literature_review.md to understand the research landscape
+  ✓ READ resources.md to see what's available
+  ✓ Browse papers/ directory for key papers
+  ✓ Check datasets/ directory to see what data is ready
+  ✓ Explore code/ directory for baseline implementations
+
+  → WHEN COMPLETE: Immediately proceed to Phase 1 (Planning)
+
+Phase 1: Motivation & Planning (20-40 min)
+  ✓ FIRST: Write "Motivation & Novelty Assessment" section in planning.md
+    - Why this research matters (problem and impact)
+    - What gap it fills (based on literature review)
+    - Why each experiment is necessary
+  ✓ Review pre-gathered resources (literature_review.md, resources.md)
+  ✓ Create experimental plan leveraging available datasets and code
+  ✓ Design experiments with specific steps (justify each experiment)
+  ✓ Choose baselines and metrics based on literature review
+  ✓ Plan timeline and resource allocation
+  ✓ Document plan in planning.md (2-3 pages maximum)
+
+  → WHEN COMPLETE: Immediately proceed to Phase 2 (Setup)
+  → DO NOT WAIT for user confirmation - this is fully automated!
+
+Phase 2: Environment & Data Setup (10-20 min)
+  ✓ Set up isolated virtual environment (uv venv)
+  ✓ Install required packages (uv add)
+  ✓ Load and verify pre-downloaded datasets from datasets/ directory
+  ✓ Verify data quality and characteristics
+  ✓ Run exploratory data analysis
+
+  → WHEN COMPLETE: Immediately proceed to Phase 3 (Implementation)
+
+Phase 3: Implementation (60-90 min)
+  {{ code_workflow }}
+  ✓ Leverage code from code/ directory where applicable
+  ✓ Implement baselines first (use/adapt existing implementations)
+  ✓ Implement proposed method
+  ✓ Create evaluation harness
+  ✓ Write clean, documented code with comments and docstrings
+  ✓ Test incrementally
+
+  → WHEN COMPLETE: Immediately proceed to Phase 4 (Experiments)
+
+Phase 4: Experimentation (60-90 min)
+  ✓ Run baseline experiments
+  ✓ Run proposed method experiments
+  ✓ Collect results systematically (save to results/ directory)
+  ✓ Generate visualizations
+  ✓ Monitor for issues
+
+  → WHEN COMPLETE: Immediately proceed to Phase 5 (Analysis)
+
+Phase 5: Analysis (30-45 min)
+  ✓ Analyze results statistically
+  ✓ Compare against baselines and literature
+  ✓ Perform error analysis
+  ✓ Create comprehensive visualizations
+  ✓ Document findings incrementally
+
+  → WHEN COMPLETE: Immediately proceed to Phase 6 (Documentation)
+
+Phase 6: Final Documentation (20-30 min) - MANDATORY BEFORE ENDING SESSION
+  ✓ Create REPORT.md with ACTUAL experimental results (not placeholder)
+  ✓ Create README.md with project overview and key findings
+  ✓ Ensure resources.md documents your research process
+  ✓ Verify all code has clear comments and docstrings
+  ✓ Check reproducibility
+
+  → WHEN COMPLETE: Session is finished
+
+CRITICAL REMINDERS:
+- This is a SINGLE CONTINUOUS SESSION covering all 6 phases
+- Resources have been PRE-GATHERED for you - use them!
+- Never stop between phases waiting for user input
+- If you encounter issues, document them and continue
+- Even if experiments fail, complete Phase 6 documenting what happened
+- REPORT.md is mandatory - it's the primary deliverable
+
+WORKSPACE DIRECTORY AND DIRECTORY SAFETY:
+────────────────────────────────────────────────────────────────────────────────
+You are running in the project workspace directory: {{ work_dir }}
+
+WORKING DIRECTORY VERIFICATION:
+Before creating or writing ANY files, ALWAYS verify you are in the correct directory:
+
+1. Run `pwd` to check your current directory
+2. You should be in: {{ work_dir }}
+3. If you're somewhere else, run: cd {{ work_dir }}
+
+MANDATORY VERIFICATION POINTS - Run `pwd` and verify location:
+✓ Before creating any new directories (mkdir results, mkdir figures, etc.)
+✓ Before saving any output files
+✓ Before running experiments that produce output
+✓ After any cd command - ALWAYS cd back to workspace root afterward
+✓ When starting each new phase of work
+
+SAFE PATTERN FOR DIRECTORY CHANGES:
+If you need to cd into a subdirectory, ALWAYS return immediately:
+  pwd                              # Verify starting location
+  cd results && python script.py && cd -   # cd back using "cd -"
+  pwd                              # Verify you're back in workspace root
+
+⚠️  NEVER create files in parent directory (cd .. is dangerous!)
+⚠️  All your work MUST stay within this workspace directory
+
+Remember:
+- READ literature_review.md and resources.md first (they're in your current directory)
+- Use pre-downloaded datasets from datasets/ directory (relative to current directory)
+- Leverage code from code/ directory (relative to current directory)
+{{ code_reminder }}
+- Use markdown files (.md) for documentation (saved in current directory)
+- Save outputs to organized directories: results/, figures/, logs/ (all relative)
+- All your work stays within this workspace directory
+- Follow the methodology carefully, leveraging the pre-gathered resources
+
+────────────────────────────────────────────────────────────────────────────────
+PHASE 6 REQUIREMENTS - WHAT TO INCLUDE IN FINAL DOCUMENTATION
+────────────────────────────────────────────────────────────────────────────────
+
+When you reach Phase 6, create these files with ACTUAL results from your experiments:
+
+1. REPORT.md - Comprehensive research report containing:
+   - Executive Summary (2-3 paragraphs summarizing what you found)
+   - Research Question & Hypothesis
+   - Literature Review Summary (key papers and insights from Phase 0)
+   - Methodology (what you actually did, step-by-step)
+     * Datasets/baselines you used and why
+     * Evaluation metrics and justification
+   - Key Findings (ACTUAL results with supporting data/figures from experiments)
+   - Discussion & Interpretation
+     * How your results compare to expectations
+     * What this means for the research question
+   - Limitations & Future Work
+   - Conclusion
+   - References (papers, datasets, tools used)
+
+   Include key visualizations/tables inline (as markdown).
+
+2. README.md - Quick overview containing:
+   - Brief project description (2-3 sentences)
+   - Key findings summary (bullet points, 3-5 main results from your experiments)
+   - How to reproduce (environment setup, run instructions)
+   - File structure overview
+   - Link to REPORT.md for full details
+
+   Keep this concise and scannable.
+
+IMPORTANT NOTES:
+- Do NOT create placeholder/stub reports during planning - wait until Phase 6
+- If experiments fail or are incomplete, document what you attempted and what happened
+- REPORT.md is the PRIMARY DELIVERABLE - it must contain actual findings
+- These documents make your research accessible and understandable
+
+────────────────────────────────────────────────────────────────────────────────
+SESSION COMPLETION
+────────────────────────────────────────────────────────────────────────────────
+
+The session is COMPLETE when:
+✓ All phases (1-6) have been attempted
+✓ Pre-gathered resources have been reviewed and used
+✓ Experiments were run (even if simple or preliminary)
+✓ REPORT.md has been created documenting actual results
+✓ README.md has been created with overview
+✓ Code is organized with comments
+✓ Results are saved to results/ directory
+
+If you reach this point, your research session is finished.

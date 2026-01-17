@@ -129,6 +129,7 @@ workspace/<repo-name>/
   logs/           <- Execution logs and transcripts
   artifacts/      <- Models, checkpoints
   notebooks/      <- Jupyter notebooks (only with --use-scribe)
+  paper_draft/    <- LaTeX paper output (only with --write-paper)
   .idea-explorer/ <- Original idea spec
 ```
 
@@ -314,6 +315,8 @@ uv run python src/core/runner.py <idea_id> --provider <YOUR_CLI> --full-permissi
 | `--no-github` | Run locally without GitHub integration |
 | `--github-org ORG` | GitHub organization (default: GITHUB_ORG env var) |
 | `--use-scribe` | Enable Jupyter notebook integration |
+| `--write-paper` | Generate academic paper after experiments |
+| `--paper-style neurips\|icml\|acl` | Paper format style (default: neurips) |
 
 ### Common Commands
 
@@ -373,10 +376,25 @@ runner.evaluate_research(
 
 - **[docs/WORKFLOW.md](docs/WORKFLOW.md)** - Complete workflow guide
 - **[docs/IDEAHUB_INTEGRATION.md](docs/IDEAHUB_INTEGRATION.md)** - IdeaHub integration
+- **[ARCHITECTURE_AND_ROADMAP.md](ARCHITECTURE_AND_ROADMAP.md)** - Architecture, template system, and roadmap
 - **[DESIGN.md](DESIGN.md)** - Comprehensive design document
 - **[GITHUB_INTEGRATION.md](GITHUB_INTEGRATION.md)** - GitHub setup and usage
 - **[ideas/schema.yaml](ideas/schema.yaml)** - Full specification schema
 - **[ideas/examples/](ideas/examples/)** - Example research ideas
+
+### Customizing Agent Behavior
+
+Agent prompts are stored as templates in `templates/`. To customize:
+
+| What to Change | Template File |
+|----------------|---------------|
+| Experiment workflow (phases 1-6) | `templates/agents/session_instructions.txt` |
+| Paper writing structure | `templates/agents/paper_writer.txt` |
+| Resource finding behavior | `templates/agents/resource_finder.txt` |
+| Research methodology | `templates/base/researcher.txt` |
+| Domain-specific guidance | `templates/domains/<domain>/core.txt` |
+
+See [ARCHITECTURE_AND_ROADMAP.md](ARCHITECTURE_AND_ROADMAP.md) for details on the template system.
 
 ## Contributing
 
