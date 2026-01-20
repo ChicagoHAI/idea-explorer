@@ -124,6 +124,7 @@ ideas/
   completed/      <- Finished research
 
 workspace/<repo-name>/
+  .claude/skills/ <- Claude Code skills (paper-finder, literature-review, etc.)
   src/            <- Python scripts for experiments (default mode)
   results/        <- Metrics, plots, models
   logs/           <- Execution logs and transcripts
@@ -393,6 +394,7 @@ Agent prompts are stored as templates in `templates/`. To customize:
 | Resource finding behavior | `templates/agents/resource_finder.txt` |
 | Research methodology | `templates/base/researcher.txt` |
 | Domain-specific guidance | `templates/domains/<domain>/core.txt` |
+| Claude Code skills | `templates/skills/<skill-name>/SKILL.md` |
 
 See [ARCHITECTURE_AND_ROADMAP.md](ARCHITECTURE_AND_ROADMAP.md) for details on the template system.
 
