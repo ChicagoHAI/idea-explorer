@@ -12,11 +12,11 @@ For writing academic papers, comprehensive literature review is essential:
 
 ## How It Works
 
-When running idea-explorer, a helper script (`scripts/find_papers.py`) is copied to the workspace. Agents call this script to search for papers:
+When running idea-explorer, skills are copied to `.claude/skills/` in the workspace. Agents call the helper script to search for papers:
 
 ```bash
-python scripts/find_papers.py "your research topic"
-python scripts/find_papers.py "hypothesis generation with LLMs" --mode diligent
+python .claude/skills/paper-finder/scripts/find_papers.py "your research topic"
+python .claude/skills/paper-finder/scripts/find_papers.py "hypothesis generation with LLMs" --mode diligent
 ```
 
 ## Setting Up Paper Finder
@@ -56,8 +56,8 @@ The service runs at `http://localhost:8000`.
 # Check service is running
 curl http://localhost:8000/health
 
-# Test paper search
-python templates/scripts/find_papers.py "machine learning calibration"
+# Test paper search (run from a workspace where skills have been copied)
+python .claude/skills/paper-finder/scripts/find_papers.py "machine learning calibration"
 ```
 
 ## LLM Configuration

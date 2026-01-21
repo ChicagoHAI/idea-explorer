@@ -529,17 +529,9 @@ https://github.com/ChicagoHAI/idea-explorer
         """
         import shutil
 
-        # Copy helper scripts
-        scripts_src = self.project_root / "templates" / "scripts"
-        scripts_dst = work_dir / "scripts"
-
-        if scripts_src.exists():
-            scripts_dst.mkdir(exist_ok=True)
-            for script in scripts_src.glob("*.py"):
-                shutil.copy(script, scripts_dst)
-            print(f"   Copied helper scripts to scripts/")
-
         # Copy Claude Code skills to .claude/skills/
+        # Scripts (like find_papers.py, pdf_chunker.py) live inside skills
+        # and get copied automatically as part of the skill directory
         skills_src = self.project_root / "templates" / "skills"
         skills_dst = work_dir / ".claude" / "skills"
 

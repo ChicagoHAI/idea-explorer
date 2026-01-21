@@ -104,6 +104,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcudnn8 \
     && rm -rf /var/lib/apt/lists/*
 
+# Install LaTeX for paper compilation
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    texlive-latex-base \
+    texlive-latex-extra \
+    texlive-fonts-recommended \
+    texlive-science \
+    texlive-bibtex-extra \
+    biber \
+    latexmk \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy Node.js from builder
 COPY --from=builder /usr/bin/node /usr/bin/
 COPY --from=builder /usr/lib/node_modules /usr/lib/node_modules
