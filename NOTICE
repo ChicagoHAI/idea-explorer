@@ -1,0 +1,35 @@
+Idea Explorer
+Copyright 2025 ChicagoHAI
+
+This product includes software developed at ChicagoHAI (https://github.com/ChicagoHAI).
+
+================================================================================
+Acknowledgments
+================================================================================
+
+--------------------------------------------------------------------------------
+claude-scientific-skills
+--------------------------------------------------------------------------------
+
+Source: https://github.com/K-Dense-AI/claude-scientific-skills
+License: MIT License
+Copyright (c) 2025 K-Dense Inc.
+
+Some skills in templates/skills/ were inspired by the structure and concepts
+in claude-scientific-skills, an MIT-licensed collection of scientific skills
+for Claude. Our implementations are independently written for ML/AI/CS research
+workflows, but we acknowledge K-Dense Inc.'s work as an influence.
+
+Skills with conceptual inspiration from claude-scientific-skills:
+  - literature-review/
+  - hypothesis-generation/
+  - peer-review/
+  - citation-manager/
+  - data-analysis/
+  - critical-analysis/
+  - research-brainstorming/
+  - grant-writing/
+
+Skills original to idea-explorer:
+  - paper-finder/ 
+  - paper-writer/

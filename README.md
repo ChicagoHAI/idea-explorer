@@ -421,6 +421,10 @@ If you use Idea Explorer in research, please cite:
 }
 ```
 
+## Acknowledgments
+
+Some skills in `templates/skills/` were inspired by [claude-scientific-skills](https://github.com/K-Dense-AI/claude-scientific-skills) (MIT License, K-Dense Inc.). See [NOTICE](NOTICE) for details.
+
 ## License
 
 Apache 2.0 - See [LICENSE](LICENSE) file
