@@ -2,6 +2,7 @@
 ideas/*
 !ideas/examples/
 !ideas/schema.yaml
+temp/
 
 # Environment variables
 .env

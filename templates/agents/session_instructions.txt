@@ -2,16 +2,25 @@
 {{ priority_section }}
 CRITICAL: Environment Setup
 ────────────────────────────────────────────────────────────────────────────────
-You MUST create a fresh isolated environment for this project. DO NOT use the
-idea-explorer environment or any existing environment.
+You MUST use an isolated environment for this project. DO NOT use the
+idea-explorer environment or any existing system environment.
 
 REQUIRED STEPS (in order):
 
-1. Create a fresh virtual environment using uv:
-   uv venv
+1. Check if a virtual environment already exists (the resource finder may have created one):
 
-2. Initialize project dependencies file:
-   Create pyproject.toml to manage dependencies in THIS workspace only:
+   If .venv/ directory exists:
+   - Skip to step 3 (activate it)
+   - The pyproject.toml should already exist
+
+   If .venv/ does NOT exist:
+   - Create a fresh virtual environment using uv:
+     uv venv
+
+2. Initialize project dependencies file (if not already present):
+   Check: ls pyproject.toml 2>/dev/null || echo "NEED_PYPROJECT"
+
+   If pyproject.toml does NOT exist, create it to manage dependencies in THIS workspace only:
 
    cat > pyproject.toml << 'EOF'
    [project]
