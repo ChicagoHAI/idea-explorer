@@ -57,13 +57,8 @@ def _copy_style_files(draft_dir: Path, style: str):
     """
     import shutil
 
-    # Style files location - look for Styles subfolder with official files
-    styles_dir = Path(__file__).parent.parent.parent / "templates" / "paper_styles"
-    style_dir = styles_dir / style / "Styles"
-
-    # Fallback to direct style directory if Styles subfolder doesn't exist
-    if not style_dir.exists():
-        style_dir = styles_dir / style
+    # Style files at templates/paper_styles/<conference>/
+    style_dir = Path(__file__).parent.parent.parent / "templates" / "paper_styles" / style
 
     if style_dir.exists():
         for f in style_dir.glob("*"):
@@ -73,6 +68,84 @@ def _copy_style_files(draft_dir: Path, style: str):
     else:
         print(f"   Warning: Style directory {style_dir} not found")
         print(f"   Agent will need to create paper without template style files")
+
+
+def _copy_paper_writing_resources(draft_dir: Path):
+    """
+    Copy shared paper writing resources (command templates) to paper draft directory.
+
+    Copies the lab's standard LaTeX command templates for math notation,
+    general formatting, and project-specific macros.
+
+    Args:
+        draft_dir: Directory where paper will be written
+    """
+    import shutil
+
+    # Paper writing resources at templates/paper_writing/
+    paper_writing_dir = Path(__file__).parent.parent.parent / "templates" / "paper_writing"
+    commands_src = paper_writing_dir / "commands"
+
+    if commands_src.exists():
+        commands_dst = draft_dir / "commands"
+        commands_dst.mkdir(exist_ok=True)
+
+        for f in commands_src.glob("*.tex"):
+            shutil.copy(f, commands_dst)
+
+        print(f"   Copied command templates to {commands_dst}")
+    else:
+        print(f"   Warning: Paper writing commands directory {commands_src} not found")
+
+
+def _copy_example_papers(work_dir: Path):
+    """
+    Copy example papers to workspace for reference.
+
+    The paper writer agent can reference these examples for formatting
+    and language style (but not content).
+
+    Args:
+        work_dir: Workspace directory
+    """
+    import shutil
+
+    # Example papers at paper_examples/
+    examples_src = Path(__file__).parent.parent.parent / "paper_examples"
+    examples_dst = work_dir / "paper_examples"
+
+    if examples_src.exists() and not examples_dst.exists():
+        shutil.copytree(examples_src, examples_dst)
+        print(f"   Copied example papers to {examples_dst}")
+    elif examples_dst.exists():
+        print(f"   Example papers already exist at {examples_dst}")
+    else:
+        print(f"   Warning: Example papers directory {examples_src} not found")
+
+
+def _copy_paper_writing_templates(work_dir: Path):
+    """
+    Copy paper writing templates (style guide, examples) to workspace.
+
+    Args:
+        work_dir: Workspace directory
+    """
+    import shutil
+
+    # Paper writing resources at templates/paper_writing/
+    paper_writing_src = Path(__file__).parent.parent.parent / "templates" / "paper_writing"
+    paper_writing_dst = work_dir / "templates" / "paper_writing"
+
+    if paper_writing_src.exists():
+        paper_writing_dst.mkdir(parents=True, exist_ok=True)
+
+        # Copy markdown files (style guide, examples)
+        for f in paper_writing_src.glob("*.md"):
+            shutil.copy(f, paper_writing_dst)
+
+        print(f"   Copied paper writing templates to {paper_writing_dst}")
+    else:
+        print(f"   Warning: Paper writing directory {paper_writing_src} not found")
 
 
 def run_paper_writer(
@@ -111,6 +184,13 @@ def run_paper_writer(
     draft_dir = work_dir / "paper_draft"
     draft_dir.mkdir(exist_ok=True)
     _copy_style_files(draft_dir, style)
+
+    # Copy paper writing resources (command templates, style guide)
+    _copy_paper_writing_resources(draft_dir)
+    _copy_paper_writing_templates(work_dir)
+
+    # Copy example papers for reference
+    _copy_example_papers(work_dir)
 
     # Generate prompt
     prompt = generate_paper_writer_prompt(work_dir, style)
