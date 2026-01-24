@@ -19,6 +19,37 @@ CLI_COMMANDS = {
 }
 
 
+def _load_style_config(style: str) -> Dict[str, Any]:
+    """
+    Load style configuration from style_config.yaml.
+
+    Args:
+        style: Paper style name (e.g., neurips, icml)
+
+    Returns:
+        Dictionary with package_name, package_options, bib_style
+    """
+    import yaml
+
+    style_dir = Path(__file__).parent.parent.parent / "templates" / "paper_styles" / style
+    config_path = style_dir / "style_config.yaml"
+
+    # Default config if no config file exists
+    default_config = {
+        'package_name': style,
+        'package_options': '',
+        'bib_style': 'plainnat'
+    }
+
+    if config_path.exists():
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+            return {**default_config, **config}
+    else:
+        print(f"   Warning: No style_config.yaml found for {style}, using defaults")
+        return default_config
+
+
 def generate_paper_writer_prompt(
     work_dir: Path,
     style: str = "neurips"
@@ -31,7 +62,7 @@ def generate_paper_writer_prompt(
 
     Args:
         work_dir: Workspace directory with experiment results
-        style: Paper style (neurips, icml, acl)
+        style: Paper style (neurips, icml, acl, or any custom style)
 
     Returns:
         Complete prompt string for paper writing
@@ -40,8 +71,11 @@ def generate_paper_writer_prompt(
     sys.path.insert(0, str(Path(__file__).parent.parent))
     from templates.prompt_generator import PromptGenerator
 
+    # Load style-specific configuration
+    style_config = _load_style_config(style)
+
     generator = PromptGenerator()
-    return generator.generate_paper_writer_prompt(work_dir, style)
+    return generator.generate_paper_writer_prompt(work_dir, style, style_config)
 
 
 def _copy_style_files(draft_dir: Path, style: str):
@@ -285,7 +319,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate academic paper from experiment results")
     parser.add_argument("work_dir", type=Path, help="Workspace directory with experiment results")
     parser.add_argument("--provider", default="claude", choices=["claude", "codex", "gemini"])
-    parser.add_argument("--style", default="neurips", choices=["neurips", "icml", "acl"])
+    parser.add_argument("--style", default="neurips", help="Paper style (must match a directory in templates/paper_styles/)")
     parser.add_argument("--timeout", type=int, default=3600)
     parser.add_argument("--no-permissions", action="store_true", help="Require permission prompts")
 

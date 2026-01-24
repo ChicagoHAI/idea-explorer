@@ -1,0 +1,4 @@
+# NeurIPS 2025 style configuration
+package_name: neurips_2025
+package_options: "final"  # Options: final, preprint
+bib_style: plainnat

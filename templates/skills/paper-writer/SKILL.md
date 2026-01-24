@@ -149,17 +149,24 @@ Format:
 
 ## LaTeX Template
 
-The NeurIPS 2025 style files are available in the `paper/` directory.
+Style files (.sty, .bst) are copied to the `paper_draft/` directory. The exact preamble (package name, options, bibliography style) is specified in your prompt - follow it exactly.
 
+### Template Structure
 ```latex
-\documentclass[final]{neurips_2025}
+\documentclass{article}
+% Conference style package - USE THE EXACT LINE FROM YOUR PROMPT
+\usepackage{<style_package>}  % e.g., neurips_2025, icml2026, etc.
 
-% Essential packages
-\usepackage{booktabs}  % Better tables
+% Required packages - ALWAYS include these
+\usepackage[hidelinks]{hyperref}  % Clickable links (REQUIRED)
+\usepackage{booktabs}  % Better tables (REQUIRED)
 \usepackage{graphicx}  % Figures
 \usepackage{amsmath,amssymb}  % Math
-\usepackage{hyperref}  % Links
-\usepackage{algorithm2e}  % Algorithms
+
+% Import command files
+\input{commands/math}
+\input{commands/general}
+\input{commands/macros}
 
 \title{Clear Title That Conveys Main Contribution}
 
@@ -179,23 +186,8 @@ Your abstract here (150-250 words).
 \section{Introduction}
 ...
 
-\section{Related Work}
-...
-
-\section{Method}
-...
-
-\section{Experiments}
-...
-
-\section{Discussion}
-...
-
-\section{Conclusion}
-...
-
 \bibliography{references}
-\bibliographystyle{plainnat}
+\bibliographystyle{<bib_style>}  % Use the style from your prompt
 
 \end{document}
 ```

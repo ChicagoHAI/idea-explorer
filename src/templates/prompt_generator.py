@@ -406,13 +406,15 @@ Location: {run_dir}
 
         return "\n".join(lines)
 
-    def generate_paper_writer_prompt(self, work_dir: Path, style: str = "neurips") -> str:
+    def generate_paper_writer_prompt(self, work_dir: Path, style: str = "neurips",
+                                      style_config: Optional[Dict[str, Any]] = None) -> str:
         """
         Generate paper writer prompt from template.
 
         Args:
             work_dir: Workspace directory with experiment results
-            style: Paper style (neurips, icml, acl)
+            style: Paper style (neurips, icml, acl, or any custom style)
+            style_config: Style configuration dict with package_name, package_options, bib_style
 
         Returns:
             Complete prompt string for paper writing
@@ -444,9 +446,30 @@ Location: {run_dir}
         else:
             lit_review_content = "No literature_review.md found"
 
+        # Default style config if not provided
+        if style_config is None:
+            style_config = {
+                'package_name': style,
+                'package_options': '',
+                'bib_style': 'plainnat'
+            }
+
+        # Build usepackage line based on config
+        package_name = style_config.get('package_name', style)
+        package_options = style_config.get('package_options', '')
+        if package_options:
+            usepackage_line = f"\\usepackage[{package_options}]{{{package_name}}}"
+        else:
+            usepackage_line = f"\\usepackage{{{package_name}}}"
+
         # Prepare variables
         variables = {
             'style': style.upper(),
+            'style_lower': style.lower(),
+            'package_name': package_name,
+            'package_options': package_options,
+            'usepackage_line': usepackage_line,
+            'bib_style': style_config.get('bib_style', 'plainnat'),
             'report_content': report_content,
             'planning_content': planning_content,
             'lit_review_content': lit_review_content,

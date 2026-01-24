@@ -114,11 +114,25 @@ paper_draft/
 
 INSTRUCTIONS:
 1. First, create the directory structure above (mkdir -p paper_draft/sections paper_draft/figures paper_draft/tables paper_draft/appendix)
-2. Write main.tex that:
-   - Uses \documentclass[final]{neurips_2025} (or appropriate style)
-   - Includes necessary packages
-   - Uses \input{sections/abstract.tex} etc. to include each section
-   - Uses \bibliography{references} for references
+2. Write main.tex using the EXACT preamble for {{ style }}:
+
+   \documentclass{article}
+   {{ usepackage_line }}  % {{ style }} style ({{ package_name }}.sty is in paper_draft/)
+   \usepackage[hidelinks]{hyperref}  % REQUIRED: clickable links
+   \usepackage{booktabs}  % REQUIRED: professional tables
+   \usepackage{graphicx}
+   \usepackage{amsmath,amssymb}
+
+   % Import command files
+   \input{commands/math}
+   \input{commands/general}
+   \input{commands/macros}
+
+   % Use this bibliography style:
+   \bibliographystyle{ {{- bib_style -}} }
+
+   - Use \input{sections/...} to include each section
+   - Use \bibliography{references} for references
 3. Write each section file with COMPLETE content (no placeholders)
 4. Each section file should include its \section{} command
 5. Write references.bib with all citations in BibTeX format

@@ -1,0 +1,4 @@
+# ICML 2026 style configuration
+package_name: icml2026
+package_options: ""  # Options: accepted, preprint (empty for blind review)
+bib_style: icml2026
