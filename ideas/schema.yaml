@@ -353,6 +353,41 @@ properties:
               type: string
             description: "IDs of related ideas"
 
+      # ═══════════════════════════════════════════════════════
+      # COMMENTS (FOR COMMENT MODE)
+      # ═══════════════════════════════════════════════════════
+
+      comments:
+        type: string
+        description: |
+          OPTIONAL: User comments/feedback for making targeted improvements to existing work.
+
+          This field is used with the --comment-mode flag to make specific changes to
+          an existing workspace, rather than running the full exploration pipeline.
+
+          Comments can be free-form text describing:
+          - Bug fixes needed
+          - Ablation studies to add
+          - Improvements to existing baselines
+          - New experiments to run
+          - Documentation updates
+          - Any other targeted changes
+
+          The workspace must already exist (via metadata.github_repo_name or
+          metadata.github_repo_url) for comment mode to work.
+        examples:
+          - |
+            The baseline evaluation seems to be missing coverage for edge cases.
+            Please add:
+            1. An ablation study removing the chain-of-thought component
+            2. Test cases with longer context lengths (>4k tokens)
+            3. Fix the accuracy calculation in evaluate.py
+          - |
+            Improve the visualization in the results section:
+            - Add error bars to all plots
+            - Include statistical significance annotations
+            - Create a summary table comparing all methods
+
 # ═══════════════════════════════════════════════════════════
 # EXAMPLE TEMPLATES
 # ═══════════════════════════════════════════════════════════
