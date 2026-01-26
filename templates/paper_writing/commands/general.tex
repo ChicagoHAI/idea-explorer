@@ -1,0 +1,173 @@
+%%%%% GENERAL FORMATTING MACROS %%%%%
+% General formatting and styling macros for academic papers
+% Import with: \input{commands/general}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PARAGRAPH AND TEXT FORMATTING
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Bold paragraph headers (use: \para{Header.} followed by text)
+\newcommand{\para}[1]{\noindent \textbf{#1}}
+
+% Cut content for space (content is hidden but preserved in source)
+\newcommand{\cutforspace}[1]{}
+
+% Response/rebuttal formatting for reviews
+\newcommand{\response}[1]{\vspace{3pt}\hrule\vspace{3pt}\textbf{#1:}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% RESULT HIGHLIGHTING
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{xcolor}
+\usepackage{bm}
+
+% Colors for result arrows
+\definecolor{pastelgreen}{RGB}{50,205,50}
+
+% Arrows for showing improvement/decline in results
+\newcommand{\increase}{\textcolor{pastelgreen}{\bm{$\uparrow$}}}
+\newcommand{\decrease}{\textcolor{red}{\bm{$\downarrow$}}}
+
+% Phantom star for alignment in tables (use where no significance marker needed)
+\newcommand{\pstar}{\phantom{*}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% HIGHLIGHT BOXES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Background colors for highlight boxes
+\definecolor{aigold}{RGB}{244,210,1}
+\definecolor{aigreen}{RGB}{213,245,227}
+\definecolor{humanpurple}{RGB}{235,222,240}
+\definecolor{aired}{RGB}{255,180,181}
+\definecolor{mypurple}{RGB}{147,112,219}
+\definecolor{myorange}{RGB}{255,165,0}
+\definecolor{commentgray}{RGB}{86,101,115}
+\definecolor{mygray}{RGB}{169,169,169}
+
+% Highlight boxes for examples, quotes, etc.
+\newcommand{\lightgreen}[1]{\fcolorbox{aigreen}{aigreen}{\parbox{\linewidth}{#1}}}
+\newcommand{\lightred}[1]{\colorbox{aired}{\parbox{\linewidth}{#1}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ALGORITHM STYLING
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Comment style for algorithms (triangleright marker)
+\newcommand{\rightcomment}[1]{\(\triangleright\) {\small \it #1}}
+
+% Equation comments
+\newcommand{\eqcomment}[1]{\addtocounter{equation}{1}\tag*{\rightcomment{#1}\quad(\theequation)}}
+
+% Algorithm formatting (requires algorithm and algpseudocode packages)
+% \usepackage{algorithm}
+% \usepackage[noend]{algpseudocode}
+
+% Customize algorithm appearance
+\renewcommand{\algorithmicindent}{9pt}
+% \renewcommand\algorithmicdo{:}
+% \renewcommand\algorithmicthen{:}
+
+% Algorithm input/output
+% \algnewcommand\algorithmicinput{{\bfseries Input:}}
+% \algnewcommand\INPUT{\item[\algorithmicinput]}
+% \algnewcommand\algorithmicoutput{{\bfseries Output:}}
+% \algnewcommand\OUTPUT{\item[\algorithmicoutput]}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CODE LISTINGS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{listings}
+
+\definecolor{codepurple}{RGB}{128,0,128}
+
+\lstdefinestyle{datalogstyle}{
+    basicstyle={\tt \scriptsize},
+    xleftmargin={6pt},
+    xrightmargin={6pt},
+    columns=flexible,
+    breakindent=0pt,
+    breaklines=true,
+    frame=tb,
+    stepnumber=1,
+    firstnumber=1,
+    numberfirstline=true,
+    tabsize=2,
+    extendedchars=true,
+    columns=fullflexible,
+    keepspaces=true,
+    escapeinside={@}{@},
+    captionpos=b,
+    commentstyle=\color{black!65},
+    numberstyle=\tiny\color{black!65},
+    stringstyle=\color{codepurple},
+    breakatwhitespace=false,
+    mathescape=true,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    aboveskip={0.8\baselineskip},
+    belowskip={0.2\baselineskip},
+}
+\lstset{style=datalogstyle}
+
+% Rename listings to "Example"
+\renewcommand{\lstlistingname}{Example}
+
+% Vertical dots for code continuation
+\newcommand{\progvdots}{\\[-4pt]$\vdots$}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% AUTHOR COMMENT SYSTEM
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Toggle to hide/show comments (uncomment \hidecommentstrue to hide)
+\newif\ifhidecomments
+% \hidecommentstrue
+
+% Define author comments (add your own authors here)
+% Each author gets a unique color
+\ifhidecomments
+    % Hidden mode - comments are invisible
+    \newcommand{\authorone}[1]{}
+    \newcommand{\authortwo}[1]{}
+    \newcommand{\authorthree}[1]{}
+\else
+    % Visible mode - comments shown in color
+    \newcommand{\authorone}[1]{\textcolor{blue}{[\textsc{AuthorOne}: #1]}}
+    \newcommand{\authortwo}[1]{\textcolor{green!70!blue}{[\textsc{AuthorTwo}: #1]}}
+    \newcommand{\authorthree}[1]{\textcolor{magenta!80!brown}{[\textsc{AuthorThree}: #1]}}
+\fi
+
+% Generic fixme/todo command
+\newcommand{\fixme}[1]{\textcolor{red}{[FIXME: #1]}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SPACING CONFIGURATION
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Tight spacing for figures and tables (adjust as needed)
+% \captionsetup[subfigure]{aboveskip=2pt,belowskip=2pt}
+% \captionsetup[table]{aboveskip=4pt,belowskip=4pt}
+% \captionsetup[figure]{aboveskip=4pt,belowskip=4pt}
+% \setlength{\dbltextfloatsep}{11pt}
+% \setlength{\dblfloatsep}{11pt}
+% \setlength{\floatsep}{11pt}
+% \setlength{\textfloatsep}{11pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MISCELLANEOUS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Ordinals
+\renewcommand{\th}{\textsuperscript{th}\xspace}
+
+% Special tokens
+\newcommand{\bos}{\textsc{bos}\xspace}
+\newcommand{\eos}{\textsc{eos}\xspace}
+
+% Inverse notation
+\newcommand{\inv}[1]{#1^{\scriptscriptstyle-\!1}}

@@ -1,0 +1,1 @@
+This folder is for storing examples of previous papers, to guide the paper-writer for consistent style, formatting, etc.
