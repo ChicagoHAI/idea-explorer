@@ -467,12 +467,6 @@ class ResearchRunner:
             raise
 
         finally:
-            # Organize outputs (skip for GitHub repos, files already in place)
-            if not self.use_github:
-                print()
-                print("📦 Organizing outputs...")
-                self._organize_outputs(work_dir)
-
             # Commit and push to GitHub if enabled
             if self.use_github and self.github_manager:
                 try:
@@ -545,40 +539,29 @@ https://github.com/ChicagoHAI/idea-explorer
                     shutil.copytree(skill_dir, dst_skill_dir)
             print(f"   Copied Claude Code skills to .claude/skills/")
 
-    def _organize_outputs(self, run_dir: Path):
-        """
-        Organize research outputs into appropriate directories.
+        # Copy skills to .gemini/skills/ for Gemini support
+        gemini_skills_dst = work_dir / ".gemini" / "skills"
+        if skills_src.exists():
+            gemini_skills_dst.mkdir(parents=True, exist_ok=True)
+            for skill_dir in skills_src.iterdir():
+                if skill_dir.is_dir():
+                    dst_skill_dir = gemini_skills_dst / skill_dir.name
+                    if dst_skill_dir.exists():
+                        shutil.rmtree(dst_skill_dir)
+                    shutil.copytree(skill_dir, dst_skill_dir)
+            print(f"   Copied skills to .gemini/skills/")
 
-        Args:
-            run_dir: Run directory path
-        """
-        # Move notebooks from main notebooks/ directory to run
-        main_notebooks_dir = self.project_root / "notebooks"
-        if main_notebooks_dir.exists():
-            # Find notebooks created during this run
-            # (Simple approach: move all recent notebooks)
-            for notebook in main_notebooks_dir.glob("*.ipynb"):
-                dest = run_dir / "notebooks" / notebook.name
-                if not dest.exists():
-                    notebook.rename(dest)
-                    print(f"   Moved: {notebook.name}")
-
-        # Move results files
-        results_patterns = [
-            "*.json", "*.csv", "*.png", "*.jpg", "*.pdf"
-        ]
-        for pattern in results_patterns:
-            for result_file in self.project_root.glob(pattern):
-                if "runs" not in str(result_file) and "venv" not in str(result_file):
-                    dest = run_dir / "results" / result_file.name
-                    if not dest.exists():
-                        try:
-                            result_file.rename(dest)
-                            print(f"   Moved: {result_file.name}")
-                        except:
-                            pass  # File might be in use
-
-        print("   ✓ Outputs organized")
+        # Copy skills to .codex/skills/ for Codex support
+        codex_skills_dst = work_dir / ".codex" / "skills"
+        if skills_src.exists():
+            codex_skills_dst.mkdir(parents=True, exist_ok=True)
+            for skill_dir in skills_src.iterdir():
+                if skill_dir.is_dir():
+                    dst_skill_dir = codex_skills_dst / skill_dir.name
+                    if dst_skill_dir.exists():
+                        shutil.rmtree(dst_skill_dir)
+                    shutil.copytree(skill_dir, dst_skill_dir)
+            print(f"   Copied skills to .codex/skills/")
 
     def _finalize_research(self, idea_id: str, work_dir: Path, github_url: Optional[str],
                           title: str, provider: str, success: bool):
@@ -593,12 +576,6 @@ https://github.com/ChicagoHAI/idea-explorer
             provider: AI provider used
             success: Whether research succeeded
         """
-        # Organize outputs (skip for GitHub repos, files already in place)
-        if not self.use_github:
-            print()
-            print("📦 Organizing outputs...")
-            self._organize_outputs(work_dir)
-
         # Commit and push to GitHub if enabled
         if self.use_github and self.github_manager:
             try:
