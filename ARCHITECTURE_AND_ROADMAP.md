@@ -250,6 +250,7 @@ Final workspace structure:
 ```
 workspace/<repo-name>/
 ├── .idea-explorer/idea.yaml      # Original idea spec
+├── .claude/skills/               # Claude Code skills (paper-finder, etc.)
 ├── papers/                       # Downloaded papers
 ├── datasets/                     # Downloaded datasets
 ├── code/                         # Cloned repositories
@@ -290,6 +291,12 @@ templates/
 │   ├── machine_learning/core.txt
 │   ├── data_science/core.txt
 │   └── ...
+│
+├── skills/                         # Claude Code skills (copied to .claude/skills/ in workspaces)
+│   ├── paper-finder/               # Paper search with scripts/find_papers.py
+│   ├── literature-review/          # Systematic lit review workflow
+│   ├── citation-manager/           # BibTeX management
+│   └── ... (10 skills total)
 │
 ├── evaluation/                     # Critic/review prompts
 │   ├── code_quality.txt
@@ -364,6 +371,7 @@ To modify agent behavior, edit the corresponding template file:
 | Resource finding behavior | `templates/agents/resource_finder.txt` |
 | Research methodology | `templates/base/researcher.txt` |
 | Domain-specific guidance | `templates/domains/<domain>/core.txt` |
+| Claude Code skills | `templates/skills/<skill-name>/SKILL.md` |
 | LaTeX paper style | `templates/paper_styles/<style>/` |
 
 Templates use Jinja2 syntax for variable interpolation (e.g., `{{ prompt }}`, `{{ work_dir }}`).

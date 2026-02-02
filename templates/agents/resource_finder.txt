@@ -57,7 +57,13 @@ Academic PDFs are LARGE (50-100KB per paper when converted to text). To avoid
    a) Check file size:
       ls -lh papers/paper.pdf  # If >500KB, use chunked reading
 
-   b) For large papers (>500KB or >10 pages), use this Python chunked approach:
+   b) For large papers (>500KB or >10 pages), use the PDF chunker script:
+      ```bash
+      python .claude/skills/paper-finder/scripts/pdf_chunker.py papers/paper.pdf
+      ```
+      This creates chunk files (e.g., paper_chunk_001.txt) and a manifest.
+
+      Alternatively, use this inline Python approach:
       ```python
       import pdfplumber
       with pdfplumber.open("papers/paper.pdf") as pdf:
@@ -140,10 +146,10 @@ For quality literature review and proper academic citations, ALWAYS try the
 paper-finder service first. It provides relevance-ranked results that manual
 search cannot match.
 
-    python scripts/find_papers.py "your research topic"
+    python .claude/skills/paper-finder/scripts/find_papers.py "your research topic"
 
 Example:
-    python scripts/find_papers.py "hypothesis generation with large language models"
+    python .claude/skills/paper-finder/scripts/find_papers.py "hypothesis generation with large language models"
 
 Options:
     --mode fast      Quick search (~30 seconds, default)

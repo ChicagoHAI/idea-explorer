@@ -3,11 +3,11 @@
 Paper Finder Helper Script
 
 Calls the paper-finder API if available, otherwise returns graceful fallback.
-This script is copied to workspace/scripts/ and called by agents.
+This script lives in .claude/skills/paper-finder/scripts/ when copied to workspaces.
 
 Usage:
-    python scripts/find_papers.py "query about papers"
-    python scripts/find_papers.py "query" --mode diligent
+    python .claude/skills/paper-finder/scripts/find_papers.py "query about papers"
+    python .claude/skills/paper-finder/scripts/find_papers.py "query" --mode diligent
 """
 
 import sys
