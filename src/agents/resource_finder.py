@@ -47,6 +47,9 @@ def generate_resource_finder_prompt(idea: Dict[str, Any], templates_dir: Path) -
     """
     Generate the resource finder prompt by combining the template with idea specification.
 
+    This is a convenience wrapper that uses PromptGenerator internally.
+    The actual template is stored in templates/agents/resource_finder.txt.
+
     Args:
         idea: Full idea specification (YAML dict)
         templates_dir: Path to templates directory
@@ -54,91 +57,11 @@ def generate_resource_finder_prompt(idea: Dict[str, Any], templates_dir: Path) -
     Returns:
         Complete prompt string for resource finder agent
     """
-    idea_spec = idea.get('idea', {})
+    from templates.prompt_generator import PromptGenerator
 
-    # Load resource finder template
-    template_path = templates_dir / "agents" / "resource_finder.txt"
-    with open(template_path, 'r') as f:
-        template = f.read()
-
-    # Extract key information from idea
-    title = idea_spec.get('title', 'Untitled Research')
-    hypothesis = idea_spec.get('hypothesis', '')
-    domain = idea_spec.get('domain', 'general')
-    background = idea_spec.get('background', {})
-    constraints = idea_spec.get('constraints', {})
-
-    # Build research context section
-    research_context = f"""
-═══════════════════════════════════════════════════════════════════════════════
-                         RESEARCH TOPIC SPECIFICATION
-═══════════════════════════════════════════════════════════════════════════════
-
-RESEARCH TITLE:
-{title}
-
-RESEARCH HYPOTHESIS:
-{hypothesis}
-
-RESEARCH DOMAIN:
-{domain}
-"""
-
-    # Add background information if provided
-    if background:
-        research_context += "\nBACKGROUND INFORMATION:\n"
-
-        if 'context' in background:
-            research_context += f"\nContext:\n{background['context']}\n"
-
-        if 'papers' in background and background['papers']:
-            research_context += "\nRelevant papers mentioned:\n"
-            for paper in background['papers']:
-                if isinstance(paper, dict):
-                    research_context += f"- {paper.get('title', 'Unknown')}"
-                    if 'url' in paper:
-                        research_context += f" ({paper['url']})"
-                    research_context += "\n"
-                else:
-                    research_context += f"- {paper}\n"
-
-        if 'datasets' in background and background['datasets']:
-            research_context += "\nRelevant datasets mentioned:\n"
-            for dataset in background['datasets']:
-                if isinstance(dataset, dict):
-                    research_context += f"- {dataset.get('name', 'Unknown')}"
-                    if 'source' in dataset:
-                        research_context += f" (from: {dataset['source']})"
-                    research_context += "\n"
-                else:
-                    research_context += f"- {dataset}\n"
-
-        if 'related_work' in background:
-            research_context += f"\nRelated work:\n{background['related_work']}\n"
-
-    # Add constraints if provided
-    if constraints:
-        research_context += "\nCONSTRAINTS AND REQUIREMENTS:\n"
-
-        if 'computational' in constraints:
-            research_context += f"Computational: {constraints['computational']}\n"
-
-        if 'time' in constraints:
-            research_context += f"Time: {constraints['time']}\n"
-
-        if 'budget' in constraints:
-            research_context += f"Budget: {constraints['budget']}\n"
-
-        if 'other' in constraints:
-            research_context += f"Other: {constraints['other']}\n"
-
-    research_context += "\n" + "="*79 + "\n"
-
-    # Combine template with research context
-    # Insert research context before the main template content
-    full_prompt = research_context + "\n" + template
-
-    return full_prompt
+    # templates_dir is typically project_root/templates, so parent is project_root
+    generator = PromptGenerator(templates_dir)
+    return generator.generate_resource_finder_prompt(idea)
 
 
 def run_resource_finder(

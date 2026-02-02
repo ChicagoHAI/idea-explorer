@@ -392,6 +392,246 @@ Location: {run_dir}
 
         return "\n".join(lines)
 
+    def generate_paper_writer_prompt(self, work_dir: Path, style: str = "neurips") -> str:
+        """
+        Generate paper writer prompt from template.
+
+        Args:
+            work_dir: Workspace directory with experiment results
+            style: Paper style (neurips, icml, acl)
+
+        Returns:
+            Complete prompt string for paper writing
+        """
+        # Load template
+        template = self.load_template('agents/paper_writer.txt')
+
+        # Load experiment results
+        report_content = ""
+        planning_content = ""
+        lit_review_content = ""
+
+        report_path = work_dir / "REPORT.md"
+        planning_path = work_dir / "planning.md"
+        lit_review_path = work_dir / "literature_review.md"
+
+        if report_path.exists():
+            report_content = report_path.read_text()
+        else:
+            report_content = "No REPORT.md found"
+
+        if planning_path.exists():
+            planning_content = planning_path.read_text()
+        else:
+            planning_content = "No planning.md found"
+
+        if lit_review_path.exists():
+            lit_review_content = lit_review_path.read_text()
+        else:
+            lit_review_content = "No literature_review.md found"
+
+        # Prepare variables
+        variables = {
+            'style': style.upper(),
+            'report_content': report_content,
+            'planning_content': planning_content,
+            'lit_review_content': lit_review_content,
+        }
+
+        return self.render_template(template, variables)
+
+    def generate_session_instructions(self, prompt: str, work_dir: str, use_scribe: bool = False) -> str:
+        """
+        Generate session instructions from template.
+
+        Args:
+            prompt: The research task prompt (from generate_research_prompt)
+            work_dir: Working directory path for the research
+            use_scribe: If True, include notebook instructions; if False, use Python scripts
+
+        Returns:
+            Complete session instructions string
+        """
+        # Load template
+        template = self.load_template('agents/session_instructions.txt')
+
+        # Extract user instructions
+        user_instructions = self._extract_user_instructions(prompt)
+
+        # Build priority section
+        priority_section = ""
+        if user_instructions:
+            priority_section = f'''
+════════════════════════════════════════════════════════════════════════════════
+⚠️  HIGHEST PRIORITY: USER-PROVIDED INSTRUCTIONS
+════════════════════════════════════════════════════════════════════════════════
+
+The idea submitter has provided SPECIFIC INSTRUCTIONS that MUST take precedence
+over the general research workflow. Read carefully and follow these:
+
+{user_instructions}
+
+────────────────────────────────────────────────────────────────────────────────
+IMPORTANT: The above instructions from the user have HIGHER PRIORITY than the
+general workflow steps below. If there is any conflict between user instructions
+and the general workflow, ALWAYS follow the user's instructions.
+────────────────────────────────────────────────────────────────────────────────
+
+'''
+
+        # Code workflow instructions depend on whether we're using notebooks or scripts
+        if use_scribe:
+            session_start = "Start a new session for research execution."
+            code_workflow = "✓ Use Jupyter notebooks as needed for experiments and analysis"
+            code_reminder = "- Use Jupyter notebooks for experiments and analysis (saved in notebooks/ directory)"
+        else:
+            session_start = "Begin research execution."
+            code_workflow = "✓ Write Python scripts in src/ directory for experiments and analysis"
+            code_reminder = "- Write Python scripts (.py) in src/ for experiments (NOT Jupyter notebooks)"
+
+        # Prepare variables
+        variables = {
+            'session_start': session_start,
+            'priority_section': priority_section,
+            'code_workflow': code_workflow,
+            'code_reminder': code_reminder,
+            'prompt': prompt,
+            'work_dir': work_dir,
+        }
+
+        return self.render_template(template, variables)
+
+    def _extract_user_instructions(self, prompt: str) -> str:
+        """
+        Extract user-provided instructions from the prompt.
+
+        Looks for content in the "User-Provided Instructions and Context" section
+        or any content marked with >>> <<< delimiters.
+
+        Args:
+            prompt: The research task prompt
+
+        Returns:
+            Extracted user instructions, or empty string if none found
+        """
+        import re
+
+        # Look for explicitly marked user instructions section
+        pattern = r'###\s*User-Provided Instructions and Context:\s*\n>>>\s*(.*?)\s*<<<'
+        match = re.search(pattern, prompt, re.DOTALL | re.IGNORECASE)
+        if match:
+            instructions = match.group(1).strip()
+            # Only return if there's substantial content (not just whitespace)
+            if instructions and len(instructions) > 20:
+                return instructions
+
+        # Also check for description content that looks like instructions
+        # (contains action words like "run", "test", "implement", "use", etc.)
+        desc_pattern = r'description:\s*["\']?(.*?)["\']?\s*(?:\n|$)'
+        desc_match = re.search(desc_pattern, prompt, re.DOTALL | re.IGNORECASE)
+        if desc_match:
+            desc = desc_match.group(1).strip()
+            # Check if description contains actionable instructions
+            action_words = ['run', 'test', 'implement', 'use', 'focus', 'try', 'ensure', 'make sure', 'should', 'must']
+            if any(word in desc.lower() for word in action_words) and len(desc) > 50:
+                return desc
+
+        return ""
+
+    def generate_resource_finder_prompt(self, idea: Dict[str, Any]) -> str:
+        """
+        Generate resource finder prompt from template.
+
+        Args:
+            idea: Full idea specification (YAML dict)
+
+        Returns:
+            Complete prompt string for resource finder agent
+        """
+        # Load template
+        template = self.load_template('agents/resource_finder.txt')
+
+        idea_spec = idea.get('idea', {})
+
+        # Extract key information
+        title = idea_spec.get('title', 'Untitled Research')
+        hypothesis = idea_spec.get('hypothesis', '')
+        domain = idea_spec.get('domain', 'general')
+        background = idea_spec.get('background', {})
+        constraints = idea_spec.get('constraints', {})
+
+        # Build research context section
+        research_context = f"""
+═══════════════════════════════════════════════════════════════════════════════
+                         RESEARCH TOPIC SPECIFICATION
+═══════════════════════════════════════════════════════════════════════════════
+
+RESEARCH TITLE:
+{title}
+
+RESEARCH HYPOTHESIS:
+{hypothesis}
+
+RESEARCH DOMAIN:
+{domain}
+"""
+
+        # Add background information if provided
+        if background:
+            research_context += "\nBACKGROUND INFORMATION:\n"
+
+            if 'context' in background:
+                research_context += f"\nContext:\n{background['context']}\n"
+
+            if 'papers' in background and background['papers']:
+                research_context += "\nRelevant papers mentioned:\n"
+                for paper in background['papers']:
+                    if isinstance(paper, dict):
+                        research_context += f"- {paper.get('title', 'Unknown')}"
+                        if 'url' in paper:
+                            research_context += f" ({paper['url']})"
+                        research_context += "\n"
+                    else:
+                        research_context += f"- {paper}\n"
+
+            if 'datasets' in background and background['datasets']:
+                research_context += "\nRelevant datasets mentioned:\n"
+                for dataset in background['datasets']:
+                    if isinstance(dataset, dict):
+                        research_context += f"- {dataset.get('name', 'Unknown')}"
+                        if 'source' in dataset:
+                            research_context += f" (from: {dataset['source']})"
+                        research_context += "\n"
+                    else:
+                        research_context += f"- {dataset}\n"
+
+            if 'related_work' in background:
+                research_context += f"\nRelated work:\n{background['related_work']}\n"
+
+        # Add constraints if provided
+        if constraints:
+            research_context += "\nCONSTRAINTS AND REQUIREMENTS:\n"
+
+            if 'computational' in constraints:
+                research_context += f"Computational: {constraints['computational']}\n"
+
+            if 'time' in constraints:
+                research_context += f"Time: {constraints['time']}\n"
+
+            if 'budget' in constraints:
+                research_context += f"Budget: {constraints['budget']}\n"
+
+            if 'other' in constraints:
+                research_context += f"Other: {constraints['other']}\n"
+
+        research_context += "\n" + "="*79 + "\n"
+
+        # Combine research context with template
+        # Insert research context before the main template content
+        full_prompt = research_context + "\n" + template
+
+        return full_prompt
+
 
 def main():
     """Test the prompt generator."""
