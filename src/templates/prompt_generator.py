@@ -683,6 +683,46 @@ RESEARCH DOMAIN:
 
         return full_prompt
 
+    def generate_comment_prompt(self, idea: Dict[str, Any], work_dir: Path) -> str:
+        """
+        Generate comment handler prompt from template.
+
+        This creates a lightweight prompt for making targeted improvements
+        to existing workspaces based on user comments/feedback.
+
+        Args:
+            idea: Full idea specification (YAML dict) with 'comments' field
+            work_dir: Working directory (existing workspace)
+
+        Returns:
+            Complete prompt string for comment handler agent
+        """
+        # Load template
+        template = self.load_template('agents/comment_handler.txt')
+
+        idea_spec = idea.get('idea', idea)
+
+        # Extract key information
+        title = idea_spec.get('title', 'Untitled Research')
+        domain = idea_spec.get('domain', '')
+        comments = idea_spec.get('comments', '')
+
+        # For comment mode, the comments ARE the user's instructions
+        # No need for separate priority section extraction
+        priority_section = ""
+
+        # Prepare variables for template
+        variables = {
+            'title': title,
+            'domain': domain,
+            'comments': comments,
+            'work_dir': str(work_dir),
+            'priority_section': priority_section
+        }
+
+        # Render template with variables
+        return self.render_template(template, variables)
+
 
 def main():
     """Test the prompt generator."""

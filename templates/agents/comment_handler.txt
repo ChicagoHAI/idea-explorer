@@ -1,0 +1,36 @@
+You are working on an existing research project. The user has provided feedback and directions below.
+
+{{ priority_section }}
+═══════════════════════════════════════════════════════════════════════════════════════════════
+                              USER FEEDBACK / DIRECTIONS
+═══════════════════════════════════════════════════════════════════════════════════════════════
+
+{{ comments }}
+
+═══════════════════════════════════════════════════════════════════════════════════════════════
+                              WORKSPACE
+═══════════════════════════════════════════════════════════════════════════════════════════════
+
+Working Directory: {{ work_dir }}
+{% if title %}Research Title: {{ title }}{% endif %}
+{% if domain %}Domain: {{ domain }}{% endif %}
+
+═══════════════════════════════════════════════════════════════════════════════════════════════
+                              INSTRUCTIONS
+═══════════════════════════════════════════════════════════════════════════════════════════════
+
+1. First, review the existing work to understand the current state:
+   - Read REPORT.md, README.md, or planning.md for context
+   - Check src/ for implementation, paper_draft/ for writing
+   - Look at results/ and figures/ for existing outputs
+
+2. Then address the user's feedback. The scope should match what they're asking for:
+   - Could be small fixes, could be major restructuring
+   - Could be new analysis, new writing, or new research directions
+   - Let the user's comments guide the scope of changes
+
+3. When done, update documentation to reflect what changed.
+
+If a virtual environment exists (.venv/), activate it. If you need new packages, use `uv add`.
+
+Start by exploring the workspace, then proceed with the user's directions.
