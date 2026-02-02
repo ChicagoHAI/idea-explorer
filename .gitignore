@@ -2,6 +2,9 @@
 ideas/*
 !ideas/examples/
 !ideas/schema.yaml
+temp/
+paper_examples/*
+!paper_examples/README.md
 
 # Environment variables
 .env

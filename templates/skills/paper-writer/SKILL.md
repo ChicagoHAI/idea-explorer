@@ -13,6 +13,28 @@ Guide for writing academic papers from experiment results using a two-stage proc
 - When explicitly asked to write a paper
 - When generating publication-ready documents
 
+## Before Writing - Required Steps
+
+**IMPORTANT**: Before writing any content, you MUST complete these steps:
+
+1. **Read the style guide**: Review `templates/paper_writing/lab_style_guide.md` for comprehensive formatting and language conventions
+
+2. **Study example papers**: Browse `paper_examples/` to understand our lab's style:
+   - **Language patterns**: Look at `sections/1.introduction.tex` or `sections/introduction.tex`
+   - **Table formatting**: Look at `tables/*.tex` files
+   - **Figure layouts**: Look at `figures/*.tex` files
+   - **Macro usage**: Look at `commands/*.tex` files
+
+3. **Copy command templates**: Use files from `templates/paper_writing/commands/` as your starting point:
+   - `math.tex` - Math notation macros
+   - `general.tex` - Formatting macros (`\para{}`, colors, etc.)
+   - `macros.tex` - Template for project-specific terms
+
+4. **CRITICAL**: Reference example papers for **FORMATTING and LANGUAGE STYLE only**
+   - Do NOT copy content, phrasing, or narrative structure
+   - The example papers are in different research domains
+   - Focus only on HOW things are formatted, not WHAT is written
+
 ## Two-Stage Writing Process
 
 ### Stage 1: Outline Development
@@ -127,17 +149,24 @@ Format:
 
 ## LaTeX Template
 
-The NeurIPS 2025 style files are available in the `paper/` directory.
+Style files (.sty, .bst) are copied to the `paper_draft/` directory. The exact preamble (package name, options, bibliography style) is specified in your prompt - follow it exactly.
 
+### Template Structure
 ```latex
-\documentclass[final]{neurips_2025}
+\documentclass{article}
+% Conference style package - USE THE EXACT LINE FROM YOUR PROMPT
+\usepackage{<style_package>}  % e.g., neurips_2025, icml2026, etc.
 
-% Essential packages
-\usepackage{booktabs}  % Better tables
+% Required packages - ALWAYS include these
+\usepackage[hidelinks]{hyperref}  % Clickable links (REQUIRED)
+\usepackage{booktabs}  % Better tables (REQUIRED)
 \usepackage{graphicx}  % Figures
 \usepackage{amsmath,amssymb}  % Math
-\usepackage{hyperref}  % Links
-\usepackage{algorithm2e}  % Algorithms
+
+% Import command files
+\input{commands/math}
+\input{commands/general}
+\input{commands/macros}
 
 \title{Clear Title That Conveys Main Contribution}
 
@@ -157,23 +186,8 @@ Your abstract here (150-250 words).
 \section{Introduction}
 ...
 
-\section{Related Work}
-...
-
-\section{Method}
-...
-
-\section{Experiments}
-...
-
-\section{Discussion}
-...
-
-\section{Conclusion}
-...
-
 \bibliography{references}
-\bibliographystyle{plainnat}
+\bibliographystyle{<bib_style>}  % Use the style from your prompt
 
 \end{document}
 ```
@@ -230,16 +244,73 @@ Ours & \textbf{82.1} {\scriptsize $\pm$ 0.2} & \textbf{79.4} {\scriptsize $\pm$ 
 - Use `\cite{key}` for parenthetical: "...as shown previously (Author et al., 2024)"
 - Use `\citet{key}` for textual: "Author et al. (2024) showed that..."
 
+## Lab Style Conventions
+
+### Quick Reference
+
+These are the key conventions from our lab's writing style. See `templates/paper_writing/lab_style_guide.md` for complete documentation.
+
+**Language:**
+- Active voice: "We propose", "We examine", "We focus on"
+- Clear and simple - prefer plain language over jargon
+- Bold questions as organizers: `{\bf what is hypothesis generation?}`
+- Specific quantitative claims: "8.97% over baselines"
+
+**Structure:**
+- Modular `commands/` directory with `math.tex`, `general.tex`, `macros.tex`
+- Import with `\input{commands/math}` etc.
+
+**Macros:**
+- Vectors: `\va`, `\vb`, ..., `\vz` (bold lowercase)
+- Matrices: `\mA`, `\mB`, ..., `\mZ` (bold uppercase)
+- References: `\figref{}`, `\Figref{}`, `\secref{}` (not raw `\ref{}`)
+- Method names: `\newcommand{\methodname}{\textsc{Name}\xspace}`
+
+**Tables:**
+- Always use `booktabs` (`\toprule`, `\midrule`, `\bottomrule`)
+- Use `\resizebox{\textwidth}{!}{...}` for wide tables
+- Use `@{}` at edges, `\cmidrule(lr){x-y}` for sub-headers
+- Bold best results
+
+**Hyperlinks (Required):**
+- Always use `\usepackage[hidelinks]{hyperref}`
+- All citations, refs must be clickable
+
+**Figures:**
+- Use `0.32\textwidth` for 3-column subfigures
+- Use `\input{figures/legend}` for shared legends
+- Self-contained captions
+
+**Contribution Lists:**
+```latex
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+    \item We propose...
+    \item We conduct...
+\end{itemize}
+```
+
 ## Output
 
-Save to `paper/` directory:
-- `main.tex`: Main document
-- `references.bib`: BibTeX citations
-- `figures/`: Figure files (PDF preferred)
+Save to `paper_draft/` directory with this structure:
+```
+paper_draft/
+├── main.tex              # Main document
+├── references.bib        # BibTeX citations
+├── commands/
+│   ├── math.tex          # Math notation macros
+│   ├── general.tex       # Formatting macros
+│   └── macros.tex        # Project-specific terms
+├── sections/
+│   ├── abstract.tex
+│   ├── introduction.tex
+│   └── ...
+├── figures/              # Figure files (PDF preferred)
+└── tables/               # Complex standalone tables
+```
 
 Compile with:
 ```bash
-cd paper && pdflatex main && bibtex main && pdflatex main && pdflatex main
+cd paper_draft && pdflatex main && bibtex main && pdflatex main && pdflatex main
 ```
 
 ## Quality Checklist

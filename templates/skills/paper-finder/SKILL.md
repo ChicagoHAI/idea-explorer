@@ -24,8 +24,8 @@ python .claude/skills/paper-finder/scripts/find_papers.py "your research topic"
 ```
 
 Options:
-- `--mode fast` (default): Quick search (~30 seconds)
-- `--mode diligent`: Thorough search (~3 minutes)
+- `--mode fast` (default): Quick search
+- `--mode diligent`: Thorough search (recommended for comprehensive review)
 - `--format json`: Output as JSON instead of text
 
 Example:
@@ -94,12 +94,12 @@ Use structured queries for better results:
 ### Phase 2: Abstract Screening
 - Read abstracts for included/maybe papers
 - Evaluate: relevance, methodology, findings
-- Goal: Identify ~10-20 key papers
+- Goal: Identify key papers for deeper reading
 
 ### Phase 3: Full-Text Review
 - Download and read full PDFs for key papers
 - Extract: methods, results, limitations, citations
-- Goal: 5-10 papers for detailed analysis
+- Use the PDF chunker for detailed reading (see below)
 
 ## Output Structure
 
@@ -120,12 +120,17 @@ Returns relevance-ranked papers with:
 
 ## Reading Large PDFs
 
-When reviewing many papers or dealing with context window limits, use the PDF chunker to preprocess papers into manageable chunks.
+Use the PDF chunker to split papers into smaller PDF files that can be read directly.
+This preserves all formatting perfectly (unlike text extraction which loses formatting).
 
-**When to use:**
-- Processing more than 3-5 papers in a session
-- Large papers (>20 pages) that exceed context limits
-- Phase 3 screening requiring detailed reading
+**Dependencies:**
+```bash
+# Using uv (recommended):
+uv add pypdf
+
+# Or with pip:
+pip install pypdf
+```
 
 **How to run:**
 
@@ -134,17 +139,19 @@ python .claude/skills/paper-finder/scripts/pdf_chunker.py <pdf_path>
 ```
 
 Options:
-- `--pages-per-chunk N`: Number of pages per chunk (default: 5)
-- `--output-dir DIR`: Output directory (default: `<pdf_dir>/chunks`)
+- `--pages-per-chunk N`: Number of pages per chunk (default: 1)
+- `--output-dir DIR`: Output directory (default: `<pdf_dir>/pages`)
 
 **Output:**
-- Creates chunk files: `<pdf_name>_chunk_001.txt`, `<pdf_name>_chunk_002.txt`, etc.
+- Creates PDF chunk files: `<pdf_name>_chunk_001.pdf`, `<pdf_name>_chunk_002.pdf`, etc.
 - Creates a manifest: `<pdf_name>_manifest.txt` listing all chunks with page ranges
 
 **Integration with screening workflow:**
-1. Run the chunker on high-relevance papers before detailed reading
-2. Read chunks incrementally, writing notes after each chunk
-3. Focus on Abstract (chunk 1), Methods (chunks 2-3), and Results sections
+1. Run the chunker on papers before detailed reading
+2. For abstract skimming: read only chunk 1 (page 1 or pages 1-3)
+3. For deep reading: read ALL chunk PDFs sequentially, writing notes after each
+4. Check the manifest to see how many chunks exist
+5. IMPORTANT: Do not skip chunks - methodology and results are in later chunks
 
 ## If Paper-Finder Service Not Running
 

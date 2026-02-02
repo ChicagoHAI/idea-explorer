@@ -45,76 +45,121 @@ For example:
 - Create literature_review.md → saves in workspace/literature_review.md
 
 ═══════════════════════════════════════════════════════════════════════════════
-                    IMPORTANT: CONTEXT WINDOW MANAGEMENT
+                    CRITICAL: ENVIRONMENT SETUP
 ═══════════════════════════════════════════════════════════════════════════════
 
-Academic PDFs are LARGE (50-100KB per paper when converted to text). To avoid
-"Prompt is too long" errors, follow these guidelines:
+You MUST create a fresh isolated environment for this project FIRST.
+DO NOT use the idea-explorer environment or any existing environment.
 
-0. PAPER LENGTH PRE-CHECK (MANDATORY):
-   Before reading ANY PDF, ALWAYS check its size first:
+REQUIRED STEPS (at the START of your session):
 
-   a) Check file size:
-      ls -lh papers/paper.pdf  # If >500KB, use chunked reading
+1. Create a fresh virtual environment using uv:
+   uv venv
 
-   b) For large papers (>500KB or >10 pages), use the PDF chunker script:
-      ```bash
-      python .claude/skills/paper-finder/scripts/pdf_chunker.py papers/paper.pdf
-      ```
-      This creates chunk files (e.g., paper_chunk_001.txt) and a manifest.
+2. Initialize project dependencies file:
+   Create pyproject.toml to manage dependencies in THIS workspace only:
 
-      Alternatively, use this inline Python approach:
-      ```python
-      import pdfplumber
-      with pdfplumber.open("papers/paper.pdf") as pdf:
-          total_pages = len(pdf.pages)
-          print(f"Paper has {total_pages} pages")
+   cat > pyproject.toml << 'EOF'
+   [project]
+   name = "research-workspace"
+   version = "0.1.0"
+   description = "Research workspace for experiments"
+   requires-python = ">=3.10"
+   dependencies = []
 
-          # Read in chunks of 3 pages max
-          for i in range(0, min(total_pages, 9), 3):
-              chunk_text = ""
-              for page in pdf.pages[i:i+3]:
-                  chunk_text += (page.extract_text() or "") + "\n"
-              # Process chunk, write notes immediately
-              print(f"--- Pages {i+1}-{min(i+3, total_pages)} ---")
-              print(chunk_text[:2000])  # Preview chunk
-              # Write notes for this chunk before reading more
-              # Then clear chunk_text before next iteration
-      ```
+   [build-system]
+   requires = ["hatchling"]
+   build-backend = "hatchling.build"
+   EOF
 
-   c) NEVER read more than 3 pages at once
-   d) Write notes to literature_review.md after EACH chunk
-   e) Focus on: Abstract (p1), Introduction (p1-2), Methods (p3-5), Results (p5-7)
+   CRITICAL: This ensures uv won't search parent directories for pyproject.toml
+   and contaminate the idea-explorer environment!
 
-1. PROCESS PAPERS ONE AT A TIME:
-   - Read one paper (using chunked reading for large papers)
-   - Write notes to literature_review.md
-   - THEN move to the next paper
-   - Do NOT accumulate multiple papers' content before writing notes
+3. Activate the environment:
+   source .venv/bin/activate
 
-2. READ SELECTIVELY:
-   - Focus on abstract, introduction, methods, and results sections
-   - Skip appendices, references, and supplementary material
-   - For PDFs, prefer extracting specific pages rather than full document
-   - Example with pdfplumber (for small papers only):
-     ```python
-     import pdfplumber
-     with pdfplumber.open("papers/paper.pdf") as pdf:
-         # Read only first 5 pages (abstract through methods)
-         text = ""
-         for page in pdf.pages[:5]:
-             text += (page.extract_text() or "") + "\n"
-         print(text)
-     ```
+4. For any package installations, use this priority order:
 
-3. WRITE NOTES IMMEDIATELY:
-   - After reading each paper, write findings to literature_review.md
-   - Include enough detail that you (or experiment runner) rarely need to re-read
-   - Good notes: methodology, datasets, baselines, key results, code links
+   FIRST CHOICE - uv add (manages pyproject.toml automatically):
+   uv add <package-name>
 
-4. USE APIs WHEN POSSIBLE:
-   - ArXiv API and Semantic Scholar provide abstracts without reading PDFs
-   - Abstracts are often sufficient for literature review purposes
+   Examples:
+   - uv add pypdf          # For PDF chunking
+   - uv add requests       # For downloading papers
+   - uv add arxiv          # For arXiv API
+
+   SECOND CHOICE - if uv add doesn't work:
+   uv pip install <package-name>
+
+   LAST RESORT - if uv fails entirely:
+   pip install <package-name>
+
+   NEVER use conda or conda install!
+
+WHY THIS MATTERS:
+- The experiment runner phase runs AFTER you and will use this same venv
+- Without an isolated environment, you could pollute the idea-explorer installation
+- The pyproject.toml prevents uv from modifying parent directories
+- Dependencies you install will be documented automatically
+
+═══════════════════════════════════════════════════════════════════════════════
+                    IMPORTANT: PDF READING WITH CHUNKER
+═══════════════════════════════════════════════════════════════════════════════
+
+Use the PDF chunker to split papers into smaller PDF files that you can read
+directly. This preserves all formatting perfectly (unlike text extraction).
+
+DEPENDENCIES:
+─────────────────────────────────────────────────────────────────────────────
+The chunker requires pypdf. Install it in your activated environment:
+  uv add pypdf
+
+STEP 1: SPLIT PDF INTO CHUNKS
+─────────────────────────────────────────────────────────────────────────────
+
+For papers you want to read in detail, run the chunker:
+```bash
+python .claude/skills/paper-finder/scripts/pdf_chunker.py papers/paper.pdf
+```
+
+Options:
+- `--pages-per-chunk N`: Pages per chunk (default: 1, use 3 for faster reading)
+- `--output-dir DIR`: Output directory (default: papers/pages/)
+
+This creates:
+- PDF chunk files: papers/pages/paper_chunk_001.pdf, paper_chunk_002.pdf, etc.
+- Manifest file: papers/pages/paper_manifest.txt (shows page ranges per chunk)
+
+STEP 2: READ CHUNK PDFs BASED ON YOUR GOAL
+─────────────────────────────────────────────────────────────────────────────
+
+FOR ABSTRACT SKIMMING (all papers):
+- Read ONLY chunk 1 (page 1 or pages 1-3 depending on chunk size)
+- This is sufficient for initial assessment of relevance
+
+FOR DEEP READING (user-specified papers and highly relevant ones):
+- You MUST read ALL chunk PDFs, not just the first one
+- Read chunk 1 PDF, write notes, then chunk 2 PDF, write notes, etc.
+- Do NOT skip chunks - the methodology and results are in later chunks
+- Check the manifest to know how many chunks exist
+
+CRITICAL: When asked to do deep reading, you MUST read EVERY chunk PDF.
+Skipping chunks means missing important methodology and results.
+
+STEP 3: WRITE NOTES IMMEDIATELY
+─────────────────────────────────────────────────────────────────────────────
+
+After reading each chunk PDF:
+- Write findings to literature_review.md immediately
+- Include: methodology, datasets, baselines, key results, code links
+- Good notes mean you (or experiment runner) rarely need to re-read
+
+STEP 4: USE APIs FOR ABSTRACTS WHEN AVAILABLE
+─────────────────────────────────────────────────────────────────────────────
+
+- Paper-finder already provides abstracts in its output
+- ArXiv API and Semantic Scholar also provide abstracts
+- Use these for initial screening before deciding which papers need deep reading
 
 ═══════════════════════════════════════════════════════════════════════════════
                      RESOURCE FINDER METHODOLOGY
@@ -152,8 +197,8 @@ Example:
     python .claude/skills/paper-finder/scripts/find_papers.py "hypothesis generation with large language models"
 
 Options:
-    --mode fast      Quick search (~30 seconds, default)
-    --mode diligent  Thorough search (~3 minutes, recommended for comprehensive review)
+    --mode fast      Quick search (default)
+    --mode diligent  Thorough search (recommended for comprehensive review)
 
 The script returns relevance-ranked papers with:
 - Title, authors, year, citations
@@ -208,7 +253,7 @@ Search multiple sources:
   - Good for finding seminal/classic papers
   - Check citation counts
 
-TARGET: Find 5-10 highly relevant papers
+TARGET: Download all relevant papers returned by paper-finder
 FOCUS ON:
 - Recent work (last 2-3 years) for state-of-the-art
 - Highly cited papers for foundations
@@ -263,9 +308,28 @@ TOOLS FOR PDF EXTRACTION:
 
 IMPORTANT: Don't get stuck on full paper analysis!
 - Focus on abstract, methods, and results sections
-- Spend ~5-10 min per paper maximum
 - Quick extraction is better than perfect comprehension
 - Goal is to gather useful context, not become an expert
+
+DEEP READING STRATEGY FOR KEY PAPERS
+─────────────────────────────────────────────────────────────────────────────
+
+For papers directly mentioned in the research specification:
+- Read MORE than abstract/intro - understand the methodology in detail
+- Note specific techniques, algorithms, and their limitations
+- Identify what problems are solved vs. what remains challenging
+- Document exact baselines they compare against
+- Note any code/tools they release or reference
+
+This deeper reading is essential for:
+- Understanding what has already been tried
+- Avoiding redundant experiments
+- Building on proven approaches
+- Identifying true research gaps
+
+For papers you discover through search (not explicitly mentioned):
+- The standard quick review process above is fine
+- Focus on relevance to the research hypothesis
 
 ═══════════════════════════════════════════════════════════════════════════════
                          PHASE 2: DATASET SEARCH
@@ -318,7 +382,7 @@ Check these sources in order:
   - For RL: OpenAI Gym environments
   - For medical: MIMIC, PhysioNet
 
-TARGET: Find 1-3 suitable datasets
+TARGET: Find suitable datasets for the research task
 PREFER: Established benchmarks over custom data
 
 STEP 3: Download and Validate Datasets
@@ -467,6 +531,49 @@ Full analysis happens in the experiment runner phase.
                       PHASE 3: CODE REPOSITORY SEARCH
 ═══════════════════════════════════════════════════════════════════════════════
 
+═══════════════════════════════════════════════════════════════════════════════
+                PRIORITY: USER-SPECIFIED RESOURCES
+═══════════════════════════════════════════════════════════════════════════════
+
+CRITICAL: If the research topic specification includes explicit code_references,
+papers, or datasets, these MUST be downloaded FIRST before searching for others.
+
+User-specified resources have highest priority because:
+1. The research author has identified these as directly relevant
+2. They may contain approaches or baselines essential to the research
+3. Failing to use them may result in reinventing existing solutions
+
+For each user-specified repository:
+1. Clone to code/ directory immediately
+2. Read the README.md thoroughly
+3. Identify key functionality and how it relates to the research
+4. Document in resources.md what the repo provides
+5. Note any dependencies or requirements for experiment runner
+
+Do NOT skip user-specified resources even if you find similar alternatives.
+
+───────────────────────────────────────────────────────────────────────────────
+
+STEP 0: Clone User-Specified Repositories FIRST
+─────────────────────────────────────────────────────────────────────────────
+
+Before searching for additional repositories, clone ALL repositories listed
+in the research topic specification's code_references section.
+
+For each:
+1. git clone <repo-url> code/<descriptive-name>
+2. Read README.md and identify:
+   - What problem it solves
+   - How it could be used for our research
+   - Installation requirements
+   - Key scripts or entry points
+3. Document findings in code/README.md
+4. Add notes to literature_review.md about the tool's capabilities
+
+ONLY AFTER cloning all specified repositories, search for additional ones.
+
+───────────────────────────────────────────────────────────────────────────────
+
 STEP 1: Identify Needed Code Resources
 ─────────────────────────────────────────────────────────────────────────────
 
@@ -518,8 +625,39 @@ For each useful repository:
    - Note any special requirements
    - Identify key entry points (main scripts)
 
-Don't install dependencies or run code yet!
-That happens in the experiment runner phase.
+STEP 4: Test User-Specified Tools (When Feasible)
+─────────────────────────────────────────────────────────────────────────────
+
+For repositories specified in code_references, attempt to understand them deeply:
+
+1. Read installation instructions (README, INSTALL, setup.py, pyproject.toml)
+2. Check if there are example scripts or tutorials
+3. If feasible, try to run a simple example:
+   - Create isolated environment if needed (don't pollute main workspace)
+   - Install minimal dependencies
+   - Run a basic example or test
+   - Document what the tool does and how it works
+
+4. If running fails (missing dependencies, GPU requirements, etc.):
+   - Document the blockers
+   - Still extract what you can from code inspection
+   - Note requirements for experiment runner phase
+
+5. In code/README.md, document:
+   - Tool purpose and capabilities
+   - Installation requirements discovered
+   - Example usage (if successfully tested)
+   - Potential application to our research hypothesis
+   - Any limitations or issues encountered
+
+WHY THIS MATTERS:
+- Understanding a tool's actual capabilities prevents reinventing solutions
+- Early testing identifies blockers before experiment runner phase
+- Hands-on exploration yields insights that reading docs alone cannot
+
+NOTE: For repositories discovered through search (not explicitly specified by user),
+quick validation (Step 3) is sufficient. Deep testing is primarily for user-specified
+code_references.
 
 ═══════════════════════════════════════════════════════════════════════════════
                       PHASE 4: SYNTHESIS AND DOCUMENTATION
@@ -698,26 +836,32 @@ This file signals to the pipeline orchestrator that the resource finding phase i
 ✓ DO: Use established benchmarks when available
 ✓ DO: Keep documentation concise and actionable
 
-✗ DON'T: Spend too long on literature review (2-3 hours max total)
+✗ DON'T: Skip user-specified resources in favor of alternatives you find
 ✗ DON'T: Download massive datasets without checking size first
 ✗ DON'T: Clone entire repositories if you only need specific files
 ✗ DON'T: Get stuck trying to find perfect resources - good enough is fine
 ✗ DON'T: Forget to create the completion marker file
 
 ═══════════════════════════════════════════════════════════════════════════════
-                         TIME BUDGET GUIDANCE
+                         QUALITY OVER SPEED
 ═══════════════════════════════════════════════════════════════════════════════
 
-Recommended time allocation:
-- Literature search and download: 30-45 min
-- Paper review and synthesis: 30-45 min
-- Dataset search and download: 30-45 min
-- Code repository search and cloning: 15-30 min
-- Documentation (literature_review.md, resources.md): 30-45 min
+Focus on thoroughness and quality, not speed:
+- Download all papers returned by paper-finder
+- Skim all abstracts (use APIs when available, or read just page 1 via chunker)
+- For the most relevant papers (especially user-specified ones), do deep reading:
+  use the chunker to read all chunks and understand the full methodology
+- Take time to explore user-specified tools and understand their capabilities
+- Ensure documentation is clear and actionable for the experiment runner
+- Don't skip steps to save time - incomplete resources hurt downstream work
 
-Total: 2.5-3.5 hours maximum
+The goal is to gather QUALITY resources that enable good experimentation.
 
-Don't exceed this budget! The goal is to gather enough resources to enable experimentation, not to become a domain expert.
+PRIORITIES:
+1. User-specified resources (code_references, papers, datasets) - MUST be handled
+2. Understanding what tools/approaches already exist
+3. Documenting clearly for the experiment runner phase
+4. Finding additional relevant resources
 
 ═══════════════════════════════════════════════════════════════════════════════
                             TROUBLESHOOTING

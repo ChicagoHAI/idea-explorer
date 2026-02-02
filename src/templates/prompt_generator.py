@@ -314,6 +314,20 @@ Location: {run_dir}
                         lines.append(f"  {desc}")
                 lines.append("")
 
+            if 'code_references' in background and background['code_references']:
+                lines.append("### Code References:\n")
+                lines.append("**IMPORTANT**: The following repositories are specifically mentioned and MUST be downloaded and explored:\n")
+                for repo in background['code_references']:
+                    if isinstance(repo, dict):
+                        repo_url = repo.get('repo', repo.get('url', ''))
+                        desc = repo.get('description', 'Code repository')
+                        lines.append(f"- **{desc}**")
+                        lines.append(f"  - URL: {repo_url}")
+                        lines.append(f"  - ACTION REQUIRED: Clone this repository and explore its capabilities")
+                    else:
+                        lines.append(f"- {repo}")
+                lines.append("")
+
         # Methodology (if provided)
         methodology = idea_spec.get('methodology', {})
         if methodology:
@@ -392,13 +406,15 @@ Location: {run_dir}
 
         return "\n".join(lines)
 
-    def generate_paper_writer_prompt(self, work_dir: Path, style: str = "neurips") -> str:
+    def generate_paper_writer_prompt(self, work_dir: Path, style: str = "neurips",
+                                      style_config: Optional[Dict[str, Any]] = None) -> str:
         """
         Generate paper writer prompt from template.
 
         Args:
             work_dir: Workspace directory with experiment results
-            style: Paper style (neurips, icml, acl)
+            style: Paper style (neurips, icml, acl, or any custom style)
+            style_config: Style configuration dict with package_name, package_options, bib_style
 
         Returns:
             Complete prompt string for paper writing
@@ -430,9 +446,30 @@ Location: {run_dir}
         else:
             lit_review_content = "No literature_review.md found"
 
+        # Default style config if not provided
+        if style_config is None:
+            style_config = {
+                'package_name': style,
+                'package_options': '',
+                'bib_style': 'plainnat'
+            }
+
+        # Build usepackage line based on config
+        package_name = style_config.get('package_name', style)
+        package_options = style_config.get('package_options', '')
+        if package_options:
+            usepackage_line = f"\\usepackage[{package_options}]{{{package_name}}}"
+        else:
+            usepackage_line = f"\\usepackage{{{package_name}}}"
+
         # Prepare variables
         variables = {
             'style': style.upper(),
+            'style_lower': style.lower(),
+            'package_name': package_name,
+            'package_options': package_options,
+            'usepackage_line': usepackage_line,
+            'bib_style': style_config.get('bib_style', 'plainnat'),
             'report_content': report_content,
             'planning_content': planning_content,
             'lit_review_content': lit_review_content,
@@ -604,6 +641,20 @@ RESEARCH DOMAIN:
                         research_context += "\n"
                     else:
                         research_context += f"- {dataset}\n"
+
+            if 'code_references' in background and background['code_references']:
+                research_context += "\n**CRITICAL - REPOSITORIES TO CLONE**:\n"
+                research_context += "The following repositories are EXPLICITLY SPECIFIED by the user and MUST be cloned:\n"
+                for repo in background['code_references']:
+                    if isinstance(repo, dict):
+                        repo_url = repo.get('repo', repo.get('url', ''))
+                        desc = repo.get('description', 'Code repository')
+                        research_context += f"- {desc}\n"
+                        research_context += f"  URL: {repo_url}\n"
+                        research_context += f"  → You MUST clone this repository to code/ directory\n"
+                    else:
+                        research_context += f"- {repo}\n"
+                research_context += "\nThese are NOT optional - they are specified by the research author.\n"
 
             if 'related_work' in background:
                 research_context += f"\nRelated work:\n{background['related_work']}\n"

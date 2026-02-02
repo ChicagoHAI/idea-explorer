@@ -1,106 +1,114 @@
 #!/usr/bin/env python3
 """
-PDF Chunker - Preprocesses PDFs into text chunks for incremental reading.
+PDF Page Splitter - Splits PDFs into page chunks for reading.
+
+This script splits a PDF into smaller PDF chunks that can be read directly
+by Claude (which has native PDF reading capability). This preserves all
+formatting, spacing, and layout perfectly.
 
 Usage:
     python pdf_chunker.py <pdf_path> [--pages-per-chunk N] [--output-dir DIR]
 
 Output:
-    Creates chunk files: <output_dir>/<pdf_name>_chunk_001.txt, etc.
+    Creates PDF chunks: <output_dir>/<pdf_name>_chunk_001.pdf, etc.
     Also creates a manifest: <output_dir>/<pdf_name>_manifest.txt
+
+Dependencies:
+    pip install pypdf
 """
 
 import argparse
-import os
 from pathlib import Path
 
-import pdfplumber
+try:
+    from pypdf import PdfReader, PdfWriter
+except ImportError:
+    print("Error: pypdf is required. Install with: pip install pypdf")
+    print("  or with uv: uv pip install pypdf")
+    exit(1)
 
 
-def extract_text_by_pages(pdf_path: str) -> list[tuple[int, str]]:
-    """Extract text from PDF, returning list of (page_num, text) tuples."""
-    pages = []
-    with pdfplumber.open(pdf_path) as pdf:
-        for i, page in enumerate(pdf.pages):
-            text = page.extract_text() or ""
-            pages.append((i + 1, text))
-    return pages
+def split_pdf(pdf_path: str, pages_per_chunk: int = 1, output_dir: str = None) -> str:
+    """
+    Split a PDF into chunk PDFs.
 
+    Args:
+        pdf_path: Path to the PDF file
+        pages_per_chunk: Number of pages per chunk (default: 1)
+        output_dir: Output directory (default: <pdf_dir>/pages)
 
-def chunk_pages(pages: list[tuple[int, str]], pages_per_chunk: int) -> list[dict]:
-    """Group pages into chunks."""
-    chunks = []
-    for i in range(0, len(pages), pages_per_chunk):
-        chunk_pages_subset = pages[i:i + pages_per_chunk]
-        page_nums = [p[0] for p in chunk_pages_subset]
-        text = "\n\n".join([f"--- Page {p[0]} ---\n{p[1]}" for p in chunk_pages_subset])
-        chunks.append({
-            "chunk_num": len(chunks) + 1,
-            "pages": page_nums,
-            "text": text,
-            "char_count": len(text)
-        })
-    return chunks
+    Returns:
+        Path to the manifest file
+    """
+    pdf_path = Path(pdf_path)
 
+    if output_dir is None:
+        output_dir = pdf_path.parent / "pages"
+    else:
+        output_dir = Path(output_dir)
 
-def save_chunks(chunks: list[dict], pdf_path: str, output_dir: str) -> str:
-    """Save chunks to files and create manifest."""
-    pdf_name = Path(pdf_path).stem
-    output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    pdf_name = pdf_path.stem
+
+    print(f"Splitting PDF: {pdf_path}")
+
+    reader = PdfReader(pdf_path)
+    total_pages = len(reader.pages)
+
+    print(f"Total pages: {total_pages}")
+    print(f"Pages per chunk: {pages_per_chunk}")
 
     manifest_lines = [
         f"PDF: {pdf_path}",
-        f"Total chunks: {len(chunks)}",
-        f"Total pages: {sum(len(c['pages']) for c in chunks)}",
+        f"Total pages: {total_pages}",
+        f"Pages per chunk: {pages_per_chunk}",
         "",
         "Chunks:",
     ]
 
-    for chunk in chunks:
-        chunk_filename = f"{pdf_name}_chunk_{chunk['chunk_num']:03d}.txt"
-        chunk_path = output_path / chunk_filename
+    chunk_num = 0
+    for start_idx in range(0, total_pages, pages_per_chunk):
+        chunk_num += 1
+        end_idx = min(start_idx + pages_per_chunk, total_pages)
 
-        with open(chunk_path, "w", encoding="utf-8") as f:
-            f.write(chunk["text"])
+        chunk_filename = f"{pdf_name}_chunk_{chunk_num:03d}.pdf"
+        chunk_path = output_dir / chunk_filename
 
-        manifest_lines.append(
-            f"  {chunk_filename}: pages {chunk['pages'][0]}-{chunk['pages'][-1]}, "
-            f"{chunk['char_count']} chars"
-        )
+        writer = PdfWriter()
+        for page_idx in range(start_idx, end_idx):
+            writer.add_page(reader.pages[page_idx])
 
-    manifest_path = output_path / f"{pdf_name}_manifest.txt"
+        with open(chunk_path, "wb") as f:
+            writer.write(f)
+
+        page_range = f"page {start_idx + 1}" if end_idx == start_idx + 1 else f"pages {start_idx + 1}-{end_idx}"
+        manifest_lines.append(f"  {chunk_filename}: {page_range}")
+
+    # Write manifest
+    manifest_path = output_dir / f"{pdf_name}_manifest.txt"
     with open(manifest_path, "w", encoding="utf-8") as f:
         f.write("\n".join(manifest_lines))
+
+    print(f"Created {chunk_num} chunk files in: {output_dir}")
+    print(f"Manifest: {manifest_path}")
 
     return str(manifest_path)
 
 
-def chunk_pdf(pdf_path: str, pages_per_chunk: int = 5, output_dir: str = None) -> str:
-    """Main function to chunk a PDF."""
-    if output_dir is None:
-        output_dir = str(Path(pdf_path).parent / "chunks")
-
-    print(f"Extracting text from: {pdf_path}")
-    pages = extract_text_by_pages(pdf_path)
-    print(f"Extracted {len(pages)} pages")
-
-    chunks = chunk_pages(pages, pages_per_chunk)
-    print(f"Created {len(chunks)} chunks ({pages_per_chunk} pages each)")
-
-    manifest_path = save_chunks(chunks, pdf_path, output_dir)
-    print(f"Saved to: {output_dir}")
-    print(f"Manifest: {manifest_path}")
-
-    return manifest_path
-
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Chunk PDF into text files")
+    parser = argparse.ArgumentParser(
+        description="Split PDF into chunk files for reading"
+    )
     parser.add_argument("pdf_path", help="Path to PDF file")
-    parser.add_argument("--pages-per-chunk", type=int, default=5,
-                        help="Number of pages per chunk (default: 5)")
-    parser.add_argument("--output-dir", help="Output directory (default: <pdf_dir>/chunks)")
+    parser.add_argument(
+        "--pages-per-chunk", type=int, default=1,
+        help="Number of pages per chunk (default: 1)"
+    )
+    parser.add_argument(
+        "--output-dir",
+        help="Output directory (default: <pdf_dir>/pages)"
+    )
 
     args = parser.parse_args()
-    chunk_pdf(args.pdf_path, args.pages_per_chunk, args.output_dir)
+    split_pdf(args.pdf_path, args.pages_per_chunk, args.output_dir)
