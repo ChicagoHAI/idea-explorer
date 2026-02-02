@@ -707,26 +707,9 @@ RESEARCH DOMAIN:
         domain = idea_spec.get('domain', '')
         comments = idea_spec.get('comments', '')
 
-        # Extract user instructions (highest priority) if present
-        background = idea_spec.get('background', {})
-        user_instructions = self._extract_user_instructions(background)
-
-        # Build priority section if user instructions exist
+        # For comment mode, the comments ARE the user's instructions
+        # No need for separate priority section extraction
         priority_section = ""
-        if user_instructions:
-            priority_section = f"""
-═══════════════════════════════════════════════════════════════════════════════════════════════
-                    ⚠️ HIGHEST PRIORITY - USER-PROVIDED INSTRUCTIONS ⚠️
-═══════════════════════════════════════════════════════════════════════════════════════════════
-
-The following instructions were explicitly provided by the research author.
-These take ABSOLUTE PRECEDENCE over any other guidelines:
-
-{user_instructions}
-
-═══════════════════════════════════════════════════════════════════════════════════════════════
-
-"""
 
         # Prepare variables for template
         variables = {
