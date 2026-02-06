@@ -39,24 +39,32 @@ Idea Explorer is an autonomous research framework that takes structured research
 
 ### Option A: Docker (Recommended)
 
-Docker provides an isolated, reproducible environment with GPU support.
+Docker provides an isolated, reproducible environment with GPU support, all CLI tools pre-installed, and optional paper-finder integration.
 
 ```bash
 # 1. Clone and setup
 git clone https://github.com/ChicagoHAI/idea-explorer
 cd idea-explorer
-cp .env.docker.example .env
-# Edit .env with your API keys (ANTHROPIC_API_KEY, OPENAI_API_KEY, etc.)
 
-# 2. Build container (one-time)
+# 2. Build the Docker image (one-time, ~10-15 min)
 ./idea-explorer build
 
-# 3. Run! Fetch from IdeaHub and execute
-./idea-explorer fetch https://hypogenic.ai/ideahub/idea/HGVv4Z0ALWVHZ9YsstWT \
-    --submit --run --provider <YOUR_CLI> --full-permissions
+# 3. Configure environment
+cp .env.example .env
+# Edit .env: Add GITHUB_TOKEN, OPENAI_API_KEY (for IdeaHub)
+# Optional: Add S2_API_KEY for paper-finder (high-quality literature search)
+
+# 4. Login to your CLI tool (one-time, on your host machine)
+claude    # or: codex, gemini
+# Credentials are automatically mounted into the container
+
+# 5. Run!
+./idea-explorer run <idea_id> --provider claude --full-permissions
 ```
 
 The `--full-permissions` flag enables autonomous execution without permission prompts.
+
+**Paper-finder:** If `S2_API_KEY` and `OPENAI_API_KEY` are set, the container automatically starts the paper-finder service for high-quality literature search. Without it, agents use manual search (arXiv, Semantic Scholar, Papers with Code).
 
 ### Option B: Native Installation
 
@@ -78,7 +86,7 @@ uv run python src/cli/fetch_from_ideahub.py https://hypogenic.ai/ideahub/idea/HG
 ```bash
 # Docker
 ./idea-explorer submit ideas/examples/ml_regularization_test.yaml
-./idea-explorer run <idea_id> --provider <YOUR_CLI>  --full-permissions
+./idea-explorer run <idea_id> --provider <YOUR_CLI> --full-permissions
 
 # Native
 uv run python src/cli/submit.py ideas/examples/ml_regularization_test.yaml
@@ -214,19 +222,21 @@ See `ideas/schema.yaml` for full specification.
 git clone https://github.com/ChicagoHAI/idea-explorer
 cd idea-explorer
 
-# 2. Configure environment
-cp .env.docker.example .env
-# Edit .env and add your API keys
-
-# 3. Build container
+# 2. Build the Docker image (one-time, ~10-15 min)
 ./idea-explorer build
 
-# 4. Login to CLI tools (one-time, if needed)
-./idea-explorer login
-# Inside the container, run: claude, codex, or gemini to authenticate
+# 3. Configure environment
+cp .env.example .env
+# Edit .env and add your keys (see Configuration section below)
+
+# 4. Login to CLI tools (one-time, on your host machine)
+claude    # Login to Claude Code
+codex     # Login to Codex
+gemini    # Login to Gemini
+# Credentials are automatically mounted into the container
 ```
 
-**CLI Authentication:** If you're already logged into Claude/Codex/Gemini on your host machine, credentials are automatically mounted into containers. Only run `./idea-explorer login` if you haven't authenticated these CLI tools before.
+**CLI Authentication:** Claude, Codex, and Gemini CLIs use OAuth (not API keys). Login on your host machine and credentials are automatically mounted into containers.
 
 **Prerequisites for GPU support:**
 
@@ -250,13 +260,14 @@ cd idea-explorer
 # 3. Install dependencies
 uv sync
 
-# 4. (Optional) Install scribe for Jupyter notebook integration
-# Only needed if you want to use --use-scribe flag
-# Follow instructions at: https://github.com/goodfire-ai/scribe
-
-# 5. Configure environment
+# 4. Configure environment
 cp .env.example .env
-# Edit .env and add your API keys (see Configuration section below)
+# Edit .env and add your keys (see Configuration section below)
+
+# 5. Login to CLI tools
+claude    # Login to Claude Code
+codex     # Login to Codex
+gemini    # Login to Gemini
 ```
 
 </details>
@@ -270,11 +281,15 @@ Copy `.env.example` to `.env` and configure:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `GITHUB_TOKEN` | Yes | GitHub Personal Access Token. [Generate here](https://github.com/settings/tokens) with `repo` and `write:org` scopes |
-| `OPENAI_API_KEY` | Yes* | For IdeaHub integration. [Generate here](https://platform.openai.com/api-keys). *Not needed if not using IdeaHub |
+| `ANTHROPIC_API_KEY` | One of three | For Claude Code (recommended) |
+| `OPENAI_API_KEY` | One of three | For Codex, IdeaHub integration, and paper-finder |
+| `GOOGLE_API_KEY` | One of three | For Gemini |
+| `GITHUB_TOKEN` | Recommended | GitHub Personal Access Token. [Generate here](https://github.com/settings/tokens) with `repo` and `write:org` scopes |
 | `GITHUB_ORG` | No | Your GitHub organization (default: ChicagoHAI) |
-| `ANTHROPIC_API_KEY` | No | For Claude provider |
-| `GOOGLE_API_KEY` | No | For Gemini provider |
+| `S2_API_KEY` | No | Semantic Scholar API key for paper-finder. [Get here](https://www.semanticscholar.org/product/api) |
+| `COHERE_API_KEY` | No | Optional improvement for paper-finder reranking (~7% quality boost) |
+
+**Note:** IdeaHub integration (`./idea-explorer fetch <url>`) requires `OPENAI_API_KEY` for converting ideas to YAML format.
 
 ### Workspace Configuration
 
