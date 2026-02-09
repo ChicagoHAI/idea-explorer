@@ -38,14 +38,16 @@ Idea Explorer is an autonomous research framework that takes structured research
 <summary><b>Quick Start</b></summary>
 
 ```bash
-# 1. Clone and setup
+# 1. Clone the repo (needed for CLI scripts, config, and templates)
 git clone https://github.com/ChicagoHAI/idea-explorer
 cd idea-explorer
 cp .env.example .env   # Edit .env: add GITHUB_TOKEN, OPENAI_API_KEY
 
-# 2. Build or pull the Docker image
-./idea-explorer build                  # Build locally (~10-15 min)
-# OR: docker pull ghcr.io/chicagohai/idea-explorer:latest
+# 2. Get the Docker image (pick one)
+docker pull ghcr.io/chicagohai/idea-explorer:latest    # Pull pre-built (~2 min)
+docker tag ghcr.io/chicagohai/idea-explorer:latest chicagohai/idea-explorer:latest
+# OR
+./idea-explorer build                                   # Build from source (~10-15 min)
 
 # 3. Login to your AI CLI (one-time, on host machine)
 claude   # or: codex, gemini
@@ -63,26 +65,29 @@ That's it! The agent fetches the idea, creates a GitHub repo, runs experiments, 
 
 ### Docker (Recommended)
 
-Docker provides an isolated environment with GPU support, CLI tools, LaTeX, and paper-finder pre-installed.
+Docker provides an isolated environment with GPU support, CLI tools, LaTeX, and paper-finder pre-installed. The pre-built image includes everything — Python venvs, CLI tools (Claude/Codex/Gemini), LaTeX, and paper-finder — so you skip the long build step.
 
 ```bash
+# Clone the repo (provides CLI scripts, config, templates, and idea examples)
 git clone https://github.com/ChicagoHAI/idea-explorer
 cd idea-explorer
 
-# Option A: Pull pre-built image
+# Option A: Pull pre-built image (faster, ~2 min download)
 docker pull ghcr.io/chicagohai/idea-explorer:latest
 docker tag ghcr.io/chicagohai/idea-explorer:latest chicagohai/idea-explorer:latest
 
-# Option B: Build locally
+# Option B: Build from source (~10-15 min)
 ./idea-explorer build
 
 # Configure
 cp .env.example .env   # Edit: add your API keys (see Configuration below)
 
-# Login to your AI CLI (one-time)
+# Login to your AI CLI (one-time, on your host machine)
 claude   # or: codex, gemini
 # Credentials are automatically mounted into containers
 ```
+
+> **Note:** Cloning the repo is required even when pulling the pre-built image. The repo provides the `./idea-explorer` CLI, config files, templates, and idea examples. The Docker image provides the runtime environment (Python, tools, LaTeX). At runtime, config and templates are mounted from your local clone into the container, so you can customize them without rebuilding.
 
 **GPU support** requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html):
 
