@@ -1,5 +1,3 @@
-version: "3.8"
-
 # =============================================================================
 # idea-explorer Docker Compose Configuration
 #
@@ -50,6 +48,8 @@ services:
       - ./logs:/app/logs:rw
       # Configuration files (read-only)
       - ./config:/app/config:ro
+      # Templates and skills (read-only, customizable without rebuild)
+      - ./templates:/app/templates:ro
       # CLI credentials (for cached logins)
       # Note: Claude uses ~/.claude, Codex uses ~/.codex, Gemini uses ~/.gemini
       - ~/.claude:/home/researcher/.claude:ro

@@ -34,7 +34,6 @@ build
 # Environment and secrets (IMPORTANT: never include in build)
 .env
 .env.*
-!.env.docker.example
 !.env.example
 *.pem
 *.key

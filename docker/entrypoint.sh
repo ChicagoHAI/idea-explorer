@@ -124,8 +124,9 @@ start_paper_finder() {
                 mkdir -p /app/logs
 
                 # Start paper-finder in background
+                # Note: use 'uv run' directly instead of 'make start-dev' since make is not in runtime image
                 cd /app/services/paper-finder/agents/mabool/api
-                nohup make start-dev > /app/logs/paper-finder.log 2>&1 &
+                nohup uv run sh dev.sh > /app/logs/paper-finder.log 2>&1 &
                 PAPER_FINDER_PID=$!
                 cd /workspaces
 

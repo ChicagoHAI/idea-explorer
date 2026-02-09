@@ -26,7 +26,7 @@ Idea Explorer is an autonomous research framework that takes structured research
 |---------|-------------|
 | **Minimal Input** | Just provide title, domain, and hypothesis - agents handle the rest |
 | **Agent-Driven Research** | Literature review, dataset search, baseline identification |
-| **Multi-Provider Support** | Works with Claude, Gemini, and Codex (raw CLI by default, notebooks optional) |
+| **Multi-Provider Support** | Works with Claude, Codex, and Gemini (raw CLI by default, notebooks optional) |
 | **Pragmatic Execution** | Creates resources when they don't exist, always proceeds |
 | **Domain-Agnostic** | ML, data science, AI, systems, theory, and more |
 | **Smart Documentation** | Auto-generates reports, code, and results |
@@ -34,66 +34,195 @@ Idea Explorer is an autonomous research framework that takes structured research
 
 </details>
 
-<details>
+<details open>
 <summary><b>Quick Start</b></summary>
-
-### Option A: Docker (Recommended)
-
-Docker provides an isolated, reproducible environment with GPU support, all CLI tools pre-installed, and optional paper-finder integration.
 
 ```bash
 # 1. Clone and setup
 git clone https://github.com/ChicagoHAI/idea-explorer
 cd idea-explorer
+cp .env.example .env   # Edit .env: add GITHUB_TOKEN, OPENAI_API_KEY
 
-# 2. Build the Docker image (one-time, ~10-15 min)
-./idea-explorer build
+# 2. Build or pull the Docker image
+./idea-explorer build                  # Build locally (~10-15 min)
+# OR: docker pull ghcr.io/chicagohai/idea-explorer:latest
 
-# 3. Configure environment
-cp .env.example .env
-# Edit .env: Add GITHUB_TOKEN, OPENAI_API_KEY (for IdeaHub)
-# Optional: Add S2_API_KEY for paper-finder (high-quality literature search)
+# 3. Login to your AI CLI (one-time, on host machine)
+claude   # or: codex, gemini
 
-# 4. Login to your CLI tool (one-time, on your host machine)
-claude    # or: codex, gemini
-# Credentials are automatically mounted into the container
-
-# 5. Run!
-./idea-explorer run <idea_id> --provider claude --full-permissions
+# 4. Run from IdeaHub (easiest way to start)
+./idea-explorer fetch https://hypogenic.ai/ideahub/idea/HGVv4Z0ALWVHZ9YsstWT \
+    --submit --run --provider claude --full-permissions
 ```
 
-The `--full-permissions` flag enables autonomous execution without permission prompts.
+That's it! The agent fetches the idea, creates a GitHub repo, runs experiments, and pushes results.
 
-**Paper-finder:** If `S2_API_KEY` and `OPENAI_API_KEY` are set, the container automatically starts the paper-finder service for high-quality literature search. Without it, agents use manual search (arXiv, Semantic Scholar, Papers with Code).
+</details>
 
-### Option B: Native Installation
+## Setup
 
-For users who prefer running directly on their system without containers.
+### Docker (Recommended)
+
+Docker provides an isolated environment with GPU support, CLI tools, LaTeX, and paper-finder pre-installed.
 
 ```bash
-# 0. Setup (one-time)
-uv sync  # Install dependencies with uv
-cp .env.example .env
-# Edit .env - see Configuration section below for details
+git clone https://github.com/ChicagoHAI/idea-explorer
+cd idea-explorer
 
-# 1. One-liner: Fetch, submit, and run immediately
-uv run python src/cli/fetch_from_ideahub.py https://hypogenic.ai/ideahub/idea/HGVv4Z0ALWVHZ9YsstWT \
-    --submit --run --provider <YOUR_CLI> --full-permissions
+# Option A: Pull pre-built image
+docker pull ghcr.io/chicagohai/idea-explorer:latest
+docker tag ghcr.io/chicagohai/idea-explorer:latest chicagohai/idea-explorer:latest
+
+# Option B: Build locally
+./idea-explorer build
+
+# Configure
+cp .env.example .env   # Edit: add your API keys (see Configuration below)
+
+# Login to your AI CLI (one-time)
+claude   # or: codex, gemini
+# Credentials are automatically mounted into containers
 ```
 
-### Create Your Own Idea
+**GPU support** requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html):
+
+```bash
+sudo apt install nvidia-container-toolkit
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+```
+
+### Native Installation
+
+For users who prefer running directly on their system.
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh   # Install uv
+git clone https://github.com/ChicagoHAI/idea-explorer
+cd idea-explorer
+uv sync
+cp .env.example .env   # Edit: add your API keys
+claude   # Login to your AI CLI
+```
+
+## Configuration
+
+### CLI Authentication
+
+Claude Code, Codex, and Gemini CLIs use **OAuth login** (not API keys). Login once on your host machine:
+
+```bash
+claude    # or: codex, gemini
+```
+
+In Docker mode, credentials are automatically mounted into containers.
+
+### Environment Variables (.env)
+
+Copy `.env.example` to `.env` and configure:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GITHUB_TOKEN` | Recommended | GitHub Personal Access Token ([generate here](https://github.com/settings/tokens), `repo` scope) |
+| `GITHUB_ORG` | No | GitHub org name (default: personal account) |
+| `OPENAI_API_KEY` | For IdeaHub/paper-finder | Used for IdeaHub fetching, LLM repo naming, paper-finder |
+| `S2_API_KEY` | No | Enables paper-finder literature search ([get here](https://www.semanticscholar.org/product/api)) |
+| `COHERE_API_KEY` | No | Improves paper-finder ranking (~7% boost) |
+
+Additional keys (`ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `OPENROUTER_KEY`, `HF_TOKEN`, `WANDB_API_KEY`) are passed through to the agent environment.
+
+**Setup tiers:**
+- **Basic:** CLI login + `GITHUB_TOKEN` — full idea-explorer
+- **Enhanced:** + `OPENAI_API_KEY` — LLM repo naming + IdeaHub support
+- **Full:** + `S2_API_KEY` (+ optional `COHERE_API_KEY`) — paper-finder literature search
+
+### Workspace Configuration
+
+Research workspaces are created in the directory specified by `config/workspace.yaml`.
+
+**Default:** `workspace/` in the project root (already gitignored).
+
+**To customize:** Copy `config/workspace.yaml.example` to `config/workspace.yaml` and edit `parent_dir`:
+
+```yaml
+workspace:
+  parent_dir: "/path/to/your/workspaces"
+  auto_create: true
+```
+
+### Customizing Templates and Skills
+
+Templates in `templates/` control agent behavior. In Docker mode, these are mounted from the host, so you can edit them without rebuilding:
+
+| What to Change | Template File |
+|----------------|---------------|
+| Experiment workflow (phases 1-6) | `templates/agents/session_instructions.txt` |
+| Paper writing structure | `templates/agents/paper_writer.txt` |
+| Resource finding behavior | `templates/agents/resource_finder.txt` |
+| Research methodology | `templates/base/researcher.txt` |
+| Domain-specific guidance | `templates/domains/<domain>/core.txt` |
+| Claude Code skills | `templates/skills/<skill-name>/SKILL.md` |
+
+See [ARCHITECTURE_AND_ROADMAP.md](ARCHITECTURE_AND_ROADMAP.md) for details on the template system.
+
+## Usage
+
+### Fetch from IdeaHub (Easiest)
+
+Browse ideas at [IdeaHub](https://hypogenic.ai/ideahub), then fetch and run:
+
+```bash
+# Docker
+./idea-explorer fetch <ideahub_url> --submit --run --provider claude --full-permissions
+
+# Native
+uv run python src/cli/fetch_from_ideahub.py <ideahub_url> --submit --run --provider claude --full-permissions
+```
+
+This one command: fetches the idea, converts it to YAML, submits it, creates a GitHub repo, and runs the research agent.
+
+You can also break it into steps:
+
+```bash
+./idea-explorer fetch <url>             # Just fetch and convert to YAML
+./idea-explorer fetch <url> --submit    # Fetch, convert, and submit (creates GitHub repo)
+```
+
+### Submit Your Own Idea
+
+Write an idea YAML (see examples in `ideas/examples/`) and submit:
 
 ```bash
 # Docker
 ./idea-explorer submit ideas/examples/ml_regularization_test.yaml
-./idea-explorer run <idea_id> --provider <YOUR_CLI> --full-permissions
+./idea-explorer run <idea_id> --provider claude --full-permissions
 
 # Native
 uv run python src/cli/submit.py ideas/examples/ml_regularization_test.yaml
-uv run python src/core/runner.py <idea_id> --provider <YOUR_CLI> --full-permissions
+uv run python src/core/runner.py <idea_id> --provider claude --full-permissions
 ```
 
-</details>
+### Run Options
+
+| Option | Description |
+|--------|-------------|
+| `--provider claude\|gemini\|codex` | AI provider (default: claude) |
+| `--timeout SECONDS` | Execution timeout (default: 3600) |
+| `--full-permissions` | Allow agents to run without prompts |
+| `--no-github` | Run locally without GitHub integration |
+| `--github-org ORG` | GitHub organization (default: `GITHUB_ORG` env var) |
+| `--private` | Create private GitHub repository |
+| `--no-hash` | Simpler repo names (skip random hash) |
+| `--write-paper` | Generate LaTeX paper after experiments |
+| `--paper-style neurips\|icml\|acl` | Paper format (default: neurips) |
+
+### Other Commands
+
+```bash
+./idea-explorer shell       # Interactive shell inside the container
+./idea-explorer login       # Login to CLI tools inside the container
+./idea-explorer help        # Show all commands
+```
 
 <details>
 <summary><b>System Architecture</b></summary>
@@ -213,180 +342,17 @@ See `ideas/schema.yaml` for full specification.
 </details>
 
 <details>
-<summary><b>Installation</b></summary>
+<summary><b>Paper-Finder Integration</b></summary>
 
-### Option A: Docker (Recommended)
+When `S2_API_KEY` and `OPENAI_API_KEY` are set, the container automatically starts the paper-finder service for high-quality literature search with relevance ranking.
 
-```bash
-# 1. Clone repository
-git clone https://github.com/ChicagoHAI/idea-explorer
-cd idea-explorer
+- **With paper-finder:** Agents get ranked, relevant papers via Semantic Scholar + LLM scoring
+- **Without paper-finder:** Agents fall back to manual search (arXiv, Semantic Scholar, Papers with Code)
+- **Optional `COHERE_API_KEY`:** Adds reranking for ~7% quality improvement
 
-# 2. Build the Docker image (one-time, ~10-15 min)
-./idea-explorer build
-
-# 3. Configure environment
-cp .env.example .env
-# Edit .env and add your keys (see Configuration section below)
-
-# 4. Login to CLI tools (one-time, on your host machine)
-claude    # Login to Claude Code
-codex     # Login to Codex
-gemini    # Login to Gemini
-# Credentials are automatically mounted into the container
-```
-
-**CLI Authentication:** Claude, Codex, and Gemini CLIs use OAuth (not API keys). Login on your host machine and credentials are automatically mounted into containers.
-
-**Prerequisites for GPU support:**
-
-```bash
-# Install NVIDIA Container Toolkit
-sudo apt install nvidia-container-toolkit
-sudo nvidia-ctk runtime configure --runtime=docker
-sudo systemctl restart docker
-```
-
-### Option B: Native Installation
-
-```bash
-# 1. Install uv (if not already installed)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# 2. Clone repository
-git clone https://github.com/ChicagoHAI/idea-explorer
-cd idea-explorer
-
-# 3. Install dependencies
-uv sync
-
-# 4. Configure environment
-cp .env.example .env
-# Edit .env and add your keys (see Configuration section below)
-
-# 5. Login to CLI tools
-claude    # Login to Claude Code
-codex     # Login to Codex
-gemini    # Login to Gemini
-```
+Paper-finder starts automatically in Docker — no extra setup needed.
 
 </details>
-
-<details>
-<summary><b>Configuration</b></summary>
-
-### Environment Variables (.env)
-
-Copy `.env.example` to `.env` and configure:
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | One of three | For Claude Code (recommended) |
-| `OPENAI_API_KEY` | One of three | For Codex, IdeaHub integration, and paper-finder |
-| `GOOGLE_API_KEY` | One of three | For Gemini |
-| `GITHUB_TOKEN` | Recommended | GitHub Personal Access Token. [Generate here](https://github.com/settings/tokens) with `repo` and `write:org` scopes |
-| `GITHUB_ORG` | No | Your GitHub organization (default: ChicagoHAI) |
-| `S2_API_KEY` | No | Semantic Scholar API key for paper-finder. [Get here](https://www.semanticscholar.org/product/api) |
-| `COHERE_API_KEY` | No | Optional improvement for paper-finder reranking (~7% quality boost) |
-
-**Note:** IdeaHub integration (`./idea-explorer fetch <url>`) requires `OPENAI_API_KEY` for converting ideas to YAML format.
-
-### Workspace Configuration
-
-Research workspaces are created in the directory specified by `config/workspace.yaml`.
-
-**Default:** `workspace/` in the project root (already gitignored, works out of the box)
-
-**To customize:** Copy `config/workspace.yaml.example` to `config/workspace.yaml` and edit `parent_dir`:
-
-```yaml
-workspace:
-  parent_dir: "/path/to/your/workspaces"  # Your custom path
-  auto_create: true
-```
-
-The `workspace.yaml` file is gitignored, so your local settings won't be pushed.
-
-</details>
-
-<details>
-<summary><b>Usage Options</b></summary>
-
-### Running Research
-
-```bash
-# Docker (recommended)
-./idea-explorer run <idea_id> --provider <YOUR_CLI> --full-permissions
-
-# Native
-uv run python src/core/runner.py <idea_id> --provider <YOUR_CLI> --full-permissions
-```
-
-**Available options:**
-| Option | Description |
-|--------|-------------|
-| `--provider claude\|gemini\|codex` | AI provider (default: claude) |
-| `--timeout SECONDS` | Execution timeout (default: 3600) |
-| `--full-permissions` | Allow agents to run without prompts |
-| `--no-github` | Run locally without GitHub integration |
-| `--github-org ORG` | GitHub organization (default: GITHUB_ORG env var) |
-| `--use-scribe` | Enable Jupyter notebook integration |
-| `--write-paper` | Generate academic paper after experiments |
-| `--paper-style neurips\|icml\|acl` | Paper format style (default: neurips) |
-
-### Common Commands
-
-```bash
-# Docker
-./idea-explorer fetch <url>              # Fetch from IdeaHub
-./idea-explorer fetch <url> --submit     # Fetch and submit
-./idea-explorer submit <idea.yaml>       # Submit an idea
-./idea-explorer run <id> [options]       # Run research
-./idea-explorer shell                    # Interactive shell
-
-# Native
-uv run python src/cli/fetch_from_ideahub.py <url>
-uv run python src/cli/submit.py <idea.yaml>
-uv run python src/core/runner.py <id> [options]
-```
-
-### Execution Modes
-
-```bash
-# Default mode: Raw CLI (recommended)
-# Agents write Python scripts, simpler and more unified across providers
-./idea-explorer run my_idea --provider <YOUR_CLI> --full-permissions
-
-# Notebook mode: With scribe (optional, native only)
-# Agents get Jupyter notebook access via MCP tools
-uv run python src/core/runner.py my_idea --provider <YOUR_CLI> --full-permissions --use-scribe
-```
-
-### Permission Modes
-
-```bash
-# With permission prompts (default, safer)
-./idea-explorer run my_idea
-
-# Full autonomous mode (faster, no interruptions)
-./idea-explorer run my_idea --provider <YOUR_CLI> --full-permissions
-```
-
-### Evaluate Quality (Optional)
-
-```python
-from src.evaluation.critic_runner import CriticRunner
-
-runner = CriticRunner()
-runner.evaluate_research(
-    run_dir="runs/my_idea/",
-    critics=["code_quality", "scientific_rigor", "reproducibility"]
-)
-```
-
-</details>
-
-<hr>
 
 ## Documentation
 
@@ -394,24 +360,9 @@ runner.evaluate_research(
 - **[docs/IDEAHUB_INTEGRATION.md](docs/IDEAHUB_INTEGRATION.md)** - IdeaHub integration
 - **[ARCHITECTURE_AND_ROADMAP.md](ARCHITECTURE_AND_ROADMAP.md)** - Architecture, template system, and roadmap
 - **[DESIGN.md](DESIGN.md)** - Comprehensive design document
-- **[GITHUB_INTEGRATION.md](GITHUB_INTEGRATION.md)** - GitHub setup and usage
+- **[docs/GITHUB_INTEGRATION.md](docs/GITHUB_INTEGRATION.md)** - GitHub setup and usage
 - **[ideas/schema.yaml](ideas/schema.yaml)** - Full specification schema
 - **[ideas/examples/](ideas/examples/)** - Example research ideas
-
-### Customizing Agent Behavior
-
-Agent prompts are stored as templates in `templates/`. To customize:
-
-| What to Change | Template File |
-|----------------|---------------|
-| Experiment workflow (phases 1-6) | `templates/agents/session_instructions.txt` |
-| Paper writing structure | `templates/agents/paper_writer.txt` |
-| Resource finding behavior | `templates/agents/resource_finder.txt` |
-| Research methodology | `templates/base/researcher.txt` |
-| Domain-specific guidance | `templates/domains/<domain>/core.txt` |
-| Claude Code skills | `templates/skills/<skill-name>/SKILL.md` |
-
-See [ARCHITECTURE_AND_ROADMAP.md](ARCHITECTURE_AND_ROADMAP.md) for details on the template system.
 
 ## Contributing
 
@@ -451,13 +402,8 @@ Apache 2.0 - See [LICENSE](LICENSE) file
 **Ready to explore your research ideas?**
 
 ```bash
-# Docker (recommended)
-./idea-explorer submit ideas/examples/ml_regularization_test.yaml
-./idea-explorer run <idea_id> --provider <YOUR_CLI> --full-permissions
-
-# Native
-uv run python src/cli/submit.py ideas/examples/ml_regularization_test.yaml
-uv run python src/core/runner.py <idea_id> --provider <YOUR_CLI> --full-permissions
+./idea-explorer fetch https://hypogenic.ai/ideahub/idea/YOUR_IDEA_ID \
+    --submit --run --provider claude --full-permissions
 ```
 
 For questions and feedback, [open an issue](https://github.com/ChicagoHAI/idea-explorer/issues) or join our [Discord](https://discord.gg/BgkfTvBdbV).

@@ -2,10 +2,10 @@
 
 Idea Explorer now automatically creates GitHub repositories for each research experiment and pushes results when complete. This enables:
 
-- **Transparency**: All research is public by default
+- **Transparency**: All research is public by default (private repos supported with `--private`)
 - **Collaboration**: Easy sharing and building on prior work
 - **Reproducibility**: Complete research artifacts in version control
-- **Organization**: Centralized research under ChicagoHAI
+- **Flexible hosting**: Create repos under your personal account or an organization
 
 ## Quick Setup
 
@@ -15,8 +15,7 @@ Idea Explorer now automatically creates GitHub repositories for each research ex
 2. Click "Generate new token" → "Generate new token (classic)"
 3. Give it a name: "Idea Explorer"
 4. Select scopes:
-   - ✅ **repo** (Full control of private repositories)
-   - ✅ **write:org** (Create repositories in organizations)
+   - ✅ **repo** (Full control of private repositories — covers personal and org repos)
 5. Click "Generate token"
 6. **Copy the token immediately** (you won't see it again!)
 
@@ -56,9 +55,9 @@ uv sync  # Installs all dependencies including PyGithub, GitPython
 python src/cli/submit.py ideas/examples/ml_regularization_test.yaml
 
 # You should see:
-# ✅ GitHub integration enabled (org: ChicagoHAI)
+# ✓ Using personal GitHub account: your-username
 # 📦 Creating GitHub repository...
-# ✅ Repository created: https://github.com/ChicagoHAI/...
+# ✅ Repository created: https://github.com/your-username/...
 # ✅ Workspace ready at: workspace/...
 
 # (Optional) Add resources to workspace
@@ -78,9 +77,9 @@ python src/core/runner.py <idea_id>
 **New workspace-first workflow:**
 
 1. **Repository Creation (on submission)**
-   - Creates public repo in ChicagoHAI organization when you submit an idea
-   - Name based on sanitized idea ID
-   - Initialized with README and Python .gitignore
+   - Creates repo under your personal account (default) or a specified organization
+   - Use `--private` to create private repos (default: public)
+   - Name generated from research title using LLM
 
 2. **Local Clone (on submission)**
    - Clones repo to `workspace/<repo_name>/` immediately
@@ -131,26 +130,37 @@ repo-name/
 
 ## Configuration Options
 
-### Default Organization
+### Personal Account vs Organization
 
-Repositories are created in **ChicagoHAI** by default.
+By default, repositories are created under **your personal GitHub account**.
 
-To use a different organization:
+To use an organization instead:
 
 ```bash
-python src/core/runner.py <idea_id> --github-org YourOrgName
+# Via CLI flag
+python src/cli/submit.py idea.yaml --github-org YourOrgName
+
+# Or via environment variable
+export GITHUB_ORG=YourOrgName
 ```
+
+If you specify an organization but don't have access to create repos there, idea-explorer will automatically fall back to your personal account with a warning.
 
 ### Public vs Private Repos
 
-Currently creates **public repositories** by default for research transparency.
+Creates **public repositories** by default for research transparency.
 
-To change default (requires code modification):
+To create private repositories, use the `--private` flag:
 
-```python
-# In src/core/runner.py, line ~133
-private=True  # Change to True for private repos
+```bash
+# Submit with private repo
+python src/cli/submit.py idea.yaml --private
+
+# Run with private repo (when creating new repos)
+python src/core/runner.py <idea_id> --private
 ```
+
+Private repos are supported on all GitHub plans (free accounts have unlimited private repos).
 
 ### Disable GitHub Integration
 
@@ -180,17 +190,15 @@ cp .env.example .env
 # Edit .env and add your token
 ```
 
-### "Failed to access organization 'ChicagoHAI'"
+### "Cannot access organization 'OrgName'"
 
-**Cause**: Your token doesn't have permission to create repos in the organization
+**Cause**: Your token doesn't have permission to create repos in the organization.
 
-**Solutions**:
-1. Ask organization admin to invite you
-2. Ensure your token has `write:org` scope
-3. Use a different organization you have access to:
-   ```bash
-   python src/core/runner.py <idea_id> --github-org YourUsername
-   ```
+This is handled automatically — idea-explorer will fall back to your personal account with a warning. If you want to use the organization:
+
+1. Ask the organization admin to invite you
+2. Ensure your token has `repo` scope
+3. Ensure the organization allows members to create repositories
 
 ### "PyGithub not installed"
 
@@ -258,15 +266,18 @@ git commit -m "Remove .env from tracking"
 ```python
 from src.core.github_manager import GitHubManager
 
-# Initialize
-manager = GitHubManager(org_name="ChicagoHAI")
+# Initialize (personal account)
+manager = GitHubManager()
 
-# Create repository
+# Or use an organization
+# manager = GitHubManager(org_name="YourOrgName")
+
+# Create repository (public by default, or private=True)
 repo_info = manager.create_research_repo(
     idea_id="my_experiment",
     title="My Research Title",
     description="Research description",
-    private=False
+    private=False  # Set to True for private repos
 )
 
 # Clone it
@@ -295,7 +306,7 @@ Modify `src/core/runner.py` around line 309 to customize commit messages.
 from github import Github
 
 g = Github(token)
-repo = g.get_repo("ChicagoHAI/repo-name")
+repo = g.get_repo("your-username/repo-name")
 
 # Add collaborator
 repo.add_to_collaborators("username", permission="push")
@@ -351,7 +362,7 @@ python src/cli/submit.py my_idea.yaml
 python src/core/runner.py my_idea_id
 
 # Results automatically pushed to:
-# https://github.com/ChicagoHAI/my-idea-id
+# https://github.com/your-username/my-idea-id
 ```
 
 ### Local Development, Later Push
@@ -363,7 +374,7 @@ python src/core/runner.py my_idea_id --no-github
 # Later, manually create repo and push
 cd runs/my_idea_id_*/
 git init
-gh repo create ChicagoHAI/my-experiment --public
+gh repo create my-experiment --public
 git add .
 git commit -m "Research results"
 git push -u origin main
@@ -374,10 +385,10 @@ git push -u origin main
 ```bash
 # Researcher A runs experiment
 python src/core/runner.py experiment_001
-# Pushed to: github.com/ChicagoHAI/experiment-001
+# Pushed to: github.com/your-username/experiment-001
 
 # Researcher B extends the work
-git clone https://github.com/ChicagoHAI/experiment-001
+git clone https://github.com/your-username/experiment-001
 cd experiment-001
 # Make improvements
 git commit -am "Extend analysis with new metrics"
@@ -388,11 +399,11 @@ git push
 
 **Q: Can I use my personal GitHub account instead of an organization?**
 
-A: Yes! Use `--github-org YourUsername`
+A: Yes! This is the default behavior. If `GITHUB_ORG` is not set, repos are created under your personal account. If you specify an org you don't have access to, it falls back to your personal account automatically.
 
 **Q: Can I make repositories private?**
 
-A: Currently requires code modification. Edit `src/core/runner.py` line ~133 to set `private=True`.
+A: Yes! Use the `--private` flag: `python src/cli/submit.py idea.yaml --private`. GitHub Free accounts support unlimited private repos.
 
 **Q: What if I don't want to use GitHub?**
 
@@ -406,7 +417,7 @@ A: Yes, if a repository with the same name exists, it will be reused.
 
 A: Via GitHub web interface or:
 ```bash
-gh repo delete ChicagoHAI/repo-name
+gh repo delete your-username/repo-name
 ```
 
 **Q: Can I change the repository name?**
