@@ -124,14 +124,13 @@ start_paper_finder() {
                 mkdir -p /app/logs
 
                 # Start paper-finder in background
-                # Note: use 'uv run' directly instead of 'make start-dev' since make is not in runtime image
                 cd /app/services/paper-finder/agents/mabool/api
-                nohup uv run sh dev.sh > /app/logs/paper-finder.log 2>&1 &
+                nohup make start-dev >> /app/logs/paper-finder.log 2>&1 &
                 PAPER_FINDER_PID=$!
                 cd /workspaces
 
-                # Wait for paper-finder to be healthy (max 30 seconds)
-                for i in {1..30}; do
+                # Wait for paper-finder to be healthy (max 60 seconds)
+                for i in {1..60}; do
                     if curl -s http://localhost:8000/health > /dev/null 2>&1; then
                         echo -e "  ${GREEN}[OK]${NC} Paper-finder started at localhost:8000"
                         if [ -n "$COHERE_API_KEY" ]; then

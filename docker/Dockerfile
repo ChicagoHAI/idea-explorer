@@ -105,6 +105,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-client \
     ca-certificates \
     libcudnn8 \
+    make \
     && rm -rf /var/lib/apt/lists/*
 
 # Install LaTeX for paper compilation (CS conference papers: NeurIPS, ICML, ACL, etc.)
@@ -166,7 +167,8 @@ RUN mkdir -p /workspaces && chown researcher:researcher /workspaces
 RUN mkdir -p /app/ideas/submitted /app/ideas/in_progress /app/ideas/completed \
     /app/logs /app/runs \
     && chown -R researcher:researcher /app \
-    && chmod -R a+rX /app
+    && chmod -R a+rX /app \
+    && chmod -R 777 /app/services/paper-finder
 
 # Switch to non-root user
 USER researcher
