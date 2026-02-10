@@ -34,10 +34,16 @@ build
 # Environment and secrets (IMPORTANT: never include in build)
 .env
 .env.*
-!.env.docker.example
+!.env.example
 *.pem
 *.key
 credentials.json
+*.secret
+
+# CLI credential directories (user's local logins - never include)
+.claude/
+.codex/
+.gemini/
 
 # Logs and temporary files
 *.log

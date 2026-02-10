@@ -1,5 +1,3 @@
-version: "3.8"
-
 # =============================================================================
 # idea-explorer Docker Compose Configuration
 #
@@ -15,7 +13,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       args:
-        CUDA_VERSION: "12.6.3"
+        CUDA_VERSION: "12.5.1"
         UBUNTU_VERSION: "22.04"
         UID: ${UID:-1000}
         GID: ${GID:-1000}
@@ -50,6 +48,13 @@ services:
       - ./logs:/app/logs:rw
       # Configuration files (read-only)
       - ./config:/app/config:ro
+      # Templates and skills (read-only, customizable without rebuild)
+      - ./templates:/app/templates:ro
+      # CLI credentials (for cached logins)
+      # Note: Claude uses ~/.claude, Codex uses ~/.codex, Gemini uses ~/.gemini
+      - ~/.claude:/home/researcher/.claude:ro
+      - ~/.codex:/home/researcher/.codex:ro
+      - ~/.gemini:/home/researcher/.gemini:ro
       # Optional: SSH keys for private GitHub repos
       # - ~/.ssh:/home/researcher/.ssh:ro
 

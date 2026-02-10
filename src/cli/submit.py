@@ -56,8 +56,13 @@ def main():
     )
     parser.add_argument(
         "--github-org",
-        default=os.getenv('GITHUB_ORG', 'ChicagoHAI'),
-        help="GitHub organization name (default: from GITHUB_ORG env var or ChicagoHAI)"
+        default=os.getenv('GITHUB_ORG', ''),
+        help="GitHub organization name (default: from GITHUB_ORG env var, or personal account if not set)"
+    )
+    parser.add_argument(
+        "--private",
+        action="store_true",
+        help="Create private GitHub repository (default: public)"
     )
     parser.add_argument(
         "--provider",
@@ -126,7 +131,7 @@ def main():
         if not args.no_github and GITHUB_AVAILABLE and os.getenv('GITHUB_TOKEN'):
             print(f"\n📦 Creating GitHub repository...")
             try:
-                github_manager = GitHubManager(org_name=args.github_org)
+                github_manager = GitHubManager(org_name=args.github_org or None)
 
                 # Get idea details
                 idea = manager.get_idea(idea_id)
@@ -140,7 +145,7 @@ def main():
                         idea_id=idea_id,
                         title=title,
                         description=description,
-                        private=False,
+                        private=args.private,
                         domain=domain,
                         provider=args.provider,
                         no_hash=args.no_hash

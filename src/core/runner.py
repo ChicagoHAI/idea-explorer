@@ -52,7 +52,7 @@ class ResearchRunner:
     def __init__(self,
                  project_root: Optional[Path] = None,
                  use_github: bool = True,
-                 github_org: str = "ChicagoHAI"):
+                 github_org: str = ""):
         """
         Initialize research runner.
 
@@ -60,7 +60,7 @@ class ResearchRunner:
             project_root: Root directory of project.
                          Defaults to parent of src/
             use_github: Whether to create GitHub repos for experiments (default: True)
-            github_org: GitHub organization name (default: ChicagoHAI)
+            github_org: GitHub organization name (empty string = personal account)
         """
         if project_root is None:
             project_root = Path(__file__).parent.parent.parent
@@ -91,8 +91,12 @@ class ResearchRunner:
                 self.use_github = False
             else:
                 try:
-                    self.github_manager = GitHubManager(org_name=github_org)
-                    print(f"✅ GitHub integration enabled (org: {github_org})")
+                    self.github_manager = GitHubManager(org_name=github_org or None)
+                    account_label = self.github_manager.owner_name
+                    if self.github_manager.use_personal_account:
+                        print(f"✅ GitHub integration enabled (personal account: {account_label})")
+                    else:
+                        print(f"✅ GitHub integration enabled (org: {account_label})")
                 except Exception as e:
                     print(f"⚠️  GitHub integration failed: {e}")
                     self.use_github = False
@@ -109,7 +113,8 @@ class ResearchRunner:
                     write_paper: bool = False,
                     paper_style: str = "neurips",
                     paper_timeout: int = 3600,
-                    no_hash: bool = False) -> Dict[str, Any]:
+                    no_hash: bool = False,
+                    private: bool = False) -> Dict[str, Any]:
         """
         Execute research for a given idea.
 
@@ -202,7 +207,7 @@ class ResearchRunner:
                         idea_id=idea_id,
                         title=title,
                         description=idea_spec.get('hypothesis', ''),
-                        private=False,  # Public by default
+                        private=private,
                         domain=domain,
                         provider=provider,
                         no_hash=no_hash
@@ -794,8 +799,13 @@ def main():
     )
     parser.add_argument(
         "--github-org",
-        default=os.getenv('GITHUB_ORG', 'ChicagoHAI'),
-        help="GitHub organization name (default: from GITHUB_ORG env var or ChicagoHAI)"
+        default=os.getenv('GITHUB_ORG', ''),
+        help="GitHub organization name (default: from GITHUB_ORG env var, or personal account if not set)"
+    )
+    parser.add_argument(
+        "--private",
+        action="store_true",
+        help="Create private GitHub repository (default: public)"
     )
     parser.add_argument(
         "--full-permissions",
@@ -895,7 +905,8 @@ def main():
             write_paper=args.write_paper,
             paper_style=args.paper_style,
             paper_timeout=args.paper_timeout,
-            no_hash=args.no_hash
+            no_hash=args.no_hash,
+            private=args.private
         )
 
         print()

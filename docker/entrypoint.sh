@@ -34,43 +34,27 @@ echo ""
 # Validate environment variables
 # -----------------------------------------------------------------------------
 validate_env() {
-    local has_ai_key=false
+    echo -e "${BLUE}Checking environment...${NC}"
 
-    echo -e "${BLUE}Checking API keys...${NC}"
-
-    # Check AI provider keys
-    if [ -n "$ANTHROPIC_API_KEY" ]; then
-        echo -e "  ${GREEN}[OK]${NC} ANTHROPIC_API_KEY configured (Claude)"
-        has_ai_key=true
-    fi
+    # Check API keys (optional - CLIs use OAuth, but keys needed for some features)
+    # OPENAI_API_KEY: Required for IdeaHub integration and paper-finder
+    # GITHUB_TOKEN: Required for GitHub repo creation
+    # Note: Claude/Codex/Gemini CLIs use OAuth credentials from ~/.claude, ~/.codex, ~/.gemini
 
     if [ -n "$OPENAI_API_KEY" ]; then
-        echo -e "  ${GREEN}[OK]${NC} OPENAI_API_KEY configured (Codex/IdeaHub)"
-        has_ai_key=true
+        echo -e "  ${GREEN}[OK]${NC} OPENAI_API_KEY configured (IdeaHub, paper-finder)"
+    else
+        echo -e "  ${YELLOW}[INFO]${NC} OPENAI_API_KEY not set (IdeaHub and paper-finder won't work)"
     fi
 
-    if [ -n "$GOOGLE_API_KEY" ]; then
-        echo -e "  ${GREEN}[OK]${NC} GOOGLE_API_KEY configured (Gemini)"
-        has_ai_key=true
-    fi
-
-    if [ "$has_ai_key" = false ]; then
-        echo -e "${RED}Error: No AI provider API key found${NC}"
-        echo ""
-        echo "Please provide at least one of the following in your .env file:"
-        echo "  - ANTHROPIC_API_KEY (for Claude Code)"
-        echo "  - OPENAI_API_KEY (for Codex and IdeaHub)"
-        echo "  - GOOGLE_API_KEY (for Gemini)"
-        echo ""
-        exit 1
-    fi
-
-    # Check GitHub token (optional but recommended)
     if [ -n "$GITHUB_TOKEN" ]; then
         echo -e "  ${GREEN}[OK]${NC} GITHUB_TOKEN configured"
     else
-        echo -e "  ${YELLOW}[WARN]${NC} GITHUB_TOKEN not set - GitHub integration disabled"
-        echo "         Use --no-github flag or set GITHUB_TOKEN for full functionality"
+        echo -e "  ${YELLOW}[INFO]${NC} GITHUB_TOKEN not set - use --no-github flag"
+    fi
+
+    if [ -n "$S2_API_KEY" ]; then
+        echo -e "  ${GREEN}[OK]${NC} S2_API_KEY configured (paper-finder)"
     fi
 
     echo ""
@@ -123,6 +107,58 @@ check_gpu() {
 }
 
 # -----------------------------------------------------------------------------
+# Start paper-finder service (if S2_API_KEY is configured)
+# -----------------------------------------------------------------------------
+start_paper_finder() {
+    echo -e "${BLUE}Paper-finder Service:${NC}"
+
+    if [ -n "$S2_API_KEY" ]; then
+        if [ -n "$OPENAI_API_KEY" ]; then
+            echo -e "  ${GREEN}[OK]${NC} S2_API_KEY configured"
+
+            # Check if paper-finder is installed
+            if [ -d "/app/services/paper-finder" ]; then
+                echo "  Starting paper-finder service..."
+
+                # Create logs directory if needed
+                mkdir -p /app/logs
+
+                # Start paper-finder in background
+                cd /app/services/paper-finder/agents/mabool/api
+                nohup make start-dev >> /app/logs/paper-finder.log 2>&1 &
+                PAPER_FINDER_PID=$!
+                cd /workspaces
+
+                # Wait for paper-finder to be healthy (max 60 seconds)
+                for i in {1..60}; do
+                    if curl -s http://localhost:8000/health > /dev/null 2>&1; then
+                        echo -e "  ${GREEN}[OK]${NC} Paper-finder started at localhost:8000"
+                        if [ -n "$COHERE_API_KEY" ]; then
+                            echo -e "  ${GREEN}[OK]${NC} COHERE_API_KEY configured (full reranking)"
+                        else
+                            echo -e "  ${YELLOW}[INFO]${NC} COHERE_API_KEY not set (reranking disabled, 92.5% quality)"
+                        fi
+                        echo ""
+                        return 0
+                    fi
+                    sleep 1
+                done
+                echo -e "  ${YELLOW}[WARN]${NC} Paper-finder failed to start - using manual search fallback"
+                echo "         Check /app/logs/paper-finder.log for errors"
+            else
+                echo -e "  ${YELLOW}[WARN]${NC} Paper-finder not installed"
+            fi
+        else
+            echo -e "  ${YELLOW}[WARN]${NC} OPENAI_API_KEY required for paper-finder"
+        fi
+    else
+        echo -e "  ${YELLOW}[INFO]${NC} S2_API_KEY not set - paper-finder disabled"
+        echo "         Agents will use manual search (arXiv, Semantic Scholar, Papers with Code)"
+    fi
+    echo ""
+}
+
+# -----------------------------------------------------------------------------
 # Display available commands
 # -----------------------------------------------------------------------------
 show_help() {
@@ -156,6 +192,7 @@ show_help() {
 validate_env
 setup_git
 check_gpu
+start_paper_finder
 
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}  Container Ready${NC}"

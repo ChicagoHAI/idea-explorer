@@ -98,7 +98,7 @@ python src/cli/submit.py my_experiment.yaml
 
 **What happens:**
 1. ✅ Validates your idea against schema
-2. 📦 Creates GitHub repository in ChicagoHAI organization
+2. 📦 Creates GitHub repository (personal account or organization)
 3. 📥 Clones repository to `workspace/<repo-name>/`
 4. 📝 Adds research metadata (README, idea.yaml)
 5. 🚀 Commits and pushes initial setup to GitHub
@@ -106,7 +106,7 @@ python src/cli/submit.py my_experiment.yaml
 **Output:**
 ```
 ✓ Idea submitted successfully: my_experiment_20250103_120000_abc123de
-✓ Repository created: https://github.com/ChicagoHAI/my-experiment-20250103-120000-abc123de
+✓ Repository created: https://github.com/your-username/my-experiment-20250103-120000-abc123de
 ✓ Workspace ready at: workspace/my-experiment-20250103-120000-abc123de
 
 NEXT STEPS:
@@ -223,7 +223,7 @@ workspace/<repo-name>/
 ```
 
 **GitHub repository:**
-- Visit `https://github.com/ChicagoHAI/<repo-name>`
+- Visit the repository URL shown after submission
 - All results committed and pushed automatically
 - README with research overview
 - Complete version history

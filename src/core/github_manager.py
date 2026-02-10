@@ -2,7 +2,7 @@
 GitHub Manager - Handles GitHub repository operations
 
 This module manages:
-1. Creating repositories in ChicagoHAI organization
+1. Creating repositories (in an organization or personal account)
 2. Cloning repositories locally
 3. Committing and pushing changes
 4. Creating pull requests (optional)
@@ -42,18 +42,18 @@ class GitHubManager:
     """
 
     def __init__(self,
-                 org_name: str = "ChicagoHAI",
+                 org_name: Optional[str] = None,
                  token: Optional[str] = None,
                  workspace_dir: Optional[Path] = None):
         """
         Initialize GitHub manager.
 
         Args:
-            org_name: GitHub organization name (default: ChicagoHAI)
+            org_name: GitHub organization name. If None/empty, uses personal account.
             token: GitHub personal access token. If None, reads from GITHUB_TOKEN env var.
             workspace_dir: Directory for cloning repos (default: project_root/workspace)
         """
-        self.org_name = org_name
+        self.org_name = org_name or None  # Normalize empty string to None
 
         # Get token from parameter or environment
         self.token = token or os.getenv('GITHUB_TOKEN')
@@ -82,12 +82,35 @@ class GitHubManager:
         auth = Auth.Token(self.token)
         self.github = Github(auth=auth)
 
-        # Get organization
+        # Resolve owner: organization or personal account
+        # Both AuthenticatedUser and Organization support create_repo() and get_repo()
+        self.use_personal_account = False
+        self.owner = None
+        self.owner_name = None
+
+        if self.org_name:
+            # User specified an organization — try to access it
+            try:
+                self.owner = self.github.get_organization(self.org_name)
+                self.owner_name = self.org_name
+                print(f"✓ Connected to GitHub organization: {self.org_name}")
+            except GithubException as e:
+                print(f"⚠️  Cannot access organization '{self.org_name}': {e}")
+                print(f"   Falling back to your personal GitHub account...")
+                self._setup_personal_account()
+        else:
+            # No organization specified — use personal account
+            self._setup_personal_account()
+
+    def _setup_personal_account(self):
+        """Configure GitHub manager to use the authenticated user's personal account."""
         try:
-            self.org = self.github.get_organization(self.org_name)
-            print(f"✓ Connected to GitHub organization: {self.org_name}")
+            self.owner = self.github.get_user()
+            self.owner_name = self.owner.login
+            self.use_personal_account = True
+            print(f"✓ Using personal GitHub account: {self.owner_name}")
         except GithubException as e:
-            raise ValueError(f"Failed to access organization '{self.org_name}': {e}")
+            raise ValueError(f"Failed to access personal GitHub account: {e}")
 
     def create_research_repo(self,
                            idea_id: str,
@@ -130,20 +153,22 @@ class GitHubManager:
         # Collapse multiple spaces
         description = ' '.join(description.split())
 
+        account_label = f"Personal account ({self.owner_name})" if self.use_personal_account else f"Organization: {self.owner_name}"
         print(f"\n📦 Creating GitHub repository...")
-        print(f"   Organization: {self.org_name}")
+        print(f"   {account_label}")
         print(f"   Name: {repo_name}")
         print(f"   Visibility: {'Private' if private else 'Public'}")
 
         try:
-            # Create repository without auto-generated README
-            # The agent will create README.md after research is complete
-            repo = self.org.create_repo(
+            # auto_init=True creates an initial commit with README, ensuring the
+            # 'main' branch exists. The agent will overwrite README.md later.
+            # gitignore_template="Python" adds a Python .gitignore in that initial commit.
+            repo = self.owner.create_repo(
                 name=repo_name,
                 description=description,
                 private=private,
-                auto_init=False,  # Don't create README - agent will create it later
-                gitignore_template="Python"
+                auto_init=True,
+                gitignore_template="Python",
             )
 
             print(f"✅ Repository created: {repo.html_url}")
@@ -165,7 +190,7 @@ class GitHubManager:
             if e.status == 422 and 'already exists' in str(e):
                 # Repository already exists
                 print(f"ℹ️  Repository {repo_name} already exists, using existing repo")
-                repo = self.org.get_repo(repo_name)
+                repo = self.owner.get_repo(repo_name)
                 return {
                     'repo_name': repo_name,
                     'repo_url': repo.html_url,
@@ -273,8 +298,9 @@ class GitHubManager:
                     auth_url = origin_url.replace('https://', f'https://{self.token}@')
                     origin.set_url(auth_url)
 
-                # Push
-                origin.push(branch)
+                # Push using refspec HEAD:refs/heads/{branch} so it works even if
+                # the local branch name differs (e.g., "master" vs "main" on older git)
+                origin.push(f"HEAD:refs/heads/{branch}")
                 print(f"   ✓ Pushed to {branch}")
 
                 return True
@@ -305,7 +331,7 @@ class GitHubManager:
             PR URL if successful, None otherwise
         """
         try:
-            repo = self.org.get_repo(repo_name)
+            repo = self.owner.get_repo(repo_name)
 
             # Create PR
             pr = repo.create_pull(
@@ -548,6 +574,7 @@ Output ONLY the repository name, nothing else."""
 def main():
     """Test GitHub manager."""
     # This requires GITHUB_TOKEN to be set
+    # Uses personal account by default (no org_name)
     manager = GitHubManager()
 
     # Test repo creation

@@ -131,9 +131,9 @@ ensure_directories() {
 check_env_file() {
     if [ ! -f "$PROJECT_ROOT/.env" ]; then
         echo -e "${YELLOW}Warning: .env file not found${NC}"
-        if [ -f "$PROJECT_ROOT/.env.docker.example" ]; then
+        if [ -f "$PROJECT_ROOT/.env.example" ]; then
             echo "Create one from the template:"
-            echo "  cp .env.docker.example .env"
+            echo "  cp .env.example .env"
             echo "  # Edit .env with your API keys"
         fi
         echo ""
@@ -174,6 +174,7 @@ cmd_shell() {
         -v \"$PROJECT_ROOT/ideas:/app/ideas\" \
         -v \"$PROJECT_ROOT/logs:/app/logs\" \
         -v \"$PROJECT_ROOT/config:/app/config:ro\" \
+        -v \"$PROJECT_ROOT/templates:/app/templates:ro\" \
         $credential_mounts \
         -w /workspaces \
         \"$IMAGE_NAME\" \
@@ -209,6 +210,7 @@ cmd_fetch() {
         -v \"$PROJECT_ROOT/ideas:/app/ideas\" \
         -v \"$PROJECT_ROOT/logs:/app/logs\" \
         -v \"$PROJECT_ROOT/config:/app/config:ro\" \
+        -v \"$PROJECT_ROOT/templates:/app/templates:ro\" \
         $credential_mounts \
         -w /app \
         \"$IMAGE_NAME\" \
@@ -260,6 +262,7 @@ cmd_submit() {
         -v \"$PROJECT_ROOT/ideas:/app/ideas\" \
         -v \"$PROJECT_ROOT/logs:/app/logs\" \
         -v \"$PROJECT_ROOT/config:/app/config:ro\" \
+        -v \"$PROJECT_ROOT/templates:/app/templates:ro\" \
         $credential_mounts \
         $mount_flag \
         -w /app \
@@ -296,6 +299,7 @@ cmd_run() {
         -v \"$PROJECT_ROOT/ideas:/app/ideas\" \
         -v \"$PROJECT_ROOT/logs:/app/logs\" \
         -v \"$PROJECT_ROOT/config:/app/config:ro\" \
+        -v \"$PROJECT_ROOT/templates:/app/templates:ro\" \
         $credential_mounts \
         -w /app \
         \"$IMAGE_NAME\" \

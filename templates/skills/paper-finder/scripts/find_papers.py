@@ -12,7 +12,10 @@ Usage:
 
 import sys
 import json
+import os
+import re
 import argparse
+from datetime import datetime
 
 
 def find_papers(query: str, mode: str = "fast", url: str = "http://localhost:8000/api/2/rounds"):
@@ -49,12 +52,10 @@ def find_papers(query: str, mode: str = "fast", url: str = "http://localhost:800
         "papers": []
     }
 
-    for doc in docs[:15]:  # Top 15
+    for doc in docs:
         rel = doc.get('relevance_judgement', {}).get('relevance', 0)
         authors = doc.get('authors', [])
-        author_str = ', '.join([a.get('name', '') for a in authors[:3]])
-        if len(authors) > 3:
-            author_str += ' et al.'
+        author_str = ', '.join([a.get('name', '') for a in authors])
 
         results["papers"].append({
             "title": doc.get('title', 'Unknown'),
@@ -62,11 +63,28 @@ def find_papers(query: str, mode: str = "fast", url: str = "http://localhost:800
             "authors": author_str,
             "url": doc.get('url', ''),
             "relevance": rel,
-            "abstract": (doc.get('abstract') or '')[:300],
+            "abstract": (doc.get('abstract') or ''),
             "citations": doc.get('citation_count', 0) or 0
         })
 
     return results
+
+
+def save_results_jsonl(results, query: str, output_dir: str = "paper_search_results"):
+    """Save paper results to a JSONL file, one paper per line."""
+    os.makedirs(output_dir, exist_ok=True)
+
+    sanitized = re.sub(r'[^\w\s-]', '', query).strip()
+    sanitized = re.sub(r'[\s]+', '_', sanitized)[:80]
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f"{sanitized}_{timestamp}.jsonl"
+    filepath = os.path.join(output_dir, filename)
+
+    with open(filepath, 'w') as f:
+        for paper in results.get('papers', []):
+            f.write(json.dumps(paper) + '\n')
+
+    return filepath
 
 
 def main():
@@ -76,7 +94,7 @@ def main():
                         help="Search mode: fast (~30s) or diligent (~3min)")
     parser.add_argument("--url", default="http://localhost:8000/api/2/rounds",
                         help="Paper-finder API URL")
-    parser.add_argument("--format", default="text", choices=["text", "json"],
+    parser.add_argument("--format", default="json", choices=["text", "json"],
                         help="Output format")
     args = parser.parse_args()
 
@@ -84,6 +102,8 @@ def main():
 
     if args.format == "json":
         print(json.dumps(results, indent=2))
+        filepath = save_results_jsonl(results, args.query)
+        print(f"\nResults saved to: {filepath}", file=sys.stderr)
         return
 
     # Text format
@@ -106,10 +126,10 @@ def main():
         print(f"   Authors: {paper['authors']}")
         print(f"   URL: {paper['url']}")
         if paper['abstract']:
-            abstract = paper['abstract']
-            if len(abstract) >= 300:
-                abstract += "..."
-            print(f"   Abstract: {abstract}")
+            print(f"   Abstract: {paper['abstract']}")
+
+    filepath = save_results_jsonl(results, args.query)
+    print(f"\nResults saved to: {filepath}")
 
 
 if __name__ == "__main__":

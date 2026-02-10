@@ -31,5 +31,21 @@ Skills with conceptual inspiration from claude-scientific-skills:
   - grant-writing/
 
 Skills original to idea-explorer:
-  - paper-finder/ 
+  - paper-finder/
   - paper-writer/
+
+--------------------------------------------------------------------------------
+asta-paper-finder (Paper Finder)
+--------------------------------------------------------------------------------
+
+Source: https://github.com/ChicagoHAI/asta-paper-finder
+License: Apache License 2.0
+Copyright (c) Allen Institute for AI
+
+The services/paper-finder/ directory contains a modified copy of asta-paper-finder,
+a paper-seeking agent that assists in locating academic papers according to
+content-based and metadata criteria.
+
+Modifications from original:
+  - Made COHERE_API_KEY optional (returns no-op reranker when not set)
+  - Configuration adjusted for integration with idea-explorer
