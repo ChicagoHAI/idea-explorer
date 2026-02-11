@@ -522,11 +522,11 @@ prompt_secret() {
     local value=""
     if [ "$required" = "optional" ]; then
         echo -ne "    > ${DIM}[Enter to skip]${NC} "
-        read -s value
+        read -s value < /dev/tty
         echo ""
     else
         echo -ne "    > "
-        read -s value
+        read -s value < /dev/tty
         echo ""
     fi
 
@@ -575,7 +575,7 @@ prompt_choice() {
     local selection=""
     while true; do
         echo -ne "    > "
-        read selection
+        read selection < /dev/tty
         if [[ "$selection" =~ ^[0-9]+$ ]] && [ "$selection" -ge 1 ] && [ "$selection" -le "${#options[@]}" ]; then
             REPLY="$selection"
             return
@@ -606,7 +606,7 @@ cmd_setup() {
     if [ -f "$PROJECT_ROOT/.env" ]; then
         echo -e "    ${GREEN}[OK]${NC} .env file already exists"
         echo -ne "    Reconfigure? [y/N] "
-        read reconfigure
+        read reconfigure < /dev/tty
         if [[ ! "$reconfigure" =~ ^[Yy] ]]; then
             echo -e "    ${DIM}Keeping existing configuration${NC}"
             echo ""
@@ -720,7 +720,7 @@ cmd_setup() {
     case "$idea_choice" in
         1)
             echo -ne "    Paste your IdeaHub URL: "
-            read ideahub_url
+            read ideahub_url < /dev/tty
             if [ -z "$ideahub_url" ]; then
                 echo -e "    ${YELLOW}[SKIP]${NC} No URL provided"
             else
@@ -734,7 +734,7 @@ cmd_setup() {
             ;;
         2)
             echo -ne "    Path to YAML file: "
-            read yaml_path
+            read yaml_path < /dev/tty
             if [ -z "$yaml_path" ] || [ ! -f "$yaml_path" ]; then
                 echo -e "    ${YELLOW}[SKIP]${NC} File not found or no path provided"
             else

@@ -56,12 +56,12 @@ main() {
     echo ""
 
     # ── Clone or update repo ──
-    local install_dir="${INSTALL_DIR:-$HOME/idea-explorer}"
+    local install_dir="${INSTALL_DIR:-$(pwd)/idea-explorer}"
 
     if [ -d "$install_dir/.git" ]; then
         echo -e "  ${DIM}Found existing install at $install_dir${NC}"
         echo -ne "  Update with git pull? [Y/n] "
-        read update_choice
+        read update_choice < /dev/tty
         if [[ ! "$update_choice" =~ ^[Nn] ]]; then
             echo -e "  Updating..."
             git -C "$install_dir" pull --ff-only || {
