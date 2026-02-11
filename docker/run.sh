@@ -770,15 +770,15 @@ cmd_setup() {
 # Helper: interactive .env configuration
 setup_env_interactive() {
     prompt_secret "GitHub Token" "GITHUB_TOKEN" "required" "ghp_" \
-        "Get one at: https://github.com/settings/tokens (repo scope)"
+        "Get one at: https://github.com/settings/tokens (repo scope)" || true
     echo ""
 
     prompt_secret "OpenAI API Key" "OPENAI_API_KEY" "optional" "sk-" \
-        "Enables IdeaHub + LLM repo naming"
+        "Enables IdeaHub + LLM repo naming" || true
     echo ""
 
     prompt_secret "Semantic Scholar API Key" "S2_API_KEY" "optional" "" \
-        "Enables paper-finder literature search (https://www.semanticscholar.org/product/api)"
+        "Enables paper-finder literature search (https://www.semanticscholar.org/product/api)" || true
     echo ""
 
     echo -e "    ${GREEN}[OK]${NC} .env file configured"
