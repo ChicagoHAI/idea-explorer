@@ -637,10 +637,15 @@ cmd_setup() {
 
     case "$provider_choice" in
         1)
-            echo -e "    Opening Claude login in Docker container..."
-            echo -e "    ${DIM}Run 'claude' inside, complete login, then type 'exit'${NC}"
-            echo ""
             mkdir -p "$HOME/.claude"
+            echo ""
+            echo -e "    ${BOLD}${YELLOW}═══════════════════════════════════════════════════════${NC}"
+            echo -e "    ${BOLD}${YELLOW}  Claude will launch now. Complete the OAuth login,${NC}"
+            echo -e "    ${BOLD}${YELLOW}  then press Ctrl+C twice to exit and continue setup.${NC}"
+            echo -e "    ${BOLD}${YELLOW}═══════════════════════════════════════════════════════${NC}"
+            echo ""
+            echo -ne "    Press Enter to launch Claude..."
+            read < /dev/tty
             local gpu_flags=$(get_gpu_flags 2>/dev/null)
             eval "docker run -it --rm \
                 $gpu_flags \
@@ -648,7 +653,8 @@ cmd_setup() {
                 -v \"$HOME/.claude:/tmp/.claude\" \
                 -w /tmp \
                 \"$IMAGE_NAME\" \
-                bash" 2>/dev/null || true
+                claude" 2>/dev/null || true
+            echo ""
             if [ -d "$HOME/.claude" ] && [ "$(ls -A "$HOME/.claude" 2>/dev/null)" ]; then
                 echo -e "    ${GREEN}[OK]${NC} Claude credentials saved"
             else
@@ -656,10 +662,15 @@ cmd_setup() {
             fi
             ;;
         2)
-            echo -e "    Opening Codex login in Docker container..."
-            echo -e "    ${DIM}Run 'codex' inside, complete login, then type 'exit'${NC}"
-            echo ""
             mkdir -p "$HOME/.codex"
+            echo ""
+            echo -e "    ${BOLD}${YELLOW}═══════════════════════════════════════════════════════${NC}"
+            echo -e "    ${BOLD}${YELLOW}  Codex will launch now. Complete the OAuth login,${NC}"
+            echo -e "    ${BOLD}${YELLOW}  then press Ctrl+C twice to exit and continue setup.${NC}"
+            echo -e "    ${BOLD}${YELLOW}═══════════════════════════════════════════════════════${NC}"
+            echo ""
+            echo -ne "    Press Enter to launch Codex..."
+            read < /dev/tty
             local gpu_flags=$(get_gpu_flags 2>/dev/null)
             eval "docker run -it --rm \
                 $gpu_flags \
@@ -667,7 +678,8 @@ cmd_setup() {
                 -v \"$HOME/.codex:/tmp/.codex\" \
                 -w /tmp \
                 \"$IMAGE_NAME\" \
-                bash" 2>/dev/null || true
+                codex" 2>/dev/null || true
+            echo ""
             if [ -d "$HOME/.codex" ] && [ "$(ls -A "$HOME/.codex" 2>/dev/null)" ]; then
                 echo -e "    ${GREEN}[OK]${NC} Codex credentials saved"
             else
@@ -675,10 +687,15 @@ cmd_setup() {
             fi
             ;;
         3)
-            echo -e "    Opening Gemini login in Docker container..."
-            echo -e "    ${DIM}Run 'gemini' inside, complete login, then type 'exit'${NC}"
-            echo ""
             mkdir -p "$HOME/.gemini"
+            echo ""
+            echo -e "    ${BOLD}${YELLOW}═══════════════════════════════════════════════════════${NC}"
+            echo -e "    ${BOLD}${YELLOW}  Gemini will launch now. Complete the OAuth login,${NC}"
+            echo -e "    ${BOLD}${YELLOW}  then press Ctrl+C twice to exit and continue setup.${NC}"
+            echo -e "    ${BOLD}${YELLOW}═══════════════════════════════════════════════════════${NC}"
+            echo ""
+            echo -ne "    Press Enter to launch Gemini..."
+            read < /dev/tty
             local gpu_flags=$(get_gpu_flags 2>/dev/null)
             eval "docker run -it --rm \
                 $gpu_flags \
@@ -686,7 +703,8 @@ cmd_setup() {
                 -v \"$HOME/.gemini:/tmp/.gemini\" \
                 -w /tmp \
                 \"$IMAGE_NAME\" \
-                bash" 2>/dev/null || true
+                gemini" 2>/dev/null || true
+            echo ""
             if [ -d "$HOME/.gemini" ] && [ "$(ls -A "$HOME/.gemini" 2>/dev/null)" ]; then
                 echo -e "    ${GREEN}[OK]${NC} Gemini credentials saved"
             else
@@ -770,15 +788,15 @@ cmd_setup() {
 # Helper: interactive .env configuration
 setup_env_interactive() {
     prompt_secret "GitHub Token" "GITHUB_TOKEN" "required" "ghp_" \
-        "Get one at: https://github.com/settings/tokens (repo scope)"
+        "Get one at: https://github.com/settings/tokens (repo scope)" || true
     echo ""
 
     prompt_secret "OpenAI API Key" "OPENAI_API_KEY" "optional" "sk-" \
-        "Enables IdeaHub + LLM repo naming"
+        "Enables IdeaHub + LLM repo naming" || true
     echo ""
 
     prompt_secret "Semantic Scholar API Key" "S2_API_KEY" "optional" "" \
-        "Enables paper-finder literature search (https://www.semanticscholar.org/product/api)"
+        "Enables paper-finder literature search (https://www.semanticscholar.org/product/api)" || true
     echo ""
 
     echo -e "    ${GREEN}[OK]${NC} .env file configured"
