@@ -37,22 +37,29 @@ Idea Explorer is an autonomous research framework that takes structured research
 <details open>
 <summary><b>Quick Start</b></summary>
 
+**One-liner install** (clones repo, pulls Docker image, walks you through setup):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ChicagoHAI/idea-explorer/main/install.sh | bash
+```
+
+**Or set up manually:**
+
 ```bash
 # 1. Clone the repo (needed for CLI scripts, config, and templates)
 git clone https://github.com/ChicagoHAI/idea-explorer
 cd idea-explorer
-cp .env.example .env   # Edit .env: add GITHUB_TOKEN, OPENAI_API_KEY
 
-# 2. Get the Docker image (pick one)
+# 2. Run the interactive setup wizard
+./idea-explorer setup
+
+# Or do each step yourself:
+cp .env.example .env   # Edit .env: add GITHUB_TOKEN, OPENAI_API_KEY
 docker pull ghcr.io/chicagohai/idea-explorer:latest    # Pull pre-built (~2 min)
 docker tag ghcr.io/chicagohai/idea-explorer:latest chicagohai/idea-explorer:latest
-# OR
-./idea-explorer build                                   # Build from source (~10-15 min)
+claude   # Login to your AI CLI (one-time, on host machine)
 
-# 3. Login to your AI CLI (one-time, on host machine)
-claude   # or: codex, gemini
-
-# 4. Run from IdeaHub (easiest way to start)
+# 3. Run from IdeaHub (easiest way to start)
 ./idea-explorer fetch https://hypogenic.ai/ideahub/idea/HGVv4Z0ALWVHZ9YsstWT \
     --submit --run --provider claude --full-permissions
 ```

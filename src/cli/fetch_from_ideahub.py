@@ -130,6 +130,90 @@ def fetch_ideahub_content(url: str) -> dict:
         sys.exit(1)
 
 
+# Domain inference keyword map for template-based fallback
+_DOMAIN_KEYWORDS = {
+    'artificial_intelligence': ['llm', 'language model', 'nlp', 'text', 'gpt', 'bert', 'transformer', 'prompt', 'token'],
+    'computer_vision': ['vision', 'image', 'cnn', 'object detection', 'segmentation', 'diffusion'],
+    'reinforcement_learning': ['reinforcement', ' rl ', 'reward', 'policy', 'agent', 'environment'],
+    'ml': ['regression', 'classification', 'clustering', 'supervised', 'unsupervised', 'gradient', 'neural'],
+    'data_science': ['data analysis', 'statistics', 'prediction', 'forecasting', 'tabular'],
+    'scientific_computing': ['simulation', 'numerical', 'physics', 'biology', 'chemistry', 'molecular'],
+    'systems': ['distributed', 'database', 'network', 'operating system', 'compiler'],
+    'theory': ['algorithm', 'complexity', 'proof', 'optimization', 'graph theory'],
+}
+
+
+def _infer_domain(title: str, description: str, tags: list) -> str:
+    """Infer research domain from title, description, and tags using keyword matching."""
+    text = f"{title} {description} {' '.join(tags)}".lower()
+    best_domain = 'artificial_intelligence'
+    best_count = 0
+    for domain, keywords in _DOMAIN_KEYWORDS.items():
+        count = sum(1 for kw in keywords if kw in text)
+        if count > best_count:
+            best_count = count
+            best_domain = domain
+    return best_domain
+
+
+def _convert_without_llm(ideahub_content: dict) -> dict:
+    """
+    Convert IdeaHub content to Idea Explorer YAML format without using an LLM.
+
+    Produces a minimal but valid YAML structure using the scraped content directly.
+    The result will have title, domain, hypothesis (required fields) plus background
+    and metadata.
+
+    Args:
+        ideahub_content: Dictionary with IdeaHub content from fetch_ideahub_content()
+
+    Returns:
+        Dictionary with 'parsed' and 'yaml_string' keys
+    """
+    title = ideahub_content.get('title') or 'Untitled IdeaHub Idea'
+    description = ideahub_content.get('description', '')
+    tags = ideahub_content.get('tags', [])
+    url = ideahub_content.get('url', '')
+
+    # Infer domain from content
+    domain = _infer_domain(title, description, tags)
+
+    # Use description as hypothesis, ensuring minimum 20 chars
+    hypothesis = description.strip()
+    if len(hypothesis) < 20:
+        hypothesis = f"Investigate: {title}"
+    # Truncate very long hypotheses to keep it reasonable
+    if len(hypothesis) > 500:
+        hypothesis = hypothesis[:497] + '...'
+
+    # Build the idea structure
+    idea_data = {
+        'idea': {
+            'title': title,
+            'domain': domain,
+            'hypothesis': hypothesis,
+            'background': {
+                'description': description,
+            },
+            'metadata': {
+                'source': 'IdeaHub',
+                'source_url': url,
+            },
+        }
+    }
+
+    if tags:
+        idea_data['idea']['metadata']['tags'] = tags
+
+    # Generate clean YAML string
+    yaml_string = yaml.dump(idea_data, default_flow_style=False, sort_keys=False, allow_unicode=True)
+
+    print("   ⚠️  This is a rough template-based conversion.")
+    print("   You may want to manually refine the YAML (especially the hypothesis).")
+
+    return {'parsed': idea_data, 'yaml_string': yaml_string}
+
+
 def convert_to_yaml(ideahub_content: dict) -> dict:
     """
     Use GPT to convert IdeaHub content to Idea Explorer YAML format.
@@ -145,16 +229,14 @@ def convert_to_yaml(ideahub_content: dict) -> dict:
     # Check for OpenAI API key
     api_key = os.getenv('OPENAI_API_KEY')
     if not api_key:
-        print("❌ Error: OPENAI_API_KEY not found in .env.local or .env")
-        print("   Please add your OpenAI API key to use this feature.")
-        sys.exit(1)
+        print("ℹ️  OPENAI_API_KEY not set — using template-based conversion instead.")
+        return _convert_without_llm(ideahub_content)
 
     try:
         from openai import OpenAI
     except ImportError:
-        print("❌ Error: openai package not installed")
-        print("   Install with: uv add openai")
-        sys.exit(1)
+        print("ℹ️  openai package not installed — using template-based conversion instead.")
+        return _convert_without_llm(ideahub_content)
 
     client = OpenAI(api_key=api_key)
 
@@ -284,8 +366,9 @@ idea:
             return {'parsed': parsed, 'yaml_string': yaml_content}
 
     except Exception as e:
-        print(f"❌ Error calling GPT API: {e}")
-        sys.exit(1)
+        print(f"⚠️  GPT API call failed: {e}")
+        print("   Falling back to template-based conversion.")
+        return _convert_without_llm(ideahub_content)
 
 
 def save_yaml_file(result: dict, url: str) -> Path:
