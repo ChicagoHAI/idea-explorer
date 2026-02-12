@@ -735,54 +735,59 @@ cmd_setup() {
         3) provider_flag="gemini" ;;
     esac
 
+    # Build the run command based on user's choice
+    local run_cmd=""
+
     case "$idea_choice" in
         1)
             echo -ne "    Paste your IdeaHub URL: "
             read ideahub_url < /dev/tty
-            if [ -z "$ideahub_url" ]; then
-                echo -e "    ${YELLOW}[SKIP]${NC} No URL provided"
+            if [ -n "$ideahub_url" ]; then
+                run_cmd="./idea-explorer fetch $ideahub_url --submit --run --provider $provider_flag --full-permissions"
             else
-                echo ""
-                echo -e "    ${DIM}Provider: $provider_flag | Full permissions: yes (safe in Docker)${NC}"
-                echo -e "    Starting: ./idea-explorer fetch $ideahub_url --submit --run --provider $provider_flag --full-permissions"
-                echo ""
-                # Re-exec via the wrapper to run fetch
-                exec "$PROJECT_ROOT/idea-explorer" fetch "$ideahub_url" --submit --run --provider "$provider_flag" --full-permissions
+                echo -e "    ${YELLOW}[SKIP]${NC} No URL provided"
             fi
             ;;
         2)
             echo -ne "    Path to YAML file: "
             read yaml_path < /dev/tty
-            if [ -z "$yaml_path" ] || [ ! -f "$yaml_path" ]; then
-                echo -e "    ${YELLOW}[SKIP]${NC} File not found or no path provided"
+            if [ -n "$yaml_path" ]; then
+                run_cmd="./idea-explorer submit $yaml_path --run --provider $provider_flag --full-permissions"
             else
-                echo ""
-                echo -e "    ${DIM}Provider: $provider_flag | Full permissions: yes (safe in Docker)${NC}"
-                echo -e "    Starting: ./idea-explorer submit $yaml_path then run"
-                echo ""
-                # Submit then run — let user handle the run step since they need the idea ID
-                exec "$PROJECT_ROOT/idea-explorer" submit "$yaml_path" --run --provider "$provider_flag" --full-permissions
+                echo -e "    ${YELLOW}[SKIP]${NC} No path provided"
             fi
             ;;
         3)
-            local example_file="ideas/examples/ml_regularization_test.yaml"
-            echo -e "    Using built-in example: $example_file"
-            echo ""
-            echo -e "    ${DIM}Provider: $provider_flag | Full permissions: yes (safe in Docker)${NC}"
-            echo -e "    Starting: ./idea-explorer submit $example_file then run"
-            echo ""
-            exec "$PROJECT_ROOT/idea-explorer" submit "$example_file" --run --provider "$provider_flag" --full-permissions
-            ;;
-        4)
-            echo ""
-            echo -e "  ${GREEN}Setup complete!${NC} You're ready to go."
-            echo ""
-            echo "  Next steps:"
-            echo "    ./idea-explorer fetch <ideahub_url> --submit --run --provider claude --full-permissions"
-            echo "    ./idea-explorer help"
-            echo ""
+            run_cmd="./idea-explorer submit ideas/examples/ml_regularization_test.yaml --run --provider $provider_flag --full-permissions"
             ;;
     esac
+
+    echo ""
+    echo -e "  ${GREEN}Setup complete!${NC} You're ready to go."
+    echo ""
+
+    if [ -n "$run_cmd" ]; then
+        echo -e "  Run this to get started:"
+        echo ""
+        echo -e "    ${BOLD}cd $PROJECT_ROOT && $run_cmd${NC}"
+        echo ""
+
+        # If we have a real TTY, offer to run it now
+        if [ -t 0 ]; then
+            echo -ne "  Run it now? [Y/n] "
+            read run_now < /dev/tty
+            if [[ ! "$run_now" =~ ^[Nn] ]]; then
+                cd "$PROJECT_ROOT"
+                exec $run_cmd
+            fi
+        fi
+    else
+        echo "  Next steps:"
+        echo -e "    ${BOLD}cd $PROJECT_ROOT${NC}"
+        echo "    ./idea-explorer fetch <ideahub_url> --submit --run --provider claude --full-permissions"
+        echo "    ./idea-explorer help"
+        echo ""
+    fi
 }
 
 # Helper: interactive .env configuration
