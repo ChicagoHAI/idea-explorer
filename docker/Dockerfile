@@ -130,10 +130,10 @@ COPY --from=builder /usr/lib/node_modules /usr/lib/node_modules
 RUN ln -sf /usr/lib/node_modules/npm/bin/npm-cli.js /usr/bin/npm \
     && ln -sf /usr/lib/node_modules/npm/bin/npx-cli.js /usr/bin/npx
 
-# Copy CLI tools
-COPY --from=builder /usr/bin/claude /usr/bin/claude
-COPY --from=builder /usr/bin/codex /usr/bin/codex
-COPY --from=builder /usr/bin/gemini /usr/bin/gemini
+# Symlink CLI tools (COPY dereferences symlinks, breaking Node.js relative imports)
+RUN ln -sf /usr/lib/node_modules/@anthropic-ai/claude-code/cli.js /usr/bin/claude \
+    && ln -sf /usr/lib/node_modules/@openai/codex/bin/codex.js /usr/bin/codex \
+    && ln -sf /usr/lib/node_modules/@google/gemini-cli/dist/index.js /usr/bin/gemini
 
 # Copy uv (agents may need to create their own environments)
 COPY --from=ghcr.io/astral-sh/uv:0.5.11 /uv /usr/local/bin/uv

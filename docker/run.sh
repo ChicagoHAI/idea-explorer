@@ -557,6 +557,34 @@ prompt_secret() {
     return 0
 }
 
+# Read a visible (non-secret) value from user input
+# Usage: prompt_text "Label" "hint" "default_value"
+# Sets REPLY to the entered value (or default if empty)
+prompt_text() {
+    local label="$1"
+    local hint="$2"
+    local default_val="$3"
+
+    echo -e "    ${BOLD}$label${NC} (optional)"
+    if [ -n "$hint" ]; then
+        echo -e "    ${DIM}$hint${NC}"
+    fi
+
+    if [ -n "$default_val" ]; then
+        echo -ne "    > ${DIM}[Enter for '$default_val']${NC} "
+    else
+        echo -ne "    > ${DIM}[Enter to skip]${NC} "
+    fi
+    local value=""
+    read value < /dev/tty
+
+    if [ -z "$value" ]; then
+        REPLY="$default_val"
+    else
+        REPLY="$value"
+    fi
+}
+
 # Display a numbered menu and return the selection number
 # Usage: prompt_choice "Header" "option1" "option2" ...
 # Returns: selected number (1-based) in $REPLY
@@ -582,6 +610,45 @@ prompt_choice() {
         fi
         echo -e "    ${YELLOW}Please enter a number between 1 and ${#options[@]}${NC}"
     done
+}
+
+# Login a single provider inside Docker with guided instructions
+# Usage: setup_login_provider "Display Name" "cli_command" "/host/cred/dir" "/container/cred/dir"
+setup_login_provider() {
+    local display_name="$1"
+    local cli_cmd="$2"
+    local host_dir="$3"
+    local container_dir="$4"
+
+    mkdir -p "$host_dir"
+    echo ""
+    echo -e "    ${BOLD}${YELLOW}═══════════════════════════════════════════════════════════${NC}"
+    echo -e "    ${BOLD}${YELLOW}  Setting up: $display_name${NC}"
+    echo -e "    ${BOLD}${YELLOW}${NC}"
+    echo -e "    ${BOLD}${YELLOW}  1. Press Enter to launch $display_name in a container${NC}"
+    echo -e "    ${BOLD}${YELLOW}  2. Complete the OAuth login flow in your browser${NC}"
+    echo -e "    ${BOLD}${YELLOW}  3. Once logged in, press Ctrl+C twice to exit and continue${NC}"
+    echo -e "    ${BOLD}${YELLOW}═══════════════════════════════════════════════════════════${NC}"
+    echo ""
+    echo -ne "    Press Enter to launch $display_name..."
+    read < /dev/tty
+
+    local gpu_flags=$(get_gpu_flags 2>/dev/null)
+    eval "docker run -it --rm \
+        $gpu_flags \
+        --env-file \"$PROJECT_ROOT/.env\" \
+        -v \"$host_dir:$container_dir\" \
+        -w /tmp \
+        \"$IMAGE_NAME\" \
+        $cli_cmd" 2>/dev/null || true
+
+    echo ""
+    if [ -d "$host_dir" ] && [ "$(ls -A "$host_dir" 2>/dev/null)" ]; then
+        echo -e "    ${GREEN}[OK]${NC} $display_name credentials saved"
+    else
+        echo -e "    ${YELLOW}[WARN]${NC} No $display_name credentials detected — you can login later with: ./idea-explorer login"
+    fi
+    echo ""
 }
 
 # -----------------------------------------------------------------------------
@@ -626,95 +693,47 @@ cmd_setup() {
 
     # ── Step 4: AI CLI Login ──
     echo -e "  ${BOLD}Step 4/5: AI CLI Login${NC}"
+    echo -e "    ${DIM}Each provider uses OAuth — you'll login inside a Docker container.${NC}"
+    echo -e "    ${DIM}You can set up multiple providers now, or add more later with: ./idea-explorer login${NC}"
+    echo ""
+    echo -e "    ${BOLD}Which providers do you want to log in to?${NC}"
+    echo "      [1] Claude (recommended)"
+    echo "      [2] Codex"
+    echo "      [3] Gemini"
+    echo "      [4] Skip for now"
+    echo -e "    ${DIM}Enter one or more numbers, e.g. 1 2 or 1,2,3${NC}"
+    echo -ne "    > "
+    local login_input=""
+    read login_input < /dev/tty
 
-    prompt_choice "Which provider will you use?" \
-        "Claude (recommended)" \
-        "Codex" \
-        "Gemini" \
-        "Skip for now"
+    # Normalize: replace commas with spaces
+    login_input="${login_input//,/ }"
 
-    local provider_choice="$REPLY"
+    # Track which providers were logged in (for step 5 default)
+    local provider_choice=""
 
-    case "$provider_choice" in
-        1)
-            mkdir -p "$HOME/.claude"
-            echo ""
-            echo -e "    ${BOLD}${YELLOW}═══════════════════════════════════════════════════════${NC}"
-            echo -e "    ${BOLD}${YELLOW}  Claude will launch now. Complete the OAuth login,${NC}"
-            echo -e "    ${BOLD}${YELLOW}  then press Ctrl+C twice to exit and continue setup.${NC}"
-            echo -e "    ${BOLD}${YELLOW}═══════════════════════════════════════════════════════${NC}"
-            echo ""
-            echo -ne "    Press Enter to launch Claude..."
-            read < /dev/tty
-            local gpu_flags=$(get_gpu_flags 2>/dev/null)
-            eval "docker run -it --rm \
-                $gpu_flags \
-                --env-file \"$PROJECT_ROOT/.env\" \
-                -v \"$HOME/.claude:/tmp/.claude\" \
-                -w /tmp \
-                \"$IMAGE_NAME\" \
-                claude" 2>/dev/null || true
-            echo ""
-            if [ -d "$HOME/.claude" ] && [ "$(ls -A "$HOME/.claude" 2>/dev/null)" ]; then
-                echo -e "    ${GREEN}[OK]${NC} Claude credentials saved"
-            else
-                echo -e "    ${YELLOW}[WARN]${NC} No Claude credentials detected — you can login later with: ./idea-explorer login"
-            fi
-            ;;
-        2)
-            mkdir -p "$HOME/.codex"
-            echo ""
-            echo -e "    ${BOLD}${YELLOW}═══════════════════════════════════════════════════════${NC}"
-            echo -e "    ${BOLD}${YELLOW}  Codex will launch now. Complete the OAuth login,${NC}"
-            echo -e "    ${BOLD}${YELLOW}  then press Ctrl+C twice to exit and continue setup.${NC}"
-            echo -e "    ${BOLD}${YELLOW}═══════════════════════════════════════════════════════${NC}"
-            echo ""
-            echo -ne "    Press Enter to launch Codex..."
-            read < /dev/tty
-            local gpu_flags=$(get_gpu_flags 2>/dev/null)
-            eval "docker run -it --rm \
-                $gpu_flags \
-                --env-file \"$PROJECT_ROOT/.env\" \
-                -v \"$HOME/.codex:/tmp/.codex\" \
-                -w /tmp \
-                \"$IMAGE_NAME\" \
-                codex" 2>/dev/null || true
-            echo ""
-            if [ -d "$HOME/.codex" ] && [ "$(ls -A "$HOME/.codex" 2>/dev/null)" ]; then
-                echo -e "    ${GREEN}[OK]${NC} Codex credentials saved"
-            else
-                echo -e "    ${YELLOW}[WARN]${NC} No Codex credentials detected — you can login later with: ./idea-explorer login"
-            fi
-            ;;
-        3)
-            mkdir -p "$HOME/.gemini"
-            echo ""
-            echo -e "    ${BOLD}${YELLOW}═══════════════════════════════════════════════════════${NC}"
-            echo -e "    ${BOLD}${YELLOW}  Gemini will launch now. Complete the OAuth login,${NC}"
-            echo -e "    ${BOLD}${YELLOW}  then press Ctrl+C twice to exit and continue setup.${NC}"
-            echo -e "    ${BOLD}${YELLOW}═══════════════════════════════════════════════════════${NC}"
-            echo ""
-            echo -ne "    Press Enter to launch Gemini..."
-            read < /dev/tty
-            local gpu_flags=$(get_gpu_flags 2>/dev/null)
-            eval "docker run -it --rm \
-                $gpu_flags \
-                --env-file \"$PROJECT_ROOT/.env\" \
-                -v \"$HOME/.gemini:/tmp/.gemini\" \
-                -w /tmp \
-                \"$IMAGE_NAME\" \
-                gemini" 2>/dev/null || true
-            echo ""
-            if [ -d "$HOME/.gemini" ] && [ "$(ls -A "$HOME/.gemini" 2>/dev/null)" ]; then
-                echo -e "    ${GREEN}[OK]${NC} Gemini credentials saved"
-            else
-                echo -e "    ${YELLOW}[WARN]${NC} No Gemini credentials detected — you can login later with: ./idea-explorer login"
-            fi
-            ;;
-        4)
-            echo -e "    ${DIM}[SKIP]${NC} You can login later with: ./idea-explorer login"
-            ;;
-    esac
+    for choice in $login_input; do
+        case "$choice" in
+            1)
+                [ -z "$provider_choice" ] && provider_choice="1"
+                setup_login_provider "Claude" "claude" "$HOME/.claude" "/tmp/.claude"
+                ;;
+            2)
+                [ -z "$provider_choice" ] && provider_choice="2"
+                setup_login_provider "Codex" "codex" "$HOME/.codex" "/tmp/.codex"
+                ;;
+            3)
+                [ -z "$provider_choice" ] && provider_choice="3"
+                setup_login_provider "Gemini" "gemini" "$HOME/.gemini" "/tmp/.gemini"
+                ;;
+            4)
+                echo -e "    ${DIM}[SKIP]${NC} You can login later with: ./idea-explorer login"
+                ;;
+        esac
+    done
+
+    # Default to claude if nothing was selected
+    [ -z "$provider_choice" ] && provider_choice="1"
     echo ""
 
     # ── Step 5: Run your first idea ──
@@ -804,7 +823,45 @@ setup_env_interactive() {
         "Enables paper-finder literature search (https://www.semanticscholar.org/product/api)" || true
     echo ""
 
-    echo -e "    ${GREEN}[OK]${NC} .env file configured"
+    # GitHub Organization
+    prompt_text "GitHub Organization" \
+        "Repos will be created under this org. Leave empty to use your personal account."
+    if [ -n "$REPLY" ]; then
+        if grep -q "^GITHUB_ORG=" "$PROJECT_ROOT/.env" 2>/dev/null; then
+            sed -i "s|^GITHUB_ORG=.*|GITHUB_ORG=$REPLY|" "$PROJECT_ROOT/.env"
+        elif grep -q "^# *GITHUB_ORG=" "$PROJECT_ROOT/.env" 2>/dev/null; then
+            sed -i "s|^# *GITHUB_ORG=.*|GITHUB_ORG=$REPLY|" "$PROJECT_ROOT/.env"
+        else
+            echo "GITHUB_ORG=$REPLY" >> "$PROJECT_ROOT/.env"
+        fi
+        echo -e "    ${GREEN}[OK]${NC} GITHUB_ORG set to $REPLY"
+    else
+        echo -e "    ${DIM}[SKIP]${NC} Using personal GitHub account"
+    fi
+    echo ""
+
+    # Workspace directory
+    prompt_text "Workspace Directory" \
+        "Where research workspaces are created. Relative to project root or absolute path." \
+        "workspaces"
+    if [ -n "$REPLY" ] && [ "$REPLY" != "workspaces" ]; then
+        # Create workspace.yaml from template only if it doesn't exist yet
+        local ws_config="$PROJECT_ROOT/config/workspace.yaml"
+        if [ ! -f "$ws_config" ] && [ -f "$PROJECT_ROOT/config/workspace.yaml.example" ]; then
+            cp "$PROJECT_ROOT/config/workspace.yaml.example" "$ws_config"
+        fi
+        sed -i "s|parent_dir:.*|parent_dir: \"$REPLY\"|" "$ws_config"
+        echo -e "    ${GREEN}[OK]${NC} Workspace directory set to $REPLY"
+    else
+        echo -e "    ${DIM}[OK]${NC} Using default: ./workspaces"
+    fi
+    echo ""
+
+    echo -e "    ${GREEN}[OK]${NC} Configuration complete"
+    echo ""
+    echo -e "    ${DIM}Tip: You can add more API keys to .env later for agent experiments:${NC}"
+    echo -e "    ${DIM}  ANTHROPIC_API_KEY, GOOGLE_API_KEY, OPENROUTER_KEY, HF_TOKEN, WANDB_API_KEY${NC}"
+    echo -e "    ${DIM}  COHERE_API_KEY (improves paper-finder ranking)${NC}"
     echo ""
 }
 
