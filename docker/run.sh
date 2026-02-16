@@ -111,6 +111,18 @@ get_user_flags() {
 }
 
 # -----------------------------------------------------------------------------
+# Get TTY flag (only allocate pseudo-terminal when one is available)
+# This allows idea-explorer to be invoked as a subprocess without failing
+# -----------------------------------------------------------------------------
+get_tty_flag() {
+    if [ -t 0 ]; then
+        echo "-it"
+    else
+        echo "-i"
+    fi
+}
+
+# -----------------------------------------------------------------------------
 # Get GPU flags (auto-detects availability)
 # -----------------------------------------------------------------------------
 get_gpu_flags() {
@@ -272,10 +284,12 @@ cmd_fetch() {
     local credential_mounts=$(get_cli_credential_mounts)
     local workspace_dir=$(get_workspace_dir)
 
+    local tty_flag=$(get_tty_flag)
+
     echo -e "${BLUE}Fetching from IdeaHub...${NC}"
     echo -e "${BLUE}Workspace:${NC} $workspace_dir -> /workspaces"
 
-    eval "docker run -it --rm \
+    eval "docker run $tty_flag --rm \
         $gpu_flags \
         $user_flags \
         --env-file \"$PROJECT_ROOT/.env\" \
@@ -324,10 +338,12 @@ cmd_submit() {
 
     local workspace_dir=$(get_workspace_dir)
 
+    local tty_flag=$(get_tty_flag)
+
     echo -e "${BLUE}Submitting research idea...${NC}"
     echo -e "${BLUE}Workspace:${NC} $workspace_dir -> /workspaces"
 
-    eval "docker run -it --rm \
+    eval "docker run $tty_flag --rm \
         $gpu_flags \
         $user_flags \
         --env-file \"$PROJECT_ROOT/.env\" \
@@ -361,10 +377,12 @@ cmd_run() {
     local credential_mounts=$(get_cli_credential_mounts)
     local workspace_dir=$(get_workspace_dir)
 
+    local tty_flag=$(get_tty_flag)
+
     echo -e "${BLUE}Running research exploration...${NC}"
     echo -e "${BLUE}Workspace:${NC} $workspace_dir -> /workspaces"
 
-    eval "docker run -it --rm \
+    eval "docker run $tty_flag --rm \
         $gpu_flags \
         $user_flags \
         --env-file \"$PROJECT_ROOT/.env\" \
