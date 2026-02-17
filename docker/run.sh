@@ -209,6 +209,12 @@ ensure_directories() {
     local workspace_dir=$(get_workspace_dir)
     mkdir -p "$workspace_dir"
     mkdir -p "$PROJECT_ROOT/logs"
+    # Pre-create ideas subdirectories on the host so they exist when
+    # the volume is mounted into Docker (the mount overlays the image's
+    # pre-created dirs, so the container can't rely on them).
+    mkdir -p "$PROJECT_ROOT/ideas/submitted"
+    mkdir -p "$PROJECT_ROOT/ideas/in_progress"
+    mkdir -p "$PROJECT_ROOT/ideas/completed"
 }
 
 # -----------------------------------------------------------------------------
