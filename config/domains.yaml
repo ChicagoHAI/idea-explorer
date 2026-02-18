@@ -47,6 +47,11 @@ domains:
     description: "Algorithmic analysis, complexity theory, formal methods"
     has_template: true
 
+  mathematics:
+    name: "Mathematics"
+    description: "Pure and applied mathematics: algebra, analysis, topology, number theory, combinatorics, geometry, proofs"
+    has_template: true
+
   scientific_computing:
     name: "Scientific Computing"
     description: "Numerical methods, simulations, computational science"

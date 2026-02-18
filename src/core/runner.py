@@ -314,12 +314,14 @@ class ResearchRunner:
 
                     from agents.paper_writer import run_paper_writer
 
+                    domain = idea.get('idea', {}).get('domain', 'general')
                     paper_result = run_paper_writer(
                         work_dir=work_dir,
                         provider=provider,
                         style=paper_style,
                         timeout=paper_timeout,
-                        full_permissions=full_permissions
+                        full_permissions=full_permissions,
+                        domain=domain
                     )
 
                     if paper_result.get('success'):
@@ -364,10 +366,12 @@ class ResearchRunner:
         print()
 
         # Prepare session instructions using the new template
+        domain = idea.get('idea', {}).get('domain', 'general')
         session_instructions = generate_instructions(
             prompt=prompt,
             work_dir=str(work_dir),
-            use_scribe=use_scribe
+            use_scribe=use_scribe,
+            domain=domain
         )
 
         # Save session instructions

@@ -350,10 +350,12 @@ class ResearchPipelineOrchestrator:
             print()
 
             # Generate session instructions (resource-aware version)
+            domain = idea.get('idea', {}).get('domain', 'general')
             session_instructions = generate_instructions(
                 prompt=prompt,
                 work_dir=str(self.work_dir),
-                use_scribe=use_scribe
+                use_scribe=use_scribe,
+                domain=domain
             )
 
             # Save session instructions

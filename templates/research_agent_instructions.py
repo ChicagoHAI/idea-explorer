@@ -34,7 +34,8 @@ def extract_user_instructions(prompt: str) -> str:
     return generator._extract_user_instructions(prompt)
 
 
-def generate_instructions(prompt: str, work_dir: str, use_scribe: bool = False) -> str:
+def generate_instructions(prompt: str, work_dir: str, use_scribe: bool = False,
+                          domain: str = 'general') -> str:
     """
     Generate comprehensive session instructions for the research agent.
 
@@ -45,10 +46,11 @@ def generate_instructions(prompt: str, work_dir: str, use_scribe: bool = False) 
         prompt: The research task prompt (from prompt_generator)
         work_dir: Working directory path for the research
         use_scribe: If True, include notebook instructions; if False, use Python scripts
+        domain: Research domain for template override lookup
 
     Returns:
         Complete session instructions string
     """
     from templates.prompt_generator import PromptGenerator
     generator = PromptGenerator()
-    return generator.generate_session_instructions(prompt, work_dir, use_scribe)
+    return generator.generate_session_instructions(prompt, work_dir, use_scribe, domain=domain)
