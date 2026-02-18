@@ -7,13 +7,13 @@ based on the experiment results provided.
 
 Before writing any content, you MUST complete these steps:
 
-1. READ THE SKILL: Review the paper-writer skill at templates/skills/paper-writer/SKILL.md
+1. READ THE SKILL: Review the paper-writer skill at {{ skill_path }}
 2. READ THE STYLE GUIDE: Study templates/paper_writing/lab_style_guide.md carefully
 3. REVIEW EXAMPLES: Browse paper_examples/ for formatting and language patterns:
    - Look at sections/1.introduction.tex for language style
    - Look at tables/*.tex for table formatting
    - Look at commands/*.tex for macro usage
-4. USE COMMAND TEMPLATES: Copy templates/paper_writing/commands/ to paper_draft/commands/
+4. VERIFY COMMAND TEMPLATES: Command templates (math.tex, general.tex, macros.tex) are pre-copied to paper_draft/commands/
 
 CRITICAL: Reference example papers for FORMATTING and LANGUAGE STYLE only.
 Do NOT copy content, phrasing, or narrative structure from the example papers.
@@ -47,47 +47,50 @@ Generate a complete academic paper with the following structure:
    - Clear, specific, informative
    - Should convey main finding or contribution
 
-2. ABSTRACT (150-250 words)
+2. AUTHOR
+   - Use this exact author line in the \author{} block: {{ author_line }}
+
+3. ABSTRACT (150-250 words)
    - Problem statement
    - Approach
    - Key results
    - Significance
 
-3. INTRODUCTION
+4. INTRODUCTION
    - Research problem and motivation
    - Gap in existing work
    - Our contribution (be specific)
    - Paper organization
 
-4. RELATED WORK
+5. RELATED WORK
    - Organized by theme/approach
    - Position our work relative to prior work
    - Cite papers from literature review
 
-5. METHODOLOGY
+6. METHODOLOGY
    - Clear description of approach
    - Experimental setup
    - Datasets used
    - Evaluation metrics
    - Baselines
 
-6. RESULTS
+7. RESULTS
    - Present results with tables and figures
    - Statistical analysis
    - Comparison to baselines
    - Ablation studies (if applicable)
 
-7. DISCUSSION
+8. DISCUSSION
    - Interpretation of results
    - Limitations
    - Broader implications
 
-8. CONCLUSION
+9. CONCLUSION
    - Summary of contributions
    - Key findings
    - Future work
 
-9. REFERENCES
+10. REFERENCES
    - BibTeX format
    - All cited papers
 
@@ -130,6 +133,8 @@ INSTRUCTIONS:
 
    % Use this bibliography style:
    \bibliographystyle{ {{- bib_style -}} }
+
+   \author{ {{- author_line -}} }
 
    - Use \input{sections/...} to include each section
    - Use \bibliography{references} for references
@@ -186,10 +191,10 @@ Follow these lab-specific conventions to match our paper style:
    \end{itemize}
 
 4. MODULAR COMMANDS STRUCTURE:
-   Create paper_draft/commands/ directory with:
-   - math.tex: Math notation macros (copy from templates/paper_writing/commands/)
-   - general.tex: Formatting macros (copy from templates/paper_writing/commands/)
-   - macros.tex: Project-specific term definitions
+   Command templates are pre-copied to paper_draft/commands/:
+   - math.tex: Math notation macros
+   - general.tex: Formatting macros
+   - macros.tex: Project-specific term definitions (customize this for your paper)
 
    In main.tex, include:
    \input{commands/math}
@@ -242,7 +247,7 @@ Follow these lab-specific conventions to match our paper style:
 Before calling finish, you MUST complete these review steps:
 
 1. REVIEW RESOURCES (at the start):
-   - Read templates/skills/paper-writer/SKILL.md for detailed guidance
+   - Read {{ skill_path }} for detailed guidance
    - Study templates/paper_writing/lab_style_guide.md for style conventions
    - Browse paper_examples/ for formatting and language patterns
 

@@ -407,7 +407,8 @@ Location: {run_dir}
         return "\n".join(lines)
 
     def generate_paper_writer_prompt(self, work_dir: Path, style: str = "neurips",
-                                      style_config: Optional[Dict[str, Any]] = None) -> str:
+                                      style_config: Optional[Dict[str, Any]] = None,
+                                      provider: str = "claude") -> str:
         """
         Generate paper writer prompt from template.
 
@@ -415,6 +416,7 @@ Location: {run_dir}
             work_dir: Workspace directory with experiment results
             style: Paper style (neurips, icml, acl, or any custom style)
             style_config: Style configuration dict with package_name, package_options, bib_style
+            provider: AI provider (claude, codex, gemini) for skill path resolution
 
         Returns:
             Complete prompt string for paper writing
@@ -446,6 +448,18 @@ Location: {run_dir}
         else:
             lit_review_content = "No literature_review.md found"
 
+        # Determine author line from idea metadata
+        author_line = "Idea-Explorer"
+        idea_yaml_path = work_dir / ".idea-explorer" / "idea.yaml"
+        if idea_yaml_path.exists():
+            try:
+                idea_meta = yaml.safe_load(idea_yaml_path.read_text())
+                submitter = idea_meta.get('idea', {}).get('metadata', {}).get('author')
+                if submitter:
+                    author_line = f"{submitter} and Idea-Explorer"
+            except Exception:
+                pass
+
         # Default style config if not provided
         if style_config is None:
             style_config = {
@@ -462,6 +476,9 @@ Location: {run_dir}
         else:
             usepackage_line = f"\\usepackage{{{package_name}}}"
 
+        # Resolve provider-specific skill path
+        skill_path = f".{provider}/skills/paper-writer/SKILL.md"
+
         # Prepare variables
         variables = {
             'style': style.upper(),
@@ -473,6 +490,8 @@ Location: {run_dir}
             'report_content': report_content,
             'planning_content': planning_content,
             'lit_review_content': lit_review_content,
+            'author_line': author_line,
+            'skill_path': skill_path,
         }
 
         return self.render_template(template, variables)

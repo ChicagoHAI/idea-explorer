@@ -106,9 +106,26 @@ def fetch_ideahub_content(url: str) -> dict:
 
         # Extract author
         author = None
-        author_elem = soup.find(class_=re.compile(r'author|posted-by', re.I))
-        if author_elem:
-            author = author_elem.get_text(strip=True)
+
+        # Method 1: Look for authorName in embedded JSON/script data
+        for script in soup.find_all('script'):
+            if script.string and 'authorName' in script.string:
+                author_match = re.search(r'"authorName"\s*:\s*"([^"]+)"', script.string)
+                if author_match:
+                    author = author_match.group(1)
+                    break
+
+        # Method 2: Look for IdeaHub author link pattern
+        if not author:
+            author_link = soup.find('a', href=re.compile(r'/ideahub/author/'))
+            if author_link:
+                author = author_link.get_text(strip=True)
+
+        # Method 3: Fallback to class-based search
+        if not author:
+            author_elem = soup.find(class_=re.compile(r'author|posted-by', re.I))
+            if author_elem:
+                author = author_elem.get_text(strip=True)
 
         # Get all text as fallback
         all_text = soup.get_text(separator='\n', strip=True)
@@ -205,6 +222,10 @@ def _convert_without_llm(ideahub_content: dict) -> dict:
     if tags:
         idea_data['idea']['metadata']['tags'] = tags
 
+    author = ideahub_content.get('author')
+    if author:
+        idea_data['idea']['metadata']['author'] = author
+
     # Generate clean YAML string
     yaml_string = yaml.dump(idea_data, default_flow_style=False, sort_keys=False, allow_unicode=True)
 
@@ -293,6 +314,7 @@ The AI research agent will handle finding datasets, designing experiments, and i
      DO NOT abbreviate titles.
      DO NOT summarize - copy the EXACT reference text from the content.
    - background.datasets: Only include if specific datasets are mentioned
+   - metadata.author: If an Author is provided above and is not "Unknown", include it as metadata.author
    - constraints: Only include if specified in the content (do NOT default to cpu_only, let users specify their own compute constraints)
 
 3. **DO NOT include**:
@@ -371,13 +393,14 @@ idea:
         return _convert_without_llm(ideahub_content)
 
 
-def save_yaml_file(result: dict, url: str) -> Path:
+def save_yaml_file(result: dict, url: str, author: str = None) -> Path:
     """
     Save the idea as a YAML file.
 
     Args:
         result: Dictionary with 'parsed' and 'yaml_string' keys
         url: Original IdeaHub URL
+        author: Optional author name from IdeaHub
 
     Returns:
         Path to saved file
@@ -409,6 +432,9 @@ def save_yaml_file(result: dict, url: str) -> Path:
 
     idea_data['idea']['metadata']['source'] = 'IdeaHub'
     idea_data['idea']['metadata']['source_url'] = url
+
+    if author and 'author' not in idea_data['idea']['metadata']:
+        idea_data['idea']['metadata']['author'] = author
 
     # Update the result
     result['parsed'] = idea_data
@@ -547,7 +573,7 @@ def main():
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(result['yaml_string'])
     else:
-        output_path = save_yaml_file(result, args.url)
+        output_path = save_yaml_file(result, args.url, author=ideahub_content.get('author'))
 
     print(f"\n✅ Idea saved to: {output_path}")
 

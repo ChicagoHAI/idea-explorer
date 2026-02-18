@@ -52,7 +52,8 @@ def _load_style_config(style: str) -> Dict[str, Any]:
 
 def generate_paper_writer_prompt(
     work_dir: Path,
-    style: str = "neurips"
+    style: str = "neurips",
+    provider: str = "claude"
 ) -> str:
     """
     Generate prompt for paper writing agent.
@@ -63,6 +64,7 @@ def generate_paper_writer_prompt(
     Args:
         work_dir: Workspace directory with experiment results
         style: Paper style (neurips, icml, acl, or any custom style)
+        provider: AI provider (claude, codex, gemini)
 
     Returns:
         Complete prompt string for paper writing
@@ -75,7 +77,7 @@ def generate_paper_writer_prompt(
     style_config = _load_style_config(style)
 
     generator = PromptGenerator()
-    return generator.generate_paper_writer_prompt(work_dir, style, style_config)
+    return generator.generate_paper_writer_prompt(work_dir, style, style_config, provider=provider)
 
 
 def _copy_style_files(draft_dir: Path, style: str):
@@ -227,7 +229,7 @@ def run_paper_writer(
     _copy_example_papers(work_dir)
 
     # Generate prompt
-    prompt = generate_paper_writer_prompt(work_dir, style)
+    prompt = generate_paper_writer_prompt(work_dir, style, provider=provider)
 
     # Save prompt for debugging
     logs_dir = work_dir / "logs"
