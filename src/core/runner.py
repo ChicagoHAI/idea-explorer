@@ -692,6 +692,55 @@ https://github.com/ChicagoHAI/idea-explorer
                     shutil.copytree(skill_dir, dst_skill_dir)
             print(f"   Copied skills to .codex/skills/")
 
+        # Add/merge .gitignore for research workspace
+        self._setup_workspace_gitignore(work_dir)
+
+    def _setup_workspace_gitignore(self, work_dir: Path):
+        """
+        Copy .gitignore template to workspace, merging with existing .gitignore.
+
+        GitHub's Python template .gitignore is created at repo init. We append
+        research-specific patterns (LaTeX, model weights, paper_examples, etc.)
+        while avoiding duplicate entries.
+
+        Args:
+            work_dir: Working directory (research repository root)
+        """
+        template_gitignore = self.project_root / "templates" / ".gitignore"
+        workspace_gitignore = work_dir / ".gitignore"
+
+        if not template_gitignore.exists():
+            print("   Warning: templates/.gitignore not found, skipping")
+            return
+
+        template_content = template_gitignore.read_text(encoding='utf-8')
+
+        if workspace_gitignore.exists():
+            # Merge: append only patterns not already present
+            existing_content = workspace_gitignore.read_text(encoding='utf-8')
+            existing_lines = set(
+                line.strip() for line in existing_content.splitlines()
+                if line.strip() and not line.strip().startswith('#')
+            )
+
+            new_lines = []
+            for line in template_content.splitlines():
+                stripped = line.strip()
+                if stripped.startswith('#') or not stripped:
+                    # Keep comments and blank lines for readability
+                    new_lines.append(line)
+                elif stripped not in existing_lines:
+                    new_lines.append(line)
+
+            merged_content = existing_content.rstrip('\n') + '\n\n' + '\n'.join(new_lines) + '\n'
+            workspace_gitignore.write_text(merged_content, encoding='utf-8')
+            print(f"   Merged research .gitignore patterns into workspace")
+        else:
+            # No existing .gitignore (e.g. local-only mode), copy template directly
+            import shutil
+            shutil.copy2(template_gitignore, workspace_gitignore)
+            print(f"   Copied .gitignore template to workspace")
+
     def _finalize_research(self, idea_id: str, work_dir: Path, github_url: Optional[str],
                           title: str, provider: str, success: bool):
         """
