@@ -965,27 +965,23 @@ cmd_config() {
         echo ""
 
         # GitHub
-        echo -e "  ${BOLD}GitHub${NC}"
+        echo -e "  ${BOLD}GitHub${NC}  ${DIM}— token required; org optional (personal account used if empty)${NC}"
         echo -e "    ${BOLD}[1]${NC}  GitHub Token ........... $(format_status GITHUB_TOKEN true)"
         echo -e "    ${BOLD}[2]${NC}  GitHub Organization .... $(format_status GITHUB_ORG false)"
         echo ""
 
-        # API Keys
-        echo -e "  ${BOLD}API Keys${NC}"
-        echo -e "    ${BOLD}[3]${NC}  OpenAI API Key ......... $(format_status OPENAI_API_KEY true)"
-        echo -e "    ${BOLD}[4]${NC}  Anthropic API Key ...... $(format_status ANTHROPIC_API_KEY true)"
-        echo -e "    ${BOLD}[5]${NC}  Google API Key ......... $(format_status GOOGLE_API_KEY true)"
-        echo -e "    ${BOLD}[6]${NC}  OpenRouter API Key ..... $(format_status OPENROUTER_KEY true)"
-        echo ""
-
         # Paper Finder
-        echo -e "  ${BOLD}Paper Finder${NC}"
-        echo -e "    ${BOLD}[7]${NC}  Semantic Scholar Key ... $(format_status S2_API_KEY true)"
-        echo -e "    ${BOLD}[8]${NC}  Cohere API Key ......... $(format_status COHERE_API_KEY true)"
+        echo -e "  ${BOLD}Paper Finder${NC}  ${DIM}— OpenAI + S2 required; Cohere optional (improves ranking)${NC}"
+        echo -e "    ${BOLD}[3]${NC}  OpenAI API Key ......... $(format_status OPENAI_API_KEY true)"
+        echo -e "    ${BOLD}[4]${NC}  Semantic Scholar Key ... $(format_status S2_API_KEY true)"
+        echo -e "    ${BOLD}[5]${NC}  Cohere API Key ......... $(format_status COHERE_API_KEY true)"
         echo ""
 
-        # Other
-        echo -e "  ${BOLD}Other${NC}"
+        # Agent Keys
+        echo -e "  ${BOLD}Agent API Keys${NC}  ${DIM}— optional, provided to the agent during experiments${NC}"
+        echo -e "    ${BOLD}[6]${NC}  Anthropic API Key ...... $(format_status ANTHROPIC_API_KEY true)"
+        echo -e "    ${BOLD}[7]${NC}  Google API Key ......... $(format_status GOOGLE_API_KEY true)"
+        echo -e "    ${BOLD}[8]${NC}  OpenRouter API Key ..... $(format_status OPENROUTER_KEY true)"
         echo -e "    ${BOLD}[9]${NC}  Hugging Face Token ..... $(format_status HF_TOKEN true)"
         echo -e "    ${BOLD}[10]${NC} Weights & Biases Key ... $(format_status WANDB_API_KEY true)"
 
@@ -1023,32 +1019,32 @@ cmd_config() {
             3)
                 echo ""
                 prompt_secret "OpenAI API Key" "OPENAI_API_KEY" "optional" "sk-" \
-                    "Enables IdeaHub + LLM repo naming" || true
+                    "Required for paper-finder" || true
                 ;;
             4)
+                echo ""
+                prompt_secret "Semantic Scholar API Key" "S2_API_KEY" "optional" "" \
+                    "Required for paper-finder (https://www.semanticscholar.org/product/api)" || true
+                ;;
+            5)
+                echo ""
+                prompt_secret "Cohere API Key" "COHERE_API_KEY" "optional" "" \
+                    "Optional — improves paper-finder ranking (https://cohere.com)" || true
+                ;;
+            6)
                 echo ""
                 prompt_secret "Anthropic API Key" "ANTHROPIC_API_KEY" "optional" "sk-ant-" \
                     "For Claude API access" || true
                 ;;
-            5)
+            7)
                 echo ""
                 prompt_secret "Google API Key" "GOOGLE_API_KEY" "optional" "" \
                     "For Google AI/Gemini API access" || true
                 ;;
-            6)
+            8)
                 echo ""
                 prompt_secret "OpenRouter API Key" "OPENROUTER_KEY" "optional" "sk-or-" \
                     "For OpenRouter multi-model access (https://openrouter.ai)" || true
-                ;;
-            7)
-                echo ""
-                prompt_secret "Semantic Scholar API Key" "S2_API_KEY" "optional" "" \
-                    "Enables paper-finder literature search (https://www.semanticscholar.org/product/api)" || true
-                ;;
-            8)
-                echo ""
-                prompt_secret "Cohere API Key" "COHERE_API_KEY" "optional" "" \
-                    "Improves paper-finder ranking (https://cohere.com)" || true
                 ;;
             9)
                 echo ""
