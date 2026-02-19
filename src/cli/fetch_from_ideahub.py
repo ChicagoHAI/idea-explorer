@@ -156,7 +156,11 @@ _DOMAIN_KEYWORDS = {
     'data_science': ['data analysis', 'statistics', 'prediction', 'forecasting', 'tabular'],
     'scientific_computing': ['simulation', 'numerical', 'physics', 'biology', 'chemistry', 'molecular'],
     'systems': ['distributed', 'database', 'network', 'operating system', 'compiler'],
-    'theory': ['algorithm', 'complexity', 'proof', 'optimization', 'graph theory'],
+    'theory': ['algorithm', 'complexity', 'optimization'],
+    'mathematics': ['theorem', 'proof', 'conjecture', 'lemma', 'algebra', 'topology',
+                    'number theory', 'combinatorics', 'graph theory', 'manifold',
+                    'homomorphism', 'isomorphism', 'eigenvalue', 'differential equation',
+                    'synchronization', 'bifurcation', 'dynamical system'],
 }
 
 
@@ -301,7 +305,9 @@ The AI research agent will handle finding datasets, designing experiments, and i
 
 1. **Required fields**:
    - title: Use the provided title
-   - domain: Infer from: machine_learning, data_science, systems, theory, scientific_computing, nlp, computer_vision, reinforcement_learning, artificial_intelligence
+   - domain: Infer from: machine_learning, data_science, systems, theory, mathematics, scientific_computing, nlp, computer_vision, reinforcement_learning, artificial_intelligence
+     Use "mathematics" for research centered on proofs, theorems, conjectures, or mathematical structures (algebra, analysis, topology, combinatorics, number theory, dynamical systems, etc.)
+     Use "theory" for algorithmic analysis, complexity theory, or formal methods that are more CS-oriented
    - hypothesis: Extract the research question or reformulate the idea as a testable hypothesis
 
 2. **Optional fields** (only include if present in the content):
@@ -523,9 +529,9 @@ def main():
     )
     parser.add_argument(
         "--paper-style",
-        default="neurips",
-        choices=["neurips", "icml", "acl"],
-        help="Paper style template (default: neurips)"
+        default=None,
+        choices=["neurips", "icml", "acl", "ams"],
+        help="Paper style template (default: auto-detect from domain, or neurips)"
     )
     parser.add_argument(
         "--paper-timeout",

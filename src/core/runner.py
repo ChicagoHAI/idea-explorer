@@ -111,7 +111,7 @@ class ResearchRunner:
                     resource_finder_timeout: int = 2700,
                     use_scribe: bool = False,
                     write_paper: bool = False,
-                    paper_style: str = "neurips",
+                    paper_style: str = None,
                     paper_timeout: int = 3600,
                     no_hash: bool = False,
                     private: bool = False) -> Dict[str, Any]:
@@ -132,7 +132,7 @@ class ResearchRunner:
             resource_finder_timeout: Timeout for resource finder in seconds (default: 45 min)
             use_scribe: Use scribe for notebook integration (default: False, raw CLI)
             write_paper: Generate paper draft after experiments (default: False)
-            paper_style: Paper template style (neurips, icml, acl)
+            paper_style: Paper template style (neurips, icml, acl, ams). None = auto-detect from domain
             paper_timeout: Timeout for paper writing in seconds
 
         Returns:
@@ -156,6 +156,12 @@ class ResearchRunner:
 
         idea_spec = idea.get('idea', {})
         title = idea_spec.get('title', 'Untitled Research')
+
+        # Resolve paper style: explicit user choice > domain default > neurips
+        if paper_style is None:
+            _DOMAIN_STYLE_DEFAULTS = {'mathematics': 'ams'}
+            domain = idea_spec.get('domain', 'general')
+            paper_style = _DOMAIN_STYLE_DEFAULTS.get(domain, 'neurips')
 
         # Update status
         self.idea_manager.update_status(idea_id, 'in_progress')
@@ -898,9 +904,9 @@ def main():
     )
     parser.add_argument(
         "--paper-style",
-        default="neurips",
-        choices=["neurips", "icml", "acl"],
-        help="Paper style template (default: neurips)"
+        default=None,
+        choices=["neurips", "icml", "acl", "ams"],
+        help="Paper style template (default: auto-detect from domain, or neurips)"
     )
     parser.add_argument(
         "--paper-timeout",
