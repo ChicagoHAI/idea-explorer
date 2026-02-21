@@ -1,0 +1,200 @@
+# Mathematics Research Domain Guidance
+
+This template provides specialized guidance for pure and applied mathematics research, including proof construction, theorem development, and mathematical writing.
+
+## Domain Overview
+
+Mathematical research in this context focuses on:
+- Pure mathematics: algebra, analysis, topology, number theory, combinatorics, geometry, logic
+- Applied mathematics: optimization, dynamical systems, probability, mathematical modeling
+- Theorem proving and conjecture exploration
+- Mathematical structure discovery and characterization
+- Computational verification of mathematical results
+
+## How to Interpret Base Methodology for Mathematics
+
+The base researcher template is designed for empirical/experimental research. For mathematics research, interpret each phase as its mathematical equivalent:
+
+| Base Phase | Mathematical Equivalent |
+|---|---|
+| Planning | Proof Strategy — decompose conjecture into sub-lemmas, identify proof approach |
+| Data Collection | Definitions & Prerequisites — establish notation, gather known results |
+| Implementation | Proof Construction — formalize definitions, prove lemmas, build main proof |
+| Experimentation | Computational Verification — test conjectures numerically, generate examples |
+| Analysis | Proof Verification — check logical completeness, test tightness with counterexamples |
+| Documentation | Write-up — theorem statements, complete proofs, discussion of implications |
+
+## Proof Strategies
+
+### Direct Proof
+- Assume hypotheses, derive conclusion through logical steps
+- Best for: implications where the path from hypothesis to conclusion is clear
+- Structure: "Let ... Suppose ... Then ... Therefore ..."
+
+### Proof by Contradiction
+- Assume the negation of what you want to prove, derive a contradiction
+- Best for: showing something cannot exist, uniqueness results, irrationality proofs
+- Structure: "Suppose for contradiction that ... Then ... But this contradicts ... Therefore ..."
+
+### Mathematical Induction
+- **Weak induction**: Prove base case, prove P(n) → P(n+1)
+- **Strong induction**: Prove base case, prove (∀k < n, P(k)) → P(n)
+- **Structural induction**: Induction on recursively defined structures (trees, formulas)
+- **Transfinite induction**: For well-ordered sets beyond natural numbers
+- Best for: statements about natural numbers, recursive structures, sequences
+
+### Proof by Contrapositive
+- To prove P → Q, prove ¬Q → ¬P instead
+- Best for: when the contrapositive direction has a clearer logical flow
+
+### Constructive vs. Non-constructive Proofs
+- **Constructive**: Explicitly build the object claimed to exist
+- **Non-constructive**: Show existence without explicit construction (e.g., pigeonhole, probabilistic method)
+- Prefer constructive proofs when possible — they yield algorithms and examples
+
+### The Probabilistic Method
+- Show that a randomly chosen object has the desired property with positive probability
+- Applications: combinatorics, graph theory, coding theory
+- Key techniques: first moment method, Lovász Local Lemma, alteration method
+
+### Combinatorial Arguments
+- Counting in two ways (double counting)
+- Bijective proofs (establish one-to-one correspondence)
+- Extremal arguments (consider minimal/maximal elements)
+- Pigeonhole principle and generalizations
+
+### Additional Techniques
+- **Diagonalization**: Cantor's method for uncountability, undecidability
+- **Compactness arguments**: Finite character of infinite structures
+- **Algebraic techniques**: Polynomial method, linear algebra method in combinatorics
+- **Topological methods**: Fixed point theorems, Borsuk-Ulam in combinatorics
+
+## Mathematical Writing Standards
+
+### Definition-Theorem-Proof Structure
+Every mathematical result should follow this structure:
+1. **Definitions**: Precisely define all objects and concepts before use
+2. **Theorem statement**: State the result clearly, with all quantifiers explicit
+3. **Proof**: Complete logical argument from hypotheses to conclusion
+4. **Examples**: Illustrate the theorem with concrete cases
+5. **Counterexamples**: Show the hypotheses are necessary (tightness)
+
+### Precise Notation
+- Define notation before first use
+- Use standard notation for standard objects (ℝ, ℤ, ℕ, ∈, ⊂, etc.)
+- Be consistent throughout the document
+- Avoid overloading symbols (one symbol = one meaning)
+- Use quantifiers explicitly: ∀, ∃, followed by the variable and domain
+
+### Logical Structure
+- Every proof step must follow logically from previous steps or stated hypotheses
+- Clearly mark when you invoke a lemma, theorem, or known result
+- Distinguish between "if", "only if", and "if and only if"
+- Be precise about set membership, containment, and equality
+- Handle edge cases and boundary conditions explicitly
+
+### Mathematical Exposition
+- Begin with motivation: why is this result interesting or useful?
+- Provide intuition before formal proofs when helpful
+- Use "we" for collaborative exposition: "We now show that..."
+- Signal proof structure: "The proof proceeds in three steps..."
+- Use remarks to highlight important consequences or connections
+
+## Research Process for Mathematics
+
+### 1. Conjecture Formulation
+- Look for patterns in specific cases and examples
+- Compute small cases by hand or with computer algebra
+- Generalize from known results in related areas
+- Ask: "Is the converse true?", "Can conditions be weakened?", "Does this generalize?"
+
+### 2. Conjecture Testing
+- Test with specific numerical examples
+- Check boundary cases and degenerate cases
+- Search for counterexamples systematically
+- Use computational tools (SymPy, SageMath) for verification
+
+### 3. Proof Development
+- Start with the simplest non-trivial case
+- Identify the key difficulty or insight needed
+- Break complex proofs into lemmas
+- Look for analogies with known proofs in related areas
+- Consider which proof technique is most natural
+
+### 4. Proof Verification
+- Check each logical step independently
+- Verify that all hypotheses are used (if not, the result may be stronger or the proof wrong)
+- Test the proof on examples to catch errors
+- Look for gaps: "Why does this step follow?"
+- Have the proof checked computationally where possible
+
+### 5. Strengthening Results
+- Can hypotheses be weakened?
+- Can the conclusion be strengthened?
+- Are there natural generalizations?
+- What are the tight examples (showing hypotheses are necessary)?
+
+## Computational Support
+
+### When to Use Computational Tools
+- **Conjecture exploration**: Generate examples, compute invariants, search for patterns
+- **Verification**: Check theorem statements against specific cases
+- **Counterexample search**: Systematically test potential counterexamples
+- **Visualization**: Plot functions, graphs, geometric objects for intuition
+- **Symbolic computation**: Simplify expressions, solve equations, compute integrals
+
+### Recommended Tools
+- **SymPy**: Symbolic mathematics in Python — algebra, calculus, number theory, combinatorics
+- **SageMath**: Comprehensive mathematics software — number theory, algebra, graph theory, geometry
+- **NetworkX**: Graph theory computations — graph invariants, algorithms, visualization
+- **NumPy/SciPy**: Numerical computation — linear algebra, optimization, statistics
+- **Matplotlib**: Mathematical visualization — function plots, geometric figures
+
+### Computer-Assisted Proof Techniques
+- Exhaustive case checking (when the number of cases is finite but large)
+- Interval arithmetic for rigorous numerical bounds
+- SAT/SMT solvers for combinatorial problems
+- Certificate-based verification (provide checkable certificates)
+
+## REPORT.md Structure for Mathematics
+
+When writing REPORT.md, use this structure instead of the experiment-oriented default:
+
+1. **Executive Summary**: Brief overview of the mathematical results obtained
+2. **Research Question**: The conjecture or problem being investigated
+3. **Definitions and Notation**: All definitions needed to state and prove results
+4. **Statement of Results**: Theorem and lemma statements (without proofs)
+5. **Proofs**: Complete proofs of all stated results
+6. **Computational Verification**: Results of any computational experiments supporting the theorems
+7. **Discussion**: Implications, connections to other areas, comparison with known results
+8. **Open Questions**: Remaining conjectures, possible generalizations
+9. **Conclusions**: Summary of contributions and future directions
+10. **References**: Mathematical references cited
+
+## Quality Checklist
+
+Before finalizing your work, verify:
+
+- [ ] Every theorem has a complete proof (no gaps or hand-waving)
+- [ ] All definitions are precise and unambiguous
+- [ ] Notation is defined before first use and consistent throughout
+- [ ] Examples illustrate each major definition and theorem
+- [ ] Counterexamples demonstrate tightness of hypotheses where applicable
+- [ ] Quantifiers are explicit (∀, ∃) and correctly ordered
+- [ ] Proof steps follow logically (no "clearly" or "obviously" hiding real work)
+- [ ] Known results are properly cited
+- [ ] Computational verification supports the theoretical claims
+- [ ] Edge cases and boundary conditions are handled
+
+## Common Pitfalls in Mathematical Research
+
+1. **Assuming what you want to prove**: Circular reasoning is the most common error
+2. **Quantifier errors**: Swapping ∀ and ∃, or getting the order wrong
+3. **Missing edge cases**: Forgetting n=0, empty set, degenerate cases
+4. **Unjustified steps**: "It is clear that..." often hides errors
+5. **Incorrect induction**: Wrong base case, or induction step that doesn't actually use the hypothesis
+6. **Division by zero**: Forgetting to check denominators are nonzero
+7. **Convergence issues**: Swapping limits and sums/integrals without justification
+8. **Over-generalization**: Claiming a result holds more broadly than proved
+9. **Notation collision**: Using the same symbol for different things
+10. **Ignoring hypotheses**: Not checking that conditions of cited theorems are satisfied

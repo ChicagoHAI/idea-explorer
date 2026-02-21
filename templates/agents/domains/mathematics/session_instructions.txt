@@ -1,0 +1,339 @@
+{{ session_start }}
+{{ priority_section }}
+CRITICAL: Environment Setup
+────────────────────────────────────────────────────────────────────────────────
+You MUST use an isolated environment for this project. DO NOT use the
+idea-explorer environment or any existing system environment.
+
+REQUIRED STEPS (in order):
+
+1. Check if a virtual environment already exists (the resource finder may have created one):
+
+   If .venv/ directory exists:
+   - Skip to step 3 (activate it)
+   - The pyproject.toml should already exist
+
+   If .venv/ does NOT exist:
+   - Create a fresh virtual environment using uv:
+     uv venv
+
+2. Initialize project dependencies file (if not already present):
+   Check: ls pyproject.toml 2>/dev/null || echo "NEED_PYPROJECT"
+
+   If pyproject.toml does NOT exist, create it to manage dependencies in THIS workspace only:
+
+   cat > pyproject.toml << 'EOF'
+   [project]
+   name = "research-workspace"
+   version = "0.1.0"
+   description = "Mathematics research workspace"
+   requires-python = ">=3.10"
+   dependencies = []
+
+   [build-system]
+   requires = ["hatchling"]
+   build-backend = "hatchling.build"
+   EOF
+
+   CRITICAL: This ensures uv won't search parent directories for pyproject.toml
+   and contaminate the idea-explorer environment!
+
+3. Activate the environment:
+   source .venv/bin/activate
+
+4. For package installations, use this priority order:
+
+   FIRST CHOICE - uv add (manages pyproject.toml automatically):
+   uv add <package-name>
+
+   Examples:
+   - uv add sympy            # Symbolic mathematics
+   - uv add numpy scipy      # Numerical computation
+   - uv add networkx         # Graph theory
+   - uv add matplotlib       # Visualization
+
+   SECOND CHOICE - if uv add doesn't work:
+   uv pip install <package-name>
+   pip freeze > requirements.txt
+
+   LAST RESORT - if uv fails entirely:
+   pip install <package-name>
+   pip freeze > requirements.txt
+
+   NEVER use conda or conda install!
+
+5. Dependency Management:
+   - Using 'uv add' automatically updates pyproject.toml
+   - Verify dependencies with: cat pyproject.toml
+   - If you used pip, also maintain: pip freeze > requirements.txt
+   - This ensures reproducibility of the research environment
+
+WHY: Using an isolated environment ensures:
+- No pollution of the idea-explorer environment
+- Fast package installation with uv (10-100x faster than pip)
+- Automatic dependency tracking with pyproject.toml
+- Clean, reproducible research setup
+
+════════════════════════════════════════════════════════════════════════════════
+
+GPU AND COMPUTATIONAL RESOURCES
+────────────────────────────────────────────────────────────────────────────────
+
+At the START of your session, check for GPU availability:
+
+1. Run GPU detection:
+   nvidia-smi --query-gpu=name,memory.total,memory.free --format=csv 2>/dev/null || echo "NO_GPU"
+
+2. If GPUs are available:
+   - You can leverage GPU for large-scale numerical computations, simulations,
+     or Monte Carlo experiments that support your mathematical work
+   - Useful for: exhaustive case-checking, numerical verification of conjectures,
+     large-scale combinatorial search, matrix computations
+
+3. If NO GPU available:
+   - Most mathematical research works fine on CPU
+   - SymPy and SageMath are CPU-based
+   - Reduce scale of numerical experiments if needed
+
+════════════════════════════════════════════════════════════════════════════════
+
+CRITICAL: Resources Have Been Pre-Gathered
+────────────────────────────────────────────────────────────────────────────────
+IMPORTANT: A separate resource-finding agent has already gathered research
+resources for you. Your workspace contains:
+
+- literature_review.md: Comprehensive literature review with definitions, theorems, and techniques
+- resources.md: Catalog of all available papers, prior results, and tools
+- papers/: Downloaded research papers (PDFs)
+- code/: Computational tools and relevant repositories (if applicable)
+
+READ THESE RESOURCES FIRST before starting your proof construction!
+They contain valuable information about:
+- Definitions and notation used in the field
+- Known theorems and lemmas you can build upon
+- Proof techniques used in related work
+- Open problems and conjectures
+- Computational tools for verification
+
+IMPORTANT PHILOSOPHY: This is a fully-automated mathematical research system.
+Your goal is to develop rigorous mathematical results (proofs, constructions,
+or characterizations) addressing the research question, using the resources provided.
+
+WHAT "FULLY-AUTOMATED" MEANS:
+✓ Complete ALL phases (1-6) in a SINGLE CONTINUOUS SESSION
+✓ Make reasonable decisions autonomously without waiting for user input
+✓ Move immediately from one phase to the next
+✓ Use the pre-gathered resources effectively
+✓ Document decisions, but keep moving forward
+✓ Deliver REPORT.md with actual mathematical results at the end
+
+YOU WILL NOT GET ADDITIONAL INSTRUCTIONS between phases.
+This prompt contains everything you need. Execute it completely from start to finish.
+
+════════════════════════════════════════════════════════════════════════════════
+
+Execute the following research task:
+
+{{ prompt }}
+
+════════════════════════════════════════════════════════════════════════════════
+
+EXECUTION WORKFLOW (FOLLOW THIS SEQUENCE - DO NOT STOP BETWEEN PHASES):
+────────────────────────────────────────────────────────────────────────────────
+
+BEFORE YOU START: Review Pre-Gathered Resources (10-15 min)
+  ✓ READ literature_review.md to understand known results and techniques
+  ✓ READ resources.md to see what's available
+  ✓ Browse papers/ directory for key papers
+  ✓ Explore code/ directory for computational tools (if present)
+  ✓ Note key definitions, theorem statements, and proof techniques
+
+  → WHEN COMPLETE: Immediately proceed to Phase 1 (Planning)
+
+Phase 1: Proof Strategy Planning (20-40 min)
+  ✓ FIRST: Write "Motivation & Novelty Assessment" section in planning.md
+    - Why this mathematical question matters
+    - What gap it fills (based on literature review)
+    - What prior results it extends or improves
+  ✓ Review pre-gathered resources (literature_review.md, resources.md)
+  ✓ Decompose the conjecture/question into sub-problems
+  ✓ Identify key lemmas that need to be proved
+  ✓ Choose proof approach for each component (direct, contradiction, induction, etc.)
+  ✓ Identify prerequisite results from the literature that you can cite
+  ✓ Plan computational verification strategy (what to check numerically)
+  ✓ Document plan in planning.md (2-3 pages maximum)
+
+  → WHEN COMPLETE: Immediately proceed to Phase 2 (Setup)
+  → DO NOT WAIT for user confirmation - this is fully automated!
+
+Phase 2: Mathematical Setup (10-20 min)
+  ✓ Set up isolated virtual environment (uv venv) if not already present
+  ✓ Install computation tools if needed (uv add sympy, etc.)
+  ✓ Establish precise definitions and notation for your work
+  ✓ State prerequisite results from gathered resources (with citations)
+  ✓ Verify prerequisites hold by testing with specific examples
+  ✓ Write a definitions.md file with all notation and definitions
+
+  → WHEN COMPLETE: Immediately proceed to Phase 3 (Proof Construction)
+
+Phase 3: Proof Construction (60-120 min)
+  This is the MAIN PHASE of mathematical research.
+
+  {{ code_workflow }}
+  ✓ Formalize all definitions precisely
+  ✓ State and prove supporting lemmas
+  ✓ Construct main proof(s) step by step
+  ✓ Write proofs in markdown with clear logical steps
+  ✓ Use computational tools (SymPy, etc.) to verify algebraic steps
+  ✓ Test each lemma with specific examples as sanity checks
+  ✓ Save proofs to results/ directory as they're completed
+  ✓ Document any difficulties or alternative approaches tried
+
+  Proof Writing Guidelines:
+  - State each result clearly before proving it
+  - Number lemmas, theorems, propositions for reference
+  - Begin each proof with "Proof." and end with "□" or "QED"
+  - Clearly mark when you cite a known result vs. proving something new
+  - If a step is non-trivial, explain why it follows
+  - Handle edge cases and boundary conditions explicitly
+
+  → WHEN COMPLETE: Immediately proceed to Phase 4 (Verification)
+
+Phase 4: Computational Verification (30-60 min)
+  This phase is OPTIONAL but STRONGLY ENCOURAGED.
+  Use computation to verify and strengthen your theoretical results.
+
+  ✓ Write Python scripts to verify theorem statements on specific cases
+  ✓ Test boundary cases and edge cases computationally
+  ✓ Generate examples and counterexamples
+  ✓ Search for patterns that might suggest generalizations
+  ✓ Create visualizations that illustrate the results
+  ✓ Save scripts to src/ and results to results/
+
+  Example verification approaches:
+  ```python
+  import sympy as sp
+  # Verify algebraic identities
+  # Check small cases of combinatorial results
+  # Test numerical bounds
+  # Search for counterexamples to stronger statements
+  ```
+
+  ✓ Document computational results and how they support the proofs
+
+  → WHEN COMPLETE: Immediately proceed to Phase 5 (Refinement)
+
+Phase 5: Refinement and Strengthening (20-30 min)
+  ✓ Review all proofs for logical gaps
+  ✓ Check: can hypotheses be weakened? (stronger theorem)
+  ✓ Check: can conclusions be strengthened?
+  ✓ Find tight examples showing hypotheses are necessary
+  ✓ Look for natural generalizations
+  ✓ Improve exposition clarity
+  ✓ Ensure all notation is consistent
+
+  → WHEN COMPLETE: Immediately proceed to Phase 6 (Documentation)
+
+Phase 6: Final Documentation (20-30 min) - MANDATORY BEFORE ENDING SESSION
+  ✓ Create REPORT.md with ACTUAL mathematical results (not placeholder)
+  ✓ Create README.md with project overview and key results
+  ✓ Ensure all proofs are complete and clearly written
+  ✓ Verify computational code has clear comments
+  ✓ Check that all definitions and notation are consistent
+
+  → WHEN COMPLETE: Session is finished
+
+CRITICAL REMINDERS:
+- This is a SINGLE CONTINUOUS SESSION covering all 6 phases
+- Resources have been PRE-GATHERED for you - use them!
+- Never stop between phases waiting for user input
+- If you encounter difficulties in a proof, document the obstacle and try alternative approaches
+- Even if proofs are incomplete, complete Phase 6 documenting what you achieved and what remains
+- REPORT.md is mandatory - it's the primary deliverable
+
+WORKSPACE DIRECTORY AND DIRECTORY SAFETY:
+────────────────────────────────────────────────────────────────────────────────
+You are running in the project workspace directory: {{ work_dir }}
+
+WORKING DIRECTORY VERIFICATION:
+Before creating or writing ANY files, ALWAYS verify you are in the correct directory:
+
+1. Run `pwd` to check your current directory
+2. You should be in: {{ work_dir }}
+3. If you're somewhere else, run: cd {{ work_dir }}
+
+MANDATORY VERIFICATION POINTS - Run `pwd` and verify location:
+✓ Before creating any new directories (mkdir results, mkdir figures, etc.)
+✓ Before saving any output files
+✓ Before running computational scripts
+✓ After any cd command - ALWAYS cd back to workspace root afterward
+✓ When starting each new phase of work
+
+SAFE PATTERN FOR DIRECTORY CHANGES:
+If you need to cd into a subdirectory, ALWAYS return immediately:
+  pwd                              # Verify starting location
+  cd results && python script.py && cd -   # cd back using "cd -"
+  pwd                              # Verify you're back in workspace root
+
+⚠️  NEVER create files in parent directory (cd .. is dangerous!)
+⚠️  All your work MUST stay within this workspace directory
+
+Remember:
+- READ literature_review.md and resources.md first (they're in your current directory)
+- Use pre-gathered papers and prior results from papers/ directory
+- Leverage computational tools from code/ directory (if present)
+{{ code_reminder }}
+- Use markdown files (.md) for proofs and documentation
+- Save outputs to organized directories: results/, figures/, src/
+- All your work stays within this workspace directory
+
+────────────────────────────────────────────────────────────────────────────────
+PHASE 6 REQUIREMENTS - WHAT TO INCLUDE IN FINAL DOCUMENTATION
+────────────────────────────────────────────────────────────────────────────────
+
+When you reach Phase 6, create these files with ACTUAL results from your work:
+
+1. REPORT.md - Comprehensive mathematical research report containing:
+   - Executive Summary (2-3 paragraphs summarizing what you proved/discovered)
+   - Research Question (the conjecture or problem investigated)
+   - Definitions and Notation (all definitions used, precisely stated)
+   - Statement of Results (theorem and lemma statements, numbered)
+   - Proofs (complete proofs of all stated results)
+   - Computational Verification (results of any computational experiments)
+   - Discussion (implications, connections to other areas, comparison with known results)
+   - Open Questions (remaining conjectures, possible generalizations)
+   - Conclusions (summary of contributions and future directions)
+   - References (papers, textbooks, tools used)
+
+   Include key computational results inline (as markdown).
+
+2. README.md - Quick overview containing:
+   - Brief project description (2-3 sentences)
+   - Key results summary (bullet points: main theorems proved)
+   - How to reproduce computational verification
+   - File structure overview
+   - Link to REPORT.md for full details
+
+   Keep this concise and scannable.
+
+IMPORTANT NOTES:
+- Do NOT create placeholder/stub reports during planning - wait until Phase 6
+- If proofs are incomplete, document what you achieved and what remains
+- REPORT.md is the PRIMARY DELIVERABLE - it must contain actual mathematical results
+- Proofs must be logically complete (no "clearly" or "obviously" hiding real work)
+
+────────────────────────────────────────────────────────────────────────────────
+SESSION COMPLETION
+────────────────────────────────────────────────────────────────────────────────
+
+The session is COMPLETE when:
+✓ All phases (1-6) have been attempted
+✓ Pre-gathered resources have been reviewed and used
+✓ Proof construction was attempted (even if some proofs are incomplete)
+✓ Computational verification was performed where applicable
+✓ REPORT.md has been created documenting actual mathematical results
+✓ README.md has been created with overview
+✓ Code is organized with comments (if computational tools were used)
+✓ Results are saved to results/ directory
+
+If you reach this point, your mathematical research session is finished.

@@ -111,7 +111,7 @@ class ResearchRunner:
                     resource_finder_timeout: int = 2700,
                     use_scribe: bool = False,
                     write_paper: bool = False,
-                    paper_style: str = "neurips",
+                    paper_style: str = None,
                     paper_timeout: int = 3600,
                     no_hash: bool = False,
                     private: bool = False) -> Dict[str, Any]:
@@ -132,7 +132,7 @@ class ResearchRunner:
             resource_finder_timeout: Timeout for resource finder in seconds (default: 45 min)
             use_scribe: Use scribe for notebook integration (default: False, raw CLI)
             write_paper: Generate paper draft after experiments (default: False)
-            paper_style: Paper template style (neurips, icml, acl)
+            paper_style: Paper template style (neurips, icml, acl, ams). None = auto-detect from domain
             paper_timeout: Timeout for paper writing in seconds
 
         Returns:
@@ -156,6 +156,12 @@ class ResearchRunner:
 
         idea_spec = idea.get('idea', {})
         title = idea_spec.get('title', 'Untitled Research')
+
+        # Resolve paper style: explicit user choice > domain default > neurips
+        if paper_style is None:
+            _DOMAIN_STYLE_DEFAULTS = {'mathematics': 'ams'}
+            domain = idea_spec.get('domain', 'general')
+            paper_style = _DOMAIN_STYLE_DEFAULTS.get(domain, 'neurips')
 
         # Update status
         self.idea_manager.update_status(idea_id, 'in_progress')
@@ -314,12 +320,14 @@ class ResearchRunner:
 
                     from agents.paper_writer import run_paper_writer
 
+                    domain = idea.get('idea', {}).get('domain', 'general')
                     paper_result = run_paper_writer(
                         work_dir=work_dir,
                         provider=provider,
                         style=paper_style,
                         timeout=paper_timeout,
-                        full_permissions=full_permissions
+                        full_permissions=full_permissions,
+                        domain=domain
                     )
 
                     if paper_result.get('success'):
@@ -364,10 +372,12 @@ class ResearchRunner:
         print()
 
         # Prepare session instructions using the new template
+        domain = idea.get('idea', {}).get('domain', 'general')
         session_instructions = generate_instructions(
             prompt=prompt,
             work_dir=str(work_dir),
-            use_scribe=use_scribe
+            use_scribe=use_scribe,
+            domain=domain
         )
 
         # Save session instructions
@@ -692,6 +702,55 @@ https://github.com/ChicagoHAI/idea-explorer
                     shutil.copytree(skill_dir, dst_skill_dir)
             print(f"   Copied skills to .codex/skills/")
 
+        # Add/merge .gitignore for research workspace
+        self._setup_workspace_gitignore(work_dir)
+
+    def _setup_workspace_gitignore(self, work_dir: Path):
+        """
+        Copy .gitignore template to workspace, merging with existing .gitignore.
+
+        GitHub's Python template .gitignore is created at repo init. We append
+        research-specific patterns (LaTeX, model weights, paper_examples, etc.)
+        while avoiding duplicate entries.
+
+        Args:
+            work_dir: Working directory (research repository root)
+        """
+        template_gitignore = self.project_root / "templates" / ".gitignore"
+        workspace_gitignore = work_dir / ".gitignore"
+
+        if not template_gitignore.exists():
+            print("   Warning: templates/.gitignore not found, skipping")
+            return
+
+        template_content = template_gitignore.read_text(encoding='utf-8')
+
+        if workspace_gitignore.exists():
+            # Merge: append only patterns not already present
+            existing_content = workspace_gitignore.read_text(encoding='utf-8')
+            existing_lines = set(
+                line.strip() for line in existing_content.splitlines()
+                if line.strip() and not line.strip().startswith('#')
+            )
+
+            new_lines = []
+            for line in template_content.splitlines():
+                stripped = line.strip()
+                if stripped.startswith('#') or not stripped:
+                    # Keep comments and blank lines for readability
+                    new_lines.append(line)
+                elif stripped not in existing_lines:
+                    new_lines.append(line)
+
+            merged_content = existing_content.rstrip('\n') + '\n\n' + '\n'.join(new_lines) + '\n'
+            workspace_gitignore.write_text(merged_content, encoding='utf-8')
+            print(f"   Merged research .gitignore patterns into workspace")
+        else:
+            # No existing .gitignore (e.g. local-only mode), copy template directly
+            import shutil
+            shutil.copy2(template_gitignore, workspace_gitignore)
+            print(f"   Copied .gitignore template to workspace")
+
     def _finalize_research(self, idea_id: str, work_dir: Path, github_url: Optional[str],
                           title: str, provider: str, success: bool):
         """
@@ -845,9 +904,9 @@ def main():
     )
     parser.add_argument(
         "--paper-style",
-        default="neurips",
-        choices=["neurips", "icml", "acl"],
-        help="Paper style template (default: neurips)"
+        default=None,
+        choices=["neurips", "icml", "acl", "ams"],
+        help="Paper style template (default: auto-detect from domain, or neurips)"
     )
     parser.add_argument(
         "--paper-timeout",

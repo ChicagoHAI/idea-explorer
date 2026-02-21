@@ -54,6 +54,29 @@ class PromptGenerator:
         self.env.filters['lower'] = str.lower
         self.env.filters['title'] = str.title
 
+    def _load_template_with_domain_override(self, template_path: str, domain: str) -> str:
+        """
+        Load a template file, checking for a domain-specific override first.
+
+        Looks for templates/agents/domains/{domain}/{filename} before falling
+        back to the universal template at template_path. Override only activates
+        if the override file physically exists.
+
+        Args:
+            template_path: Path relative to template_dir (e.g. 'agents/resource_finder.txt')
+            domain: Domain name (e.g. 'mathematics')
+
+        Returns:
+            Template content as string
+        """
+        filename = Path(template_path).name
+        override_path = f"agents/domains/{domain}/{filename}"
+
+        try:
+            return self.load_template(override_path)
+        except FileNotFoundError:
+            return self.load_template(template_path)
+
     def load_template(self, template_path: str) -> str:
         """
         Load a template file as plain text.
@@ -407,7 +430,9 @@ Location: {run_dir}
         return "\n".join(lines)
 
     def generate_paper_writer_prompt(self, work_dir: Path, style: str = "neurips",
-                                      style_config: Optional[Dict[str, Any]] = None) -> str:
+                                      style_config: Optional[Dict[str, Any]] = None,
+                                      provider: str = "claude",
+                                      domain: str = 'general') -> str:
         """
         Generate paper writer prompt from template.
 
@@ -415,12 +440,14 @@ Location: {run_dir}
             work_dir: Workspace directory with experiment results
             style: Paper style (neurips, icml, acl, or any custom style)
             style_config: Style configuration dict with package_name, package_options, bib_style
+            provider: AI provider (claude, codex, gemini) for skill path resolution
+            domain: Research domain for template override lookup
 
         Returns:
             Complete prompt string for paper writing
         """
-        # Load template
-        template = self.load_template('agents/paper_writer.txt')
+        # Load template (with domain override if available)
+        template = self._load_template_with_domain_override('agents/paper_writer.txt', domain)
 
         # Load experiment results
         report_content = ""
@@ -446,6 +473,18 @@ Location: {run_dir}
         else:
             lit_review_content = "No literature_review.md found"
 
+        # Determine author line from idea metadata
+        author_line = "Idea-Explorer"
+        idea_yaml_path = work_dir / ".idea-explorer" / "idea.yaml"
+        if idea_yaml_path.exists():
+            try:
+                idea_meta = yaml.safe_load(idea_yaml_path.read_text())
+                submitter = idea_meta.get('idea', {}).get('metadata', {}).get('author')
+                if submitter:
+                    author_line = f"{submitter} and Idea-Explorer"
+            except Exception:
+                pass
+
         # Default style config if not provided
         if style_config is None:
             style_config = {
@@ -462,6 +501,9 @@ Location: {run_dir}
         else:
             usepackage_line = f"\\usepackage{{{package_name}}}"
 
+        # Resolve provider-specific skill path
+        skill_path = f".{provider}/skills/paper-writer/SKILL.md"
+
         # Prepare variables
         variables = {
             'style': style.upper(),
@@ -473,11 +515,14 @@ Location: {run_dir}
             'report_content': report_content,
             'planning_content': planning_content,
             'lit_review_content': lit_review_content,
+            'author_line': author_line,
+            'skill_path': skill_path,
         }
 
         return self.render_template(template, variables)
 
-    def generate_session_instructions(self, prompt: str, work_dir: str, use_scribe: bool = False) -> str:
+    def generate_session_instructions(self, prompt: str, work_dir: str,
+                                       use_scribe: bool = False, domain: str = 'general') -> str:
         """
         Generate session instructions from template.
 
@@ -485,12 +530,13 @@ Location: {run_dir}
             prompt: The research task prompt (from generate_research_prompt)
             work_dir: Working directory path for the research
             use_scribe: If True, include notebook instructions; if False, use Python scripts
+            domain: Research domain for template override lookup
 
         Returns:
             Complete session instructions string
         """
-        # Load template
-        template = self.load_template('agents/session_instructions.txt')
+        # Load template (with domain override if available)
+        template = self._load_template_with_domain_override('agents/session_instructions.txt', domain)
 
         # Extract user instructions
         user_instructions = self._extract_user_instructions(prompt)
@@ -585,10 +631,11 @@ and the general workflow, ALWAYS follow the user's instructions.
         Returns:
             Complete prompt string for resource finder agent
         """
-        # Load template
-        template = self.load_template('agents/resource_finder.txt')
-
         idea_spec = idea.get('idea', {})
+        domain = idea_spec.get('domain', 'general')
+
+        # Load template (with domain override if available)
+        template = self._load_template_with_domain_override('agents/resource_finder.txt', domain)
 
         # Extract key information
         title = idea_spec.get('title', 'Untitled Research')

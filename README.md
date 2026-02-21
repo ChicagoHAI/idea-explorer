@@ -87,7 +87,7 @@ docker tag ghcr.io/chicagohai/idea-explorer:latest chicagohai/idea-explorer:late
 ./idea-explorer build
 
 # Configure
-cp .env.example .env   # Edit: add your API keys (see Configuration below)
+./idea-explorer config   # Interactive menu for API keys and settings
 
 # Login to your AI CLI (one-time, on your host machine)
 claude   # or: codex, gemini
@@ -131,17 +131,38 @@ In Docker mode, credentials are automatically mounted into containers.
 
 ### Environment Variables (.env)
 
-Copy `.env.example` to `.env` and configure:
+The easiest way to configure is the interactive menu:
+
+```bash
+./idea-explorer config
+```
+
+Or copy `.env.example` to `.env` and edit manually. Here's what each variable does:
+
+**GitHub** — token required; org optional (uses personal account if empty)
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `GITHUB_TOKEN` | Recommended | GitHub Personal Access Token ([generate here](https://github.com/settings/tokens), `repo` scope) |
+| `GITHUB_TOKEN` | Yes | GitHub Personal Access Token ([generate here](https://github.com/settings/tokens), `repo` scope) |
 | `GITHUB_ORG` | No | GitHub org name (default: personal account) |
-| `OPENAI_API_KEY` | For IdeaHub/paper-finder | Used for IdeaHub fetching, LLM repo naming, paper-finder |
-| `S2_API_KEY` | No | Enables paper-finder literature search ([get here](https://www.semanticscholar.org/product/api)) |
+
+**Paper Finder** — `OPENAI_API_KEY` + `S2_API_KEY` required for full paper-finder; `COHERE_API_KEY` optional (improves ranking)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `OPENAI_API_KEY` | For paper-finder | Used for paper-finder, IdeaHub fetching, and LLM repo naming |
+| `S2_API_KEY` | For paper-finder | Semantic Scholar API key ([get here](https://www.semanticscholar.org/product/api)) |
 | `COHERE_API_KEY` | No | Improves paper-finder ranking (~7% boost) |
 
-Additional keys (`ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `OPENROUTER_KEY`, `HF_TOKEN`, `WANDB_API_KEY`) are passed through to the agent environment.
+**Agent API Keys** — optional, provided to the agent during automated experiments
+
+| Variable | Description |
+|----------|-------------|
+| `ANTHROPIC_API_KEY` | Claude API access |
+| `GOOGLE_API_KEY` | Google AI / Gemini API access |
+| `OPENROUTER_KEY` | OpenRouter multi-model access |
+| `HF_TOKEN` | Hugging Face model/dataset access |
+| `WANDB_API_KEY` | Weights & Biases experiment tracking |
 
 **Setup tiers:**
 - **Basic:** CLI login + `GITHUB_TOKEN` — full idea-explorer
@@ -231,6 +252,7 @@ uv run python src/core/runner.py <idea_id> --provider claude --full-permissions
 ### Other Commands
 
 ```bash
+./idea-explorer config      # Configure API keys and settings
 ./idea-explorer shell       # Interactive shell inside the container
 ./idea-explorer login       # Login to CLI tools inside the container
 ./idea-explorer help        # Show all commands

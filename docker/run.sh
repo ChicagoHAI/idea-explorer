@@ -525,6 +525,60 @@ check_image() {
     echo ""
 }
 
+# Read the current value of an env var from .env (uncommented lines only)
+# Usage: get_env_value "VAR_NAME"
+get_env_value() {
+    local var_name="$1"
+    if [ -f "$PROJECT_ROOT/.env" ]; then
+        grep -E "^${var_name}=" "$PROJECT_ROOT/.env" 2>/dev/null | head -1 | sed "s/^${var_name}=//"
+    fi
+}
+
+# Mask a secret for display (first 4 + last 4 chars; values ≤8 chars show ****)
+# Usage: mask_value "value"
+mask_value() {
+    local val="$1"
+    local len=${#val}
+    if [ "$len" -le 8 ]; then
+        echo "****"
+    else
+        echo "${val:0:4}...${val:len-4:4}"
+    fi
+}
+
+# Return formatted status string for a config variable
+# Usage: format_status "VAR_NAME" [is_secret]
+# is_secret: "true" to mask the value, anything else shows full value
+format_status() {
+    local var_name="$1"
+    local is_secret="${2:-true}"
+    local val
+    val=$(get_env_value "$var_name")
+    if [ -n "$val" ]; then
+        if [ "$is_secret" = "true" ]; then
+            echo -e "${GREEN}[SET: $(mask_value "$val")]${NC}"
+        else
+            echo -e "${GREEN}[SET: $val]${NC}"
+        fi
+    else
+        echo -e "${DIM}[NOT SET]${NC}"
+    fi
+}
+
+# Write a value to .env, handling existing patterns (replace, uncomment, or append)
+# Usage: config_set_env "VAR_NAME" "value"
+config_set_env() {
+    local var_name="$1"
+    local value="$2"
+    if grep -q "^${var_name}=" "$PROJECT_ROOT/.env" 2>/dev/null; then
+        sed -i "s|^${var_name}=.*|${var_name}=${value}|" "$PROJECT_ROOT/.env"
+    elif grep -q "^# *${var_name}=" "$PROJECT_ROOT/.env" 2>/dev/null; then
+        sed -i "s|^# *${var_name}=.*|${var_name}=${value}|" "$PROJECT_ROOT/.env"
+    else
+        echo "${var_name}=${value}" >> "$PROJECT_ROOT/.env"
+    fi
+}
+
 # Read a secret value from user input (hidden)
 # Usage: prompt_secret "Label" "ENV_VAR" "required|optional" "validation_prefix"
 prompt_secret() {
@@ -807,6 +861,7 @@ cmd_setup() {
 
     echo ""
     echo -e "  ${GREEN}Setup complete!${NC} You're ready to go."
+    echo -e "  ${DIM}To change configuration later, run: ./idea-explorer config${NC}"
     echo ""
 
     if [ -n "$run_cmd" ]; then
@@ -883,10 +938,155 @@ setup_env_interactive() {
 
     echo -e "    ${GREEN}[OK]${NC} Configuration complete"
     echo ""
-    echo -e "    ${DIM}Tip: You can add more API keys to .env later for agent experiments:${NC}"
-    echo -e "    ${DIM}  ANTHROPIC_API_KEY, GOOGLE_API_KEY, OPENROUTER_KEY, HF_TOKEN, WANDB_API_KEY${NC}"
-    echo -e "    ${DIM}  COHERE_API_KEY (improves paper-finder ranking)${NC}"
+    echo -e "    ${DIM}Tip: To add more API keys or change settings later, run:${NC}"
+    echo -e "    ${DIM}  ./idea-explorer config${NC}"
     echo ""
+}
+
+# -----------------------------------------------------------------------------
+# Interactive configuration menu
+# -----------------------------------------------------------------------------
+cmd_config() {
+    # Create .env from template if missing
+    if [ ! -f "$PROJECT_ROOT/.env" ]; then
+        if [ -f "$PROJECT_ROOT/.env.example" ]; then
+            cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env"
+        else
+            touch "$PROJECT_ROOT/.env"
+        fi
+        echo -e "  ${GREEN}[OK]${NC} Created .env from template"
+        echo ""
+    fi
+
+    while true; do
+        echo ""
+        echo -e "  ${BOLD}Configuration${NC}"
+        echo -e "  ${DIM}Select an item to configure, or 'q' to exit.${NC}"
+        echo ""
+
+        # GitHub
+        echo -e "  ${BOLD}GitHub${NC}  ${DIM}— token required; org optional (personal account used if empty)${NC}"
+        echo -e "    ${BOLD}[1]${NC}  GitHub Token ........... $(format_status GITHUB_TOKEN true)"
+        echo -e "    ${BOLD}[2]${NC}  GitHub Organization .... $(format_status GITHUB_ORG false)"
+        echo ""
+
+        # Paper Finder
+        echo -e "  ${BOLD}Paper Finder${NC}  ${DIM}— OpenAI + S2 required; Cohere optional (improves ranking)${NC}"
+        echo -e "    ${BOLD}[3]${NC}  OpenAI API Key ......... $(format_status OPENAI_API_KEY true)"
+        echo -e "    ${BOLD}[4]${NC}  Semantic Scholar Key ... $(format_status S2_API_KEY true)"
+        echo -e "    ${BOLD}[5]${NC}  Cohere API Key ......... $(format_status COHERE_API_KEY true)"
+        echo ""
+
+        # Agent Keys
+        echo -e "  ${BOLD}Agent API Keys${NC}  ${DIM}— optional, provided to the agent during experiments${NC}"
+        echo -e "    ${BOLD}[6]${NC}  Anthropic API Key ...... $(format_status ANTHROPIC_API_KEY true)"
+        echo -e "    ${BOLD}[7]${NC}  Google API Key ......... $(format_status GOOGLE_API_KEY true)"
+        echo -e "    ${BOLD}[8]${NC}  OpenRouter API Key ..... $(format_status OPENROUTER_KEY true)"
+        echo -e "    ${BOLD}[9]${NC}  Hugging Face Token ..... $(format_status HF_TOKEN true)"
+        echo -e "    ${BOLD}[10]${NC} Weights & Biases Key ... $(format_status WANDB_API_KEY true)"
+
+        # Workspace status
+        local ws_val
+        ws_val=$(get_workspace_dir)
+        # Show relative to project root if possible
+        ws_val="${ws_val#$PROJECT_ROOT/}"
+        echo -e "    ${BOLD}[11]${NC} Workspace Directory .... ${GREEN}[SET: $ws_val]${NC}"
+        echo ""
+
+        echo -e "    ${BOLD}[q]${NC}  Save & exit"
+        echo ""
+        echo -ne "  > "
+        local choice=""
+        read choice < /dev/tty
+
+        case "$choice" in
+            1)
+                echo ""
+                prompt_secret "GitHub Token" "GITHUB_TOKEN" "required" "ghp_" \
+                    "Get one at: https://github.com/settings/tokens (repo scope)" || true
+                ;;
+            2)
+                echo ""
+                prompt_text "GitHub Organization" \
+                    "Repos will be created under this org. Leave empty to use your personal account."
+                if [ -n "$REPLY" ]; then
+                    config_set_env "GITHUB_ORG" "$REPLY"
+                    echo -e "    ${GREEN}[OK]${NC} GITHUB_ORG set to $REPLY"
+                else
+                    echo -e "    ${DIM}[SKIP]${NC} No change"
+                fi
+                ;;
+            3)
+                echo ""
+                prompt_secret "OpenAI API Key" "OPENAI_API_KEY" "optional" "sk-" \
+                    "Required for paper-finder" || true
+                ;;
+            4)
+                echo ""
+                prompt_secret "Semantic Scholar API Key" "S2_API_KEY" "optional" "" \
+                    "Required for paper-finder (https://www.semanticscholar.org/product/api)" || true
+                ;;
+            5)
+                echo ""
+                prompt_secret "Cohere API Key" "COHERE_API_KEY" "optional" "" \
+                    "Optional — improves paper-finder ranking (https://cohere.com)" || true
+                ;;
+            6)
+                echo ""
+                prompt_secret "Anthropic API Key" "ANTHROPIC_API_KEY" "optional" "sk-ant-" \
+                    "For Claude API access" || true
+                ;;
+            7)
+                echo ""
+                prompt_secret "Google API Key" "GOOGLE_API_KEY" "optional" "" \
+                    "For Google AI/Gemini API access" || true
+                ;;
+            8)
+                echo ""
+                prompt_secret "OpenRouter API Key" "OPENROUTER_KEY" "optional" "sk-or-" \
+                    "For OpenRouter multi-model access (https://openrouter.ai)" || true
+                ;;
+            9)
+                echo ""
+                prompt_secret "Hugging Face Token" "HF_TOKEN" "optional" "hf_" \
+                    "For Hugging Face model/dataset access" || true
+                ;;
+            10)
+                echo ""
+                prompt_secret "Weights & Biases API Key" "WANDB_API_KEY" "optional" "" \
+                    "For experiment tracking (https://wandb.ai)" || true
+                ;;
+            11)
+                echo ""
+                prompt_text "Workspace Directory" \
+                    "Where research workspaces are created. Relative to project root or absolute path." \
+                    "workspaces"
+                if [ -n "$REPLY" ]; then
+                    local ws_config="$PROJECT_ROOT/config/workspace.yaml"
+                    if [ ! -f "$ws_config" ] && [ -f "$PROJECT_ROOT/config/workspace.yaml.example" ]; then
+                        cp "$PROJECT_ROOT/config/workspace.yaml.example" "$ws_config"
+                    fi
+                    sed -i "s|parent_dir:.*|parent_dir: \"$REPLY\"|" "$ws_config"
+                    echo -e "    ${GREEN}[OK]${NC} Workspace directory set to $REPLY"
+                else
+                    echo -e "    ${DIM}[SKIP]${NC} No change"
+                fi
+                ;;
+            q|Q|"")
+                echo ""
+                echo -e "  ${GREEN}Configuration saved to .env${NC}"
+                echo ""
+                return
+                ;;
+            *)
+                echo -e "  ${YELLOW}Invalid choice. Enter 1-11 or q to exit.${NC}"
+                ;;
+        esac
+
+        echo ""
+        echo -ne "  ${DIM}Press Enter to continue...${NC}"
+        read < /dev/tty
+    done
 }
 
 # -----------------------------------------------------------------------------
@@ -900,6 +1100,7 @@ cmd_help() {
     echo ""
     echo "Commands:"
     echo "  setup                     Interactive setup wizard (start here!)"
+    echo "  config                    Configure API keys and settings"
     echo "  build                     Build the container image"
     echo "  login [provider]          Login to CLI tools (claude/codex/gemini)"
     echo "  shell                     Start an interactive shell"
@@ -925,16 +1126,21 @@ cmd_help() {
 # Main
 # -----------------------------------------------------------------------------
 
-# Check Docker is available
-check_docker
-
 # Parse command
 ACTION="${1:-help}"
 shift 2>/dev/null || true
 
+# Check Docker is available (skip for commands that don't need it)
+if [ "$ACTION" != "config" ] && [ "$ACTION" != "help" ] && [ "$ACTION" != "--help" ] && [ "$ACTION" != "-h" ]; then
+    check_docker
+fi
+
 case "$ACTION" in
     setup)
         cmd_setup
+        ;;
+    config)
+        cmd_config
         ;;
     build)
         cmd_build

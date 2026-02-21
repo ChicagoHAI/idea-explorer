@@ -33,6 +33,9 @@ except ImportError:
 
 from .config_loader import ConfigLoader
 
+# GitHub's file size limit for pushes (100MB)
+MAX_FILE_SIZE = 100 * 1024 * 1024
+
 
 class GitHubManager:
     """
@@ -283,6 +286,15 @@ class GitHubManager:
             # Add all files
             repo.git.add(A=True)
 
+            # Unstage files exceeding GitHub's 100MB file size limit
+            large_files = self._unstage_large_files(repo, repo_path)
+            if large_files:
+                for lf_path, lf_size in large_files:
+                    size_mb = lf_size / (1024 * 1024)
+                    print(f"   ⚠️  Skipped large file ({size_mb:.1f}MB > 100MB limit): {lf_path}")
+                print(f"   ⚠️  {len(large_files)} file(s) excluded from commit due to GitHub's 100MB file size limit.")
+                print(f"      These files remain in your local workspace but are not pushed to GitHub.")
+
             # Check if there are changes to commit
             if repo.is_dirty(untracked_files=True):
                 # Commit
@@ -310,6 +322,49 @@ class GitHubManager:
 
         except GitCommandError as e:
             raise RuntimeError(f"Failed to commit and push: {e}")
+
+    def _unstage_large_files(self, repo: 'Repo', repo_path: Path) -> list:
+        """
+        Check staged files and unstage any exceeding GitHub's 100MB limit.
+
+        Args:
+            repo: GitPython Repo object
+            repo_path: Path to local repository
+
+        Returns:
+            List of (relative_path, size_bytes) tuples for unstaged files
+        """
+        large_files = []
+
+        try:
+            # Get list of all staged files (relative paths)
+            staged_output = repo.git.diff('--cached', '--name-only')
+            if not staged_output.strip():
+                return large_files
+
+            staged_files = staged_output.strip().split('\n')
+
+            for filepath in staged_files:
+                filepath = filepath.strip()
+                if not filepath:
+                    continue
+
+                full_path = Path(repo_path) / filepath
+
+                # Skip deleted files (they appear in diff but don't exist on disk)
+                if not full_path.exists():
+                    continue
+
+                file_size = full_path.stat().st_size
+                if file_size > MAX_FILE_SIZE:
+                    # Unstage this file (does not delete it from working directory)
+                    repo.git.reset('--', filepath)
+                    large_files.append((filepath, file_size))
+
+        except Exception as e:
+            print(f"   ⚠️  Error checking staged file sizes: {e}")
+
+        return large_files
 
     def create_summary_pr(self,
                          repo_name: str,

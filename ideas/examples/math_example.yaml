@@ -1,0 +1,127 @@
+# Example Research Idea: Mathematics (Graph Theory / Combinatorics)
+#
+# This example demonstrates the mathematics domain for proof-oriented research.
+# Note: domain is "mathematics" which activates math-specific agent templates.
+
+idea:
+  title: "Tight Bounds on the Rainbow Connection Number of Random Regular Graphs"
+
+  domain: mathematics
+
+  hypothesis: |
+    For a random d-regular graph G on n vertices with d >= 3, the rainbow
+    connection number rc(G) satisfies rc(G) = ceil(n/d) + O(1) with high
+    probability as n -> infinity. Specifically, we conjecture that the additive
+    constant is at most 2 for d >= 5, tightening the known O(log n / d) gap
+    between the current best upper and lower bounds.
+
+  background:
+    description: |
+      The rainbow connection number rc(G) of a connected graph G is the minimum
+      number of colors needed to color the edges so that every pair of vertices
+      is connected by a path with all edges of distinct colors.
+
+      For random regular graphs, the diameter provides a trivial lower bound:
+      rc(G) >= diam(G). The current best results show diam(G) = ceil(log(n) / log(d-1))
+      for random d-regular graphs, and the best upper bound on rc(G) is
+      O(n/d * log(n)). There is a significant gap between these bounds that
+      we aim to close.
+
+      This research combines probabilistic combinatorics with constructive
+      coloring arguments to achieve tight bounds.
+
+    papers:
+      - url: "https://arxiv.org/abs/1005.1665"
+        description: "Chartrand et al. - Rainbow connection in graphs (foundational paper)"
+      - url: "https://arxiv.org/abs/1101.5428"
+        description: "Dudek et al. - Rainbow connection of random regular graphs"
+
+  methodology:
+    approach: "Proof-based mathematical research combining probabilistic methods with explicit constructions"
+
+    steps:
+      - "Review existing bounds on rc(G) for random regular graphs and identify the gap"
+      - "Establish necessary definitions and notation for rainbow connection"
+      - "Prove a structural lemma about path systems in random regular graphs"
+      - "Construct an explicit rainbow coloring achieving the conjectured bound"
+      - "Prove the coloring is valid using expansion properties of random regular graphs"
+      - "Verify the bound computationally for small d and n values"
+      - "Investigate tightness by constructing graphs requiring many colors"
+
+    baselines:
+      - "Trivial bound: rc(G) >= diam(G)"
+      - "Dudek et al. upper bound: rc(G) <= O(n log(n) / d)"
+      - "Greedy coloring bound"
+
+    metrics:
+      - "Tightness of upper bound (gap between upper and lower bound)"
+      - "Asymptotic behavior as d grows"
+      - "Computational verification for small cases"
+
+  constraints:
+    compute: cpu_only
+    time_limit: 7200  # 2 hours
+    memory: "8GB"
+    dependencies:
+      - "sympy"
+      - "networkx"
+      - "numpy"
+      - "matplotlib"
+
+  expected_outputs:
+    - type: proof
+      format: markdown
+      description: |
+        Complete proofs of:
+        - Main theorem: tight bound on rc(G) for random d-regular graphs
+        - Supporting lemmas on path structure and expansion properties
+        - Constructive coloring algorithm with correctness proof
+
+    - type: computational_verification
+      format: python
+      description: |
+        Python scripts using NetworkX to:
+        - Generate random regular graphs for small n and d
+        - Compute rainbow connection number (exact for small cases)
+        - Verify the bound holds empirically
+        - Visualize the relationship between d, n, and rc(G)
+
+    - type: visualization
+      format: png
+      description: |
+        Plots showing:
+        - rc(G) vs n for various d values
+        - Comparison of our bound with prior bounds
+        - Distribution of rc(G) over random instances
+
+  evaluation_criteria:
+    - "Main theorem is stated precisely with complete proof"
+    - "All supporting lemmas have complete proofs"
+    - "Definitions are precise and notation is consistent"
+    - "Computational verification supports the theoretical bound"
+    - "Tightness is demonstrated (matching lower bound examples)"
+    - "Results improve upon prior best bounds"
+    - "Proofs are logically complete with no gaps"
+    - "Paper is suitable for submission to a combinatorics journal"
+
+  metadata:
+    author: "math_researcher"
+    tags:
+      - "graph-theory"
+      - "combinatorics"
+      - "random-graphs"
+      - "rainbow-connection"
+      - "probabilistic-method"
+    priority: high
+    estimated_duration: "2 hours"
+    paper_style: "ams"
+    notes: |
+      This is a proof-oriented research project. The primary output is
+      mathematical theorems with complete proofs, supported by computational
+      verification. No GPU or large datasets needed.
+
+      The mathematics domain activates specialized agent templates that
+      replace experiment-oriented workflows with proof-oriented ones:
+      - Resource finder searches for prior theorems and proof techniques
+      - Session instructions guide proof construction and verification
+      - Paper writer uses amsart document class with theorem environments
