@@ -114,7 +114,7 @@ After both agents complete, the workspace should contain:
 
 ```
 workspace/
-├── .idea-explorer/
+├── .neurico/
 │   ├── pipeline_state.json           # Orchestrator state
 │   └── pipeline_results.json         # Final results
 ├── .resource_finder_complete         # Completion marker

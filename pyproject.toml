@@ -1,5 +1,5 @@
 [project]
-name = "idea-explorer"
+name = "neurico"
 version = "0.2.0"
 description = "Autonomous research framework that takes structured research ideas and orchestrates AI agents to design, execute, analyze, and document experiments across diverse domains"
 readme = "README.md"
@@ -42,10 +42,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ChicagoHAI/idea-explorer"
-Documentation = "https://github.com/ChicagoHAI/idea-explorer/blob/main/README.md"
-Repository = "https://github.com/ChicagoHAI/idea-explorer"
-Issues = "https://github.com/ChicagoHAI/idea-explorer/issues"
+Homepage = "https://github.com/ChicagoHAI/neurico"
+Documentation = "https://github.com/ChicagoHAI/neurico/blob/main/README.md"
+Repository = "https://github.com/ChicagoHAI/neurico"
+Issues = "https://github.com/ChicagoHAI/neurico/issues"
 
 [build-system]
 requires = ["hatchling"]

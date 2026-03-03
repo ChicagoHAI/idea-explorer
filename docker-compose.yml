@@ -1,14 +1,14 @@
 # =============================================================================
-# idea-explorer Docker Compose Configuration
+# neurico Docker Compose Configuration
 #
 # Usage:
 #   docker compose up -d                     # Start in background
-#   docker compose exec idea-explorer bash   # Interactive shell
+#   docker compose exec neurico bash   # Interactive shell
 #   docker compose down                      # Stop container
 # =============================================================================
 
 services:
-  idea-explorer:
+  neurico:
     build:
       context: .
       dockerfile: docker/Dockerfile
@@ -18,8 +18,8 @@ services:
         UID: ${UID:-1000}
         GID: ${GID:-1000}
 
-    image: chicagohai/idea-explorer:latest
-    container_name: idea-explorer
+    image: chicagohai/neurico:latest
+    container_name: neurico
 
     # GPU support (NVIDIA Container Toolkit required)
     deploy:
@@ -36,7 +36,7 @@ services:
 
     environment:
       - PYTHONUNBUFFERED=1
-      - IDEA_EXPLORER_WORKSPACE=/workspaces
+      - NEURICO_WORKSPACE=/workspaces
 
     # Volume mounts for persistent storage
     volumes:

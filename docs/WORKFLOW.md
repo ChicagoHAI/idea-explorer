@@ -1,10 +1,10 @@
-# Idea Explorer Workflow Guide
+# NeuriCo Workflow Guide
 
-This guide explains the complete workflow for using Idea Explorer, from idea submission to results publication.
+This guide explains the complete workflow for using NeuriCo, from idea submission to results publication.
 
 ## Overview
 
-Idea Explorer uses a **workspace-first** approach where GitHub repositories are created immediately upon idea submission, allowing you to add resources before the AI agent runs.
+NeuriCo uses a **workspace-first** approach where GitHub repositories are created immediately upon idea submission, allowing you to add resources before the AI agent runs.
 
 ## Complete Workflow
 
@@ -14,9 +14,9 @@ Idea Explorer uses a **workspace-first** approach where GitHub repositories are 
 # Install uv if not already installed
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Clone and setup Idea Explorer
-git clone https://github.com/ChicagoHAI/idea-explorer
-cd idea-explorer
+# Clone and setup NeuriCo
+git clone https://github.com/ChicagoHAI/neurico
+cd neurico
 
 # Install dependencies
 uv sync
@@ -218,7 +218,7 @@ workspace/<repo-name>/
 ├── datasets/                   # Your datasets
 ├── docs/                       # Your documents
 ├── code/                       # Your helper code
-└── .idea-explorer/
+└── .neurico/
     └── idea.yaml               # Original idea spec
 ```
 

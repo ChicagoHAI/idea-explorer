@@ -1,4 +1,4 @@
-# Idea Explorer: Implementation Summary
+# NeuriCo: Implementation Summary
 
 **Date**: 2025-11-03
 **Status**: ✅ Core System Implemented
@@ -83,7 +83,7 @@ A complete autonomous research framework that transforms structured research ide
 ### 5. Complete Directory Structure
 
 ```
-idea-explorer/
+neurico/
 ├── DESIGN.md                    (95 pages of design docs)
 ├── README.md                    (Comprehensive user guide)
 ├── IMPLEMENTATION_SUMMARY.md    (This file)
@@ -321,7 +321,7 @@ python src/core/runner.py <generated_id>
 
 ```bash
 # Test prompt generator
-cd idea-explorer
+cd neurico
 python src/templates/prompt_generator.py
 
 # Test idea manager
@@ -353,7 +353,7 @@ python src/core/idea_manager.py
 
 ## Comparison with mechinterp_playground
 
-| Aspect | mechinterp_playground | Idea Explorer |
+| Aspect | mechinterp_playground | NeuriCo |
 |--------|----------------------|---------------|
 | **Scope** | Neural circuit analysis | Any research domain |
 | **Task Definition** | Hardcoded .txt prompts | Structured YAML specification |

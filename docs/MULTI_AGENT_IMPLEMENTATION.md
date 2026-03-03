@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the implementation of the multi-agent research pipeline architecture for the Idea Explorer system.
+This document describes the implementation of the multi-agent research pipeline architecture for the NeuriCo system.
 
 ## Architecture
 
@@ -51,7 +51,7 @@ The system has been refactored from a single monolithic agent to a multi-agent p
    - Timeout handling and error recovery
 
 4. **`src/core/pipeline_orchestrator.py`**
-   - `PipelineState`: Tracks pipeline execution state in `.idea-explorer/pipeline_state.json`
+   - `PipelineState`: Tracks pipeline execution state in `.neurico/pipeline_state.json`
    - `ResearchPipelineOrchestrator`: Manages multi-agent workflow
    - Stage execution and monitoring
    - Optional human review checkpoint
@@ -150,7 +150,7 @@ The Experiment Runner continues to use scribe for Jupyter integration:
 
 ## Pipeline State Management
 
-Pipeline state is tracked in `.idea-explorer/pipeline_state.json`:
+Pipeline state is tracked in `.neurico/pipeline_state.json`:
 
 ```json
 {

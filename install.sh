@@ -1,9 +1,9 @@
 #!/bin/bash
 # =============================================================================
-# Idea Explorer — One-Liner Installer
+# NeuriCo — One-Liner Installer
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/ChicagoHAI/idea-explorer/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/ChicagoHAI/neurico/main/install.sh | bash
 #
 # Or with a custom install directory:
 #   INSTALL_DIR=~/my-folder curl -fsSL ... | bash
@@ -23,12 +23,11 @@ NC='\033[0m'
 
 main() {
     echo -e "${BLUE}${BOLD}"
-    echo '  ___    _                _____            _                       '
-    echo ' |_ _|__| | ___  __ _   | ____|_  ___ __ | | ___  _ __ ___ _ __  '
-    echo '  | |/ _` |/ _ \/ _` |  |  _| \ \/ / '"'"'_ \| |/ _ \| '"'"'__/ _ \ '"'"'__|'
-    echo '  | | (_| |  __/ (_| |  | |___ >  <| |_) | | (_) | | |  __/ |   '
-    echo ' |___\__,_|\___|\__,_|  |_____/_/\_\ .__/|_|\___/|_|  \___|_|   '
-    echo '                                    |_|                           '
+    echo '  _   _                 _  ____       '
+    echo ' | \ | | ___ _   _ _ __(_)/ ___|___   '
+    echo ' |  \| |/ _ \ | | |  __| | |   / _ \  '
+    echo ' | |\  |  __/ |_| | |  | | |__| (_) | '
+    echo ' |_| \_|\___|\__,_|_|  |_|\____\___/  '
     echo -e "${NC}"
     echo -e "  ${DIM}Autonomous Research Framework — Installer${NC}"
     echo ""
@@ -56,7 +55,7 @@ main() {
     echo ""
 
     # ── Clone or update repo ──
-    local install_dir="${INSTALL_DIR:-$(pwd)/idea-explorer}"
+    local install_dir="${INSTALL_DIR:-$(pwd)/neurico}"
 
     if [ -d "$install_dir/.git" ]; then
         echo -e "  ${DIM}Found existing install at $install_dir${NC}"
@@ -69,16 +68,16 @@ main() {
             }
             # Force pull the latest Docker image to stay in sync with updated code
             echo -e "  Updating Docker image..."
-            if docker pull ghcr.io/chicagohai/idea-explorer:latest 2>/dev/null; then
-                docker tag ghcr.io/chicagohai/idea-explorer:latest chicagohai/idea-explorer:latest
+            if docker pull ghcr.io/chicagohai/neurico:latest 2>/dev/null; then
+                docker tag ghcr.io/chicagohai/neurico:latest chicagohai/neurico:latest
                 echo -e "  ${GREEN}[OK]${NC} Docker image updated"
             else
-                echo -e "  ${YELLOW}[WARN]${NC} Docker image pull failed — run './idea-explorer build' later"
+                echo -e "  ${YELLOW}[WARN]${NC} Docker image pull failed — run './neurico build' later"
             fi
         fi
     else
         echo -e "  Cloning to ${BOLD}$install_dir${NC}..."
-        git clone https://github.com/ChicagoHAI/idea-explorer "$install_dir"
+        git clone https://github.com/ChicagoHAI/neurico "$install_dir"
         echo -e "  ${GREEN}[OK]${NC} Repository cloned"
     fi
     echo ""
@@ -87,7 +86,7 @@ main() {
     echo -e "  Launching interactive setup wizard..."
     echo ""
     cd "$install_dir"
-    exec ./idea-explorer setup
+    exec ./neurico setup
 }
 
 main

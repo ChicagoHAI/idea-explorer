@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# idea-explorer Docker Runner
+# NeuriCo Docker Runner
 # Handles GPU passthrough and credential mounting for containerized execution
 # =============================================================================
 
@@ -9,7 +9,7 @@ set -e
 # Get script and project directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-IMAGE_NAME="chicagohai/idea-explorer:latest"
+IMAGE_NAME="chicagohai/neurico:latest"
 
 # Colors for output
 RED='\033[0;31m'
@@ -27,18 +27,17 @@ NC='\033[0m'
 # -----------------------------------------------------------------------------
 show_banner() {
     echo -e "${BLUE}${BOLD}"
-    echo '  ___    _                _____            _                       '
-    echo ' |_ _|__| | ___  __ _   | ____|_  ___ __ | | ___  _ __ ___ _ __  '
-    echo '  | |/ _` |/ _ \/ _` |  |  _| \ \/ / '"'"'_ \| |/ _ \| '"'"'__/ _ \ '"'"'__|'
-    echo '  | | (_| |  __/ (_| |  | |___ >  <| |_) | | (_) | | |  __/ |   '
-    echo ' |___\__,_|\___|\__,_|  |_____/_/\_\ .__/|_|\___/|_|  \___|_|   '
-    echo '                                    |_|                           '
+    echo '  _   _                 _  ____       '
+    echo ' | \ | | ___ _   _ _ __(_)/ ___|___   '
+    echo ' |  \| |/ _ \ | | |  __| | |   / _ \  '
+    echo ' | |\  |  __/ |_| | |  | | |__| (_) | '
+    echo ' |_| \_|\___|\__,_|_|  |_|\____\___/  '
     echo -e "${NC}"
     local version=""
     if [ -f "$PROJECT_ROOT/config/VERSION" ]; then
         version=$(cat "$PROJECT_ROOT/config/VERSION" | tr -d '[:space:]')
     fi
-    echo -e "  ${DIM}Autonomous Research Framework${NC}  ${CYAN}v${version:-unknown}${NC}  ${DIM}github.com/ChicagoHAI/idea-explorer${NC}"
+    echo -e "  ${DIM}Autonomous Research Framework${NC}  ${CYAN}v${version:-unknown}${NC}  ${DIM}github.com/ChicagoHAI/neurico${NC}"
     echo ""
 }
 
@@ -61,12 +60,12 @@ show_status() {
         local cached_version=$(cat "$PROJECT_ROOT/.docker-image-version" 2>/dev/null | tr -d '[:space:]')
         if [ -n "$host_version" ] && [ -n "$cached_version" ] && [ "$host_version" != "$cached_version" ]; then
             echo -e "    Docker image ........ ${YELLOW}[OUTDATED]${NC} image v${cached_version}, code v${host_version}"
-            echo -e "                          Run: ${BOLD}./idea-explorer build${NC} to update"
+            echo -e "                          Run: ${BOLD}./neurico build${NC} to update"
         else
             echo -e "    Docker image ........ ${GREEN}[OK]${NC} $IMAGE_NAME"
         fi
     else
-        echo -e "    Docker image ........ ${YELLOW}[MISSING]${NC} run: ./idea-explorer setup"
+        echo -e "    Docker image ........ ${YELLOW}[MISSING]${NC} run: ./neurico setup"
     fi
 
     # GPU
@@ -80,7 +79,7 @@ show_status() {
     if [ -f "$PROJECT_ROOT/.env" ]; then
         echo -e "    .env ................ ${GREEN}[OK]${NC} configured"
     else
-        echo -e "    .env ................ ${YELLOW}[MISSING]${NC} run: ./idea-explorer setup"
+        echo -e "    .env ................ ${YELLOW}[MISSING]${NC} run: ./neurico setup"
     fi
 
     # Claude credentials
@@ -109,7 +108,7 @@ show_status() {
 check_docker() {
     if ! command -v docker &> /dev/null; then
         echo -e "${RED}Error: Docker not found${NC}"
-        echo "Please install Docker to use idea-explorer containers."
+        echo "Please install Docker to use neurico containers."
         exit 1
     fi
 }
@@ -123,7 +122,7 @@ get_user_flags() {
 
 # -----------------------------------------------------------------------------
 # Get TTY flag (only allocate pseudo-terminal when one is available)
-# This allows idea-explorer to be invoked as a subprocess without failing
+# This allows neurico to be invoked as a subprocess without failing
 # -----------------------------------------------------------------------------
 get_tty_flag() {
     if [ -t 0 ]; then
@@ -248,7 +247,7 @@ check_env_file() {
 # -----------------------------------------------------------------------------
 cmd_build() {
     local version=$(cat "$PROJECT_ROOT/config/VERSION" 2>/dev/null | tr -d '[:space:]')
-    echo -e "${BLUE}Building idea-explorer container image${version:+ (v${version})}...${NC}"
+    echo -e "${BLUE}Building neurico container image${version:+ (v${version})}...${NC}"
     cd "$PROJECT_ROOT"
     docker build -t "$IMAGE_NAME" -f docker/Dockerfile .
 
@@ -269,7 +268,7 @@ warn_if_outdated() {
 
     if [ -n "$host_version" ] && [ -n "$cached_version" ] && [ "$host_version" != "$cached_version" ]; then
         echo -e "${YELLOW}Warning: Docker image may be outdated (image: v${cached_version}, code: v${host_version})${NC}"
-        echo -e "${YELLOW}Run './idea-explorer build' to update.${NC}"
+        echo -e "${YELLOW}Run './neurico build' to update.${NC}"
         echo ""
     fi
 }
@@ -293,7 +292,7 @@ cmd_shell() {
         $gpu_flags \
         $user_flags \
         --env-file \"$PROJECT_ROOT/.env\" \
-        -e IDEA_EXPLORER_WORKSPACE=/workspaces \
+        -e NEURICO_WORKSPACE=/workspaces \
         -v \"$workspace_dir:/workspaces\" \
         -v \"$PROJECT_ROOT/ideas:/app/ideas\" \
         -v \"$PROJECT_ROOT/logs:/app/logs\" \
@@ -332,7 +331,7 @@ cmd_fetch() {
         $gpu_flags \
         $user_flags \
         --env-file \"$PROJECT_ROOT/.env\" \
-        -e IDEA_EXPLORER_WORKSPACE=/workspaces \
+        -e NEURICO_WORKSPACE=/workspaces \
         -v \"$workspace_dir:/workspaces\" \
         -v \"$PROJECT_ROOT/ideas:/app/ideas\" \
         -v \"$PROJECT_ROOT/logs:/app/logs\" \
@@ -387,7 +386,7 @@ cmd_submit() {
         $gpu_flags \
         $user_flags \
         --env-file \"$PROJECT_ROOT/.env\" \
-        -e IDEA_EXPLORER_WORKSPACE=/workspaces \
+        -e NEURICO_WORKSPACE=/workspaces \
         -v \"$workspace_dir:/workspaces\" \
         -v \"$PROJECT_ROOT/ideas:/app/ideas\" \
         -v \"$PROJECT_ROOT/logs:/app/logs\" \
@@ -427,7 +426,7 @@ cmd_run() {
         $gpu_flags \
         $user_flags \
         --env-file \"$PROJECT_ROOT/.env\" \
-        -e IDEA_EXPLORER_WORKSPACE=/workspaces \
+        -e NEURICO_WORKSPACE=/workspaces \
         -v \"$workspace_dir:/workspaces\" \
         -v \"$PROJECT_ROOT/ideas:/app/ideas\" \
         -v \"$PROJECT_ROOT/logs:/app/logs\" \
@@ -572,12 +571,12 @@ check_image() {
             echo -e "    ${YELLOW}[WARN]${NC} Cannot determine image version, pulling latest..."
         fi
     else
-        echo -e "    Pulling ghcr.io/chicagohai/idea-explorer:latest..."
+        echo -e "    Pulling ghcr.io/chicagohai/neurico:latest..."
     fi
 
     # Try pulling latest image
-    if docker pull ghcr.io/chicagohai/idea-explorer:latest; then
-        docker tag ghcr.io/chicagohai/idea-explorer:latest "$IMAGE_NAME"
+    if docker pull ghcr.io/chicagohai/neurico:latest; then
+        docker tag ghcr.io/chicagohai/neurico:latest "$IMAGE_NAME"
         # Cache the new image version
         local new_version=""
         new_version=$(docker run --rm --entrypoint python "$IMAGE_NAME" \
@@ -587,7 +586,7 @@ check_image() {
         fi
         echo -e "    ${GREEN}[OK]${NC} Image ready${new_version:+ (v${new_version})}"
     else
-        echo -e "    ${YELLOW}[WARN]${NC} Pull failed — build locally with: ./idea-explorer build"
+        echo -e "    ${YELLOW}[WARN]${NC} Pull failed — build locally with: ./neurico build"
     fi
     echo ""
 }
@@ -843,7 +842,7 @@ setup_login_provider() {
     if [ -d "$host_dir" ] && [ "$(ls -A "$host_dir" 2>/dev/null)" ]; then
         echo -e "    ${GREEN}[OK]${NC} $display_name credentials saved"
     else
-        echo -e "    ${YELLOW}[WARN]${NC} No $display_name credentials detected — you can login later with: ./idea-explorer login"
+        echo -e "    ${YELLOW}[WARN]${NC} No $display_name credentials detected — you can login later with: ./neurico login"
     fi
     echo ""
 }
@@ -854,7 +853,7 @@ setup_login_provider() {
 cmd_setup() {
     show_banner
 
-    echo -e "${BOLD}  Welcome to Idea Explorer!${NC}"
+    echo -e "${BOLD}  Welcome to NeuriCo!${NC}"
     echo -e "  ${DIM}This wizard will get you set up in a few minutes.${NC}"
     echo ""
 
@@ -891,7 +890,7 @@ cmd_setup() {
     # ── Step 4: AI CLI Login ──
     echo -e "  ${BOLD}Step 4/5: AI CLI Login${NC}"
     echo -e "    ${DIM}Each provider uses OAuth — you'll login inside a Docker container.${NC}"
-    echo -e "    ${DIM}You can set up multiple providers now, or add more later with: ./idea-explorer login${NC}"
+    echo -e "    ${DIM}You can set up multiple providers now, or add more later with: ./neurico login${NC}"
     echo ""
     # Detect existing credentials
     local claude_status="" codex_status="" gemini_status=""
@@ -936,7 +935,7 @@ cmd_setup() {
                 setup_login_provider "Gemini" "gemini" "$HOME/.gemini" "/tmp/.gemini"
                 ;;
             4)
-                echo -e "    ${DIM}[SKIP]${NC} You can login later with: ./idea-explorer login"
+                echo -e "    ${DIM}[SKIP]${NC} You can login later with: ./neurico login"
                 ;;
         esac
     done
@@ -971,7 +970,7 @@ cmd_setup() {
             echo -ne "    Paste your IdeaHub URL: "
             read ideahub_url < /dev/tty
             if [ -n "$ideahub_url" ]; then
-                run_cmd="./idea-explorer fetch $ideahub_url --submit --run --provider $provider_flag --full-permissions"
+                run_cmd="./neurico fetch $ideahub_url --submit --run --provider $provider_flag --full-permissions"
             else
                 echo -e "    ${YELLOW}[SKIP]${NC} No URL provided"
             fi
@@ -980,13 +979,13 @@ cmd_setup() {
             echo -ne "    Path to YAML file: "
             read yaml_path < /dev/tty
             if [ -n "$yaml_path" ]; then
-                run_cmd="./idea-explorer submit $yaml_path --run --provider $provider_flag --full-permissions"
+                run_cmd="./neurico submit $yaml_path --run --provider $provider_flag --full-permissions"
             else
                 echo -e "    ${YELLOW}[SKIP]${NC} No path provided"
             fi
             ;;
         3)
-            run_cmd="./idea-explorer submit ideas/examples/ml_regularization_test.yaml --run --provider $provider_flag --full-permissions"
+            run_cmd="./neurico submit ideas/examples/ml_regularization_test.yaml --run --provider $provider_flag --full-permissions"
             ;;
     esac
 
@@ -998,7 +997,7 @@ cmd_setup() {
     echo -e "  ${DIM}  Workspace config .......... config/workspace.yaml${NC}"
     echo -e "  ${DIM}  CLI credentials ........... ~/.claude/  ~/.codex/  ~/.gemini/${NC}"
     echo ""
-    echo -e "  ${DIM}To change configuration later, run: ./idea-explorer config${NC}"
+    echo -e "  ${DIM}To change configuration later, run: ./neurico config${NC}"
     echo ""
 
     if [ -n "$run_cmd" ]; then
@@ -1019,8 +1018,8 @@ cmd_setup() {
     else
         echo "  Next steps:"
         echo -e "    ${BOLD}cd $PROJECT_ROOT${NC}"
-        echo "    ./idea-explorer fetch <ideahub_url> --submit --run --provider claude --full-permissions"
-        echo "    ./idea-explorer help"
+        echo "    ./neurico fetch <ideahub_url> --submit --run --provider claude --full-permissions"
+        echo "    ./neurico help"
         echo ""
     fi
 }
@@ -1081,7 +1080,7 @@ setup_env_interactive() {
     echo -e "    ${DIM}  CLI credentials ........... ~/.claude/  ~/.codex/  ~/.gemini/${NC}"
     echo ""
     echo -e "    ${DIM}Tip: To add more API keys or change settings later, run:${NC}"
-    echo -e "    ${DIM}  ./idea-explorer config${NC}"
+    echo -e "    ${DIM}  ./neurico config${NC}"
     echo ""
 }
 

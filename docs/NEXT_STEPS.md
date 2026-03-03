@@ -1,4 +1,4 @@
-# Idea Explorer: Next Steps & Future Improvements
+# NeuriCo: Next Steps & Future Improvements
 
 This document outlines planned enhancements to the automated research pipeline, organized by priority and implementation complexity.
 

@@ -86,7 +86,7 @@ def _copy_style_files(draft_dir: Path, style: str):
     """
     Copy LaTeX style files to paper draft directory.
 
-    The agent runs in a separate workspace without access to idea-explorer's
+    The agent runs in a separate workspace without access to neurico's
     templates, so we copy the style files (e.g., neurips_2025.sty) there.
 
     Args:

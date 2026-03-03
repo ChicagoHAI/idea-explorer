@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# idea-explorer Container Entrypoint
+# neurico Container Entrypoint
 # Validates environment, configures credentials, and starts the container
 # =============================================================================
 
@@ -26,7 +26,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}  idea-explorer Container Starting${NC}"
+echo -e "${BLUE}  NeuriCo Container Starting${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
@@ -58,7 +58,7 @@ check_version_compatibility() {
         echo -e "  Host code version:     ${GREEN}${host_version}${NC}"
         echo ""
         echo -e "  Your Docker image is out of date. Some features may not work."
-        echo -e "  Update with: ${BOLD:-}./idea-explorer build${NC}"
+        echo -e "  Update with: ${BOLD:-}./neurico build${NC}"
         echo ""
     fi
 }

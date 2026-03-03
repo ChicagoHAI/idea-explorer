@@ -1,5 +1,5 @@
 """
-Idea Explorer version.
+NeuriCo version.
 
 This file is baked into the Docker image at build time.
 At runtime, it's compared against config/VERSION (mounted from host)

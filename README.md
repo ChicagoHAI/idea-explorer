@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="assets/banner.png" alt="Idea Explorer - AI-Powered Research Acceleration" width="600"/>
+<img src="assets/banner.png" alt="NeuriCo - AI-Powered Research Acceleration" width="600"/>
 
-[![GitHub Stars](https://img.shields.io/github/stars/ChicagoHAI/idea-explorer?style=flat-square)](https://github.com/ChicagoHAI/idea-explorer)
+[![GitHub Stars](https://img.shields.io/github/stars/ChicagoHAI/neurico?style=flat-square)](https://github.com/ChicagoHAI/neurico)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg?style=flat-square)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](docker/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg?style=flat-square)](LICENSE)
@@ -13,10 +13,10 @@
 
 <hr>
 
-Idea Explorer is an autonomous research framework that takes structured research ideas and orchestrates AI agents to design, execute, analyze, and document experiments across diverse domains.
+NeuriCo is an autonomous research framework that takes structured research ideas and orchestrates AI agents to design, execute, analyze, and document experiments across diverse domains.
 
 <div align="center">
-<img src="assets/idea-explorer-6x.gif" alt="Idea Explorer Demo" width="700"/>
+<img src="assets/neurico-6x.gif" alt="NeuriCo Demo" width="700"/>
 </div>
 
 <details open>
@@ -40,13 +40,13 @@ Idea Explorer is an autonomous research framework that takes structured research
 **1. Install** (clones repo, pulls Docker image, walks you through setup):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ChicagoHAI/idea-explorer/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ChicagoHAI/neurico/main/install.sh | bash
 ```
 
 **2. Run** — pick or submit an idea on [IdeaHub](https://hypogenic.ai/ideahub) and go:
 
 ```bash
-./idea-explorer fetch <ideahub_url> --submit --run --provider claude --write-paper --full-permissions
+./neurico fetch <ideahub_url> --submit --run --provider claude --write-paper --full-permissions
 ```
 
 That's it! The agent fetches the idea, creates a GitHub repo, runs experiments, writes a paper, and pushes everything.
@@ -55,9 +55,9 @@ That's it! The agent fetches the idea, creates a GitHub repo, runs experiments, 
 <summary>Manual setup (alternative to one-liner)</summary>
 
 ```bash
-git clone https://github.com/ChicagoHAI/idea-explorer
-cd idea-explorer
-./idea-explorer setup      # Interactive wizard: pulls Docker image, configures API keys
+git clone https://github.com/ChicagoHAI/neurico
+cd neurico
+./neurico setup      # Interactive wizard: pulls Docker image, configures API keys
 ```
 
 </details>
@@ -72,25 +72,25 @@ Docker provides an isolated environment with GPU support, CLI tools, LaTeX, and 
 
 ```bash
 # Clone the repo (provides CLI scripts, config, templates, and idea examples)
-git clone https://github.com/ChicagoHAI/idea-explorer
-cd idea-explorer
+git clone https://github.com/ChicagoHAI/neurico
+cd neurico
 
 # Option A: Pull pre-built image (faster, ~2 min download)
-docker pull ghcr.io/chicagohai/idea-explorer:latest
-docker tag ghcr.io/chicagohai/idea-explorer:latest chicagohai/idea-explorer:latest
+docker pull ghcr.io/chicagohai/neurico:latest
+docker tag ghcr.io/chicagohai/neurico:latest chicagohai/neurico:latest
 
 # Option B: Build from source (~10-15 min)
-./idea-explorer build
+./neurico build
 
 # Configure
-./idea-explorer config   # Interactive menu for API keys and settings
+./neurico config   # Interactive menu for API keys and settings
 
 # Login to your AI CLI (one-time, on your host machine)
 claude   # or: codex, gemini
 # Credentials are automatically mounted into containers
 ```
 
-> **Note:** Cloning the repo is required even when pulling the pre-built image. The repo provides the `./idea-explorer` CLI, config files, templates, and idea examples. The Docker image provides the runtime environment (Python, tools, LaTeX). At runtime, config and templates are mounted from your local clone into the container, so you can customize them without rebuilding.
+> **Note:** Cloning the repo is required even when pulling the pre-built image. The repo provides the `./neurico` CLI, config files, templates, and idea examples. The Docker image provides the runtime environment (Python, tools, LaTeX). At runtime, config and templates are mounted from your local clone into the container, so you can customize them without rebuilding.
 
 **GPU support** requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html):
 
@@ -106,8 +106,8 @@ For users who prefer running directly on their system.
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh   # Install uv
-git clone https://github.com/ChicagoHAI/idea-explorer
-cd idea-explorer
+git clone https://github.com/ChicagoHAI/neurico
+cd neurico
 uv sync
 cp .env.example .env   # Edit: add your API keys
 claude   # Login to your AI CLI
@@ -130,7 +130,7 @@ In Docker mode, credentials are automatically mounted into containers.
 The easiest way to configure is the interactive menu:
 
 ```bash
-./idea-explorer config
+./neurico config
 ```
 
 Or copy `.env.example` to `.env` and edit manually. Here's what each variable does:
@@ -161,7 +161,7 @@ Or copy `.env.example` to `.env` and edit manually. Here's what each variable do
 | `WANDB_API_KEY` | Weights & Biases experiment tracking |
 
 **Setup tiers:**
-- **Basic:** CLI login + `GITHUB_TOKEN` — full idea-explorer
+- **Basic:** CLI login + `GITHUB_TOKEN` — full neurico
 - **Enhanced:** + `OPENAI_API_KEY` — LLM repo naming + IdeaHub support
 - **Full:** + `S2_API_KEY` (+ optional `COHERE_API_KEY`) — paper-finder literature search
 
@@ -202,7 +202,7 @@ Browse ideas at [IdeaHub](https://hypogenic.ai/ideahub), then fetch and run:
 
 ```bash
 # Docker
-./idea-explorer fetch <ideahub_url> --submit --run --provider claude --write-paper --full-permissions
+./neurico fetch <ideahub_url> --submit --run --provider claude --write-paper --full-permissions
 
 # Native
 uv run python src/cli/fetch_from_ideahub.py <ideahub_url> --submit --run --provider claude --write-paper --full-permissions
@@ -213,8 +213,8 @@ This one command: fetches the idea, converts it to YAML, submits it, creates a G
 You can also break it into steps:
 
 ```bash
-./idea-explorer fetch <url>             # Just fetch and convert to YAML
-./idea-explorer fetch <url> --submit    # Fetch, convert, and submit (creates GitHub repo)
+./neurico fetch <url>             # Just fetch and convert to YAML
+./neurico fetch <url> --submit    # Fetch, convert, and submit (creates GitHub repo)
 ```
 
 ### Submit Your Own Idea
@@ -223,8 +223,8 @@ Write an idea YAML (see examples in `ideas/examples/`) and submit:
 
 ```bash
 # Docker
-./idea-explorer submit ideas/examples/ml_regularization_test.yaml
-./idea-explorer run <idea_id> --provider claude --full-permissions
+./neurico submit ideas/examples/ml_regularization_test.yaml
+./neurico run <idea_id> --provider claude --full-permissions
 
 # Native
 uv run python src/cli/submit.py ideas/examples/ml_regularization_test.yaml
@@ -248,10 +248,10 @@ uv run python src/core/runner.py <idea_id> --provider claude --full-permissions
 ### Other Commands
 
 ```bash
-./idea-explorer config      # Configure API keys and settings
-./idea-explorer shell       # Interactive shell inside the container
-./idea-explorer login       # Login to CLI tools inside the container
-./idea-explorer help        # Show all commands
+./neurico config      # Configure API keys and settings
+./neurico shell       # Interactive shell inside the container
+./neurico login       # Login to CLI tools inside the container
+./neurico help        # Show all commands
 ```
 
 <details>
@@ -298,7 +298,7 @@ workspace/<repo-name>/
   artifacts/      <- Models, checkpoints
   notebooks/      <- Jupyter notebooks (only with --use-scribe)
   paper_draft/    <- LaTeX paper output (only with --write-paper)
-  .idea-explorer/ <- Original idea spec
+  .neurico/ <- Original idea spec
 ```
 
 </details>
@@ -406,14 +406,14 @@ Contributions welcome! Areas of interest:
 
 ## Citation
 
-If you use Idea Explorer in research, please cite:
+If you use NeuriCo in research, please cite:
 
 ```bibtex
-@software{idea_explorer_2025,
-  title={Idea Explorer: Autonomous Research Framework},
+@software{neurico_2025,
+  title={NeuriCo: Autonomous Research Framework},
   author={Haokun Liu, Chenhao Tan},
   year={2025},
-  url={https://github.com/ChicagoHAI/idea-explorer}
+  url={https://github.com/ChicagoHAI/neurico}
 }
 ```
 
@@ -432,10 +432,10 @@ Apache 2.0 - See [LICENSE](LICENSE) file
 **Ready to explore your research ideas?**
 
 ```bash
-./idea-explorer fetch https://hypogenic.ai/ideahub/idea/YOUR_IDEA_ID \
+./neurico fetch https://hypogenic.ai/ideahub/idea/YOUR_IDEA_ID \
     --submit --run --provider claude --full-permissions
 ```
 
-For questions and feedback, [open an issue](https://github.com/ChicagoHAI/idea-explorer/issues) or join our [Discord](https://discord.gg/BgkfTvBdbV).
+For questions and feedback, [open an issue](https://github.com/ChicagoHAI/neurico/issues) or join our [Discord](https://discord.gg/BgkfTvBdbV).
 
 </div>

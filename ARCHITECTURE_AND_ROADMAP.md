@@ -1,6 +1,6 @@
-# Idea-Explorer: Architecture & Roadmap
+# NeuriCo: Architecture & Roadmap
 
-> **TL;DR**: Idea-Explorer is an open-source AI scientist for exploring research ideas with AI agents. This document explains how it works and where we're headed based on lessons learned from running weekly competitions.
+> **TL;DR**: NeuriCo is an open-source AI scientist for exploring research ideas with AI agents. This document explains how it works and where we're headed based on lessons learned from running weekly competitions.
 
 ---
 
@@ -46,13 +46,13 @@ failures aren't shared.
 
 ### Our Approach: Building This Together
 
-Idea-Explorer is our open, collaborative effort toward better AI Scientists. We build in public, run weekly experiments, share what works and what doesn't, and welcome contributors who want to tackle the [hard problems](#open-research-questions) with us.
+NeuriCo is our open, collaborative effort toward better AI Scientists. We build in public, run weekly experiments, share what works and what doesn't, and welcome contributors who want to tackle the [hard problems](#open-research-questions) with us.
 
 ---
 
 ## Architecture Overview
 
-Idea-Explorer uses a **multi-stage pipeline architecture** that separates resource gathering from experimentation:
+NeuriCo uses a **multi-stage pipeline architecture** that separates resource gathering from experimentation:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -135,7 +135,7 @@ Handles idea lifecycle management:
 
 Manages the multi-stage execution:
 - **Stage Management**: Runs resource finder, then experiment runner
-- **State Persistence**: Saves progress to `.idea-explorer/pipeline_state.json`
+- **State Persistence**: Saves progress to `.neurico/pipeline_state.json`
 - **Timeout Handling**: Configurable timeouts per stage (default: 45 min / 3 hours)
 - **Resume Capability**: Can restart from last completed stage
 
@@ -249,7 +249,7 @@ Options:
 Final workspace structure:
 ```
 workspace/<repo-name>/
-├── .idea-explorer/idea.yaml      # Original idea spec
+├── .neurico/idea.yaml      # Original idea spec
 ├── .claude/skills/               # Claude Code skills (paper-finder, etc.)
 ├── papers/                       # Downloaded papers
 ├── datasets/                     # Downloaded datasets
@@ -408,15 +408,15 @@ We've been running weekly competitions since November 2025, exploring 15+ resear
 
 **Stage-Specific Failures.** Different agents fail differently: Claude loses track of working directory, Codex gets stuck in rabbit holes during resource finding, Gemini doesn't follow full research instructions. These are trivial errors humans wouldn't make.
 
-### Key Insight: Idea-Explorer as Exploration Accelerator
+### Key Insight: NeuriCo as Exploration Accelerator
 
-After testing multiple AI scientist systems (including [AI-Scientist](https://github.com/SakanaAI/AI-Scientist-v2), [AI-Researcher](https://github.com/HKUDS/AI-Researcher), and Kosmos), **we believe Idea-Explorer is the most useful for actually helping researchers explore ideas.** Here's why:
+After testing multiple AI scientist systems (including [AI-Scientist](https://github.com/SakanaAI/AI-Scientist-v2), [AI-Researcher](https://github.com/HKUDS/AI-Researcher), and Kosmos), **we believe NeuriCo is the most useful for actually helping researchers explore ideas.** Here's why:
 
 - **Grounded in real experiments**: Agents run actual code on real datasets, producing concrete results you can inspect and build upon
 - **Good for** making ideas more concrete, thinking systematically, and providing a starting point for deeper investigation
 - **Honest about limitations**: Rather than generating polished-looking reports that may be untrustworthy, we focus on transparent exploration with clear artifacts
 
-Our long-term goal is for idea-explorer to produce work good enough to support publishable research, but we are not there yet. We believe the path forward isn't to optimize directly for paper-writing, but to first build reliable exploration tools that help researchers accelerate their work, identify potential issues early, and make informed decisions about what to pursue next.
+Our long-term goal is for neurico to produce work good enough to support publishable research, but we are not there yet. We believe the path forward isn't to optimize directly for paper-writing, but to first build reliable exploration tools that help researchers accelerate their work, identify potential issues early, and make informed decisions about what to pursue next.
 
 ---
 
@@ -547,13 +547,13 @@ We're looking for collaborators who resonate with the vision of AI as exploratio
 - Human-AI interaction (feedback loops, checkpoints, iterative refinement)
 
 **Get started:**
-- Browse [open issues](https://github.com/ChicagoHAI/idea-explorer/issues)
+- Browse [open issues](https://github.com/ChicagoHAI/neurico/issues)
 - Read the [weekly competition results](https://hypogenic.ai/blog) for context on current limitations
 - Try running the system on your own research ideas
 
 **Contact:**
 - Email: haokunliu@uchicago.edu
-- GitHub: [ChicagoHAI/idea-explorer](https://github.com/ChicagoHAI/idea-explorer)
+- GitHub: [ChicagoHAI/neurico](https://github.com/ChicagoHAI/neurico)
 - IdeaHub: [hypogenic.ai/ideahub](https://hypogenic.ai/ideahub)
 
 ---

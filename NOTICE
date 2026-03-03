@@ -1,4 +1,4 @@
-Idea Explorer
+NeuriCo
 Copyright 2025 ChicagoHAI
 
 This product includes software developed at ChicagoHAI (https://github.com/ChicagoHAI).
@@ -30,7 +30,7 @@ Skills with conceptual inspiration from claude-scientific-skills:
   - research-brainstorming/
   - grant-writing/
 
-Skills original to idea-explorer:
+Skills original to neurico:
   - paper-finder/
   - paper-writer/
 
@@ -48,4 +48,4 @@ content-based and metadata criteria.
 
 Modifications from original:
   - Made COHERE_API_KEY optional (returns no-op reranker when not set)
-  - Configuration adjusted for integration with idea-explorer
+  - Configuration adjusted for integration with neurico

@@ -35,9 +35,9 @@ Guide for writing academic papers from experiment results using a two-stage proc
    - The example papers are in different research domains
    - Focus only on HOW things are formatted, not WHAT is written
 
-5. **Set paper author**: Read `.idea-explorer/idea.yaml` to find `idea.metadata.author`:
-   - If `metadata.author` exists: use `<author name> and Idea-Explorer`
-   - If no `metadata.author`: use `Idea-Explorer`
+5. **Set paper author**: Read `.neurico/idea.yaml` to find `idea.metadata.author`:
+   - If `metadata.author` exists: use `<author name> and NeuriCo`
+   - If no `metadata.author`: use `NeuriCo`
 
 ## Two-Stage Writing Process
 
@@ -174,10 +174,10 @@ Style files (.sty, .bst) are copied to the `paper_draft/` directory. The exact p
 
 \title{Clear Title That Conveys Main Contribution}
 
-% Set author based on .idea-explorer/idea.yaml metadata.author:
-%   If metadata.author exists: \author{<author name> and Idea-Explorer}
-%   If no metadata.author:     \author{Idea-Explorer}
-\author{Idea-Explorer}
+% Set author based on .neurico/idea.yaml metadata.author:
+%   If metadata.author exists: \author{<author name> and NeuriCo}
+%   If no metadata.author:     \author{NeuriCo}
+\author{NeuriCo}
 
 \begin{document}
 \maketitle

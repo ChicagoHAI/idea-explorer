@@ -474,14 +474,14 @@ Location: {run_dir}
             lit_review_content = "No literature_review.md found"
 
         # Determine author line from idea metadata
-        author_line = "Idea-Explorer"
-        idea_yaml_path = work_dir / ".idea-explorer" / "idea.yaml"
+        author_line = "NeuriCo"
+        idea_yaml_path = work_dir / ".neurico" / "idea.yaml"
         if idea_yaml_path.exists():
             try:
                 idea_meta = yaml.safe_load(idea_yaml_path.read_text())
                 submitter = idea_meta.get('idea', {}).get('metadata', {}).get('author')
                 if submitter:
-                    author_line = f"{submitter} and Idea-Explorer"
+                    author_line = f"{submitter} and NeuriCo"
             except Exception:
                 pass
 

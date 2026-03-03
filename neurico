@@ -1,17 +1,17 @@
 #!/bin/bash
 # =============================================================================
-# idea-explorer - Simple CLI for containerized idea-explorer
+# neurico - Simple CLI for containerized NeuriCo
 #
 # This wrapper script makes using the containerized version as simple as
 # running the native Python scripts.
 #
 # Usage:
-#   ./idea-explorer fetch <url>              # Fetch from IdeaHub
-#   ./idea-explorer submit <idea.yaml>       # Submit an idea
-#   ./idea-explorer run <id> [options]       # Run research
-#   ./idea-explorer shell                    # Interactive shell
-#   ./idea-explorer build                    # Build container
-#   ./idea-explorer help                     # Show help
+#   ./neurico fetch <url>              # Fetch from IdeaHub
+#   ./neurico submit <idea.yaml>       # Submit an idea
+#   ./neurico run <id> [options]       # Run research
+#   ./neurico shell                    # Interactive shell
+#   ./neurico build                    # Build container
+#   ./neurico help                     # Show help
 #
 # =============================================================================
 

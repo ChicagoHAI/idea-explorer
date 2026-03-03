@@ -1,5 +1,5 @@
 # Research Domain Configuration
-# This file defines available research domains for Idea Explorer
+# This file defines available research domains for NeuriCo
 
 # Default domain to use when an unknown domain is specified
 default_domain: artificial_intelligence

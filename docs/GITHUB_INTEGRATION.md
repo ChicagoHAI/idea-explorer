@@ -1,6 +1,6 @@
 # GitHub Integration Guide
 
-Idea Explorer now automatically creates GitHub repositories for each research experiment and pushes results when complete. This enables:
+NeuriCo now automatically creates GitHub repositories for each research experiment and pushes results when complete. This enables:
 
 - **Transparency**: All research is public by default (private repos supported with `--private`)
 - **Collaboration**: Easy sharing and building on prior work
@@ -13,7 +13,7 @@ Idea Explorer now automatically creates GitHub repositories for each research ex
 
 1. Go to https://github.com/settings/tokens
 2. Click "Generate new token" → "Generate new token (classic)"
-3. Give it a name: "Idea Explorer"
+3. Give it a name: "NeuriCo"
 4. Select scopes:
    - ✅ **repo** (Full control of private repositories — covers personal and org repos)
 5. Click "Generate token"
@@ -24,7 +24,7 @@ Idea Explorer now automatically creates GitHub repositories for each research ex
 **Option A: Using .env file (Recommended)**
 
 ```bash
-cd idea-explorer
+cd neurico
 cp .env.example .env
 # Edit .env and add your token
 nano .env  # or use your preferred editor
@@ -86,7 +86,7 @@ python src/core/runner.py <idea_id>
    - Ready for you to add resources before running
 
 3. **Metadata Initialization (on submission)**
-   - Adds `.idea-explorer/idea.yaml` with full specification
+   - Adds `.neurico/idea.yaml` with full specification
    - Creates README.md with research overview
    - Commits: "Initialize research project: {title}"
 
@@ -113,7 +113,7 @@ Each research repository contains:
 repo-name/
 ├── README.md                    # Research overview
 ├── .gitignore                   # Python gitignore
-├── .idea-explorer/
+├── .neurico/
 │   └── idea.yaml                # Full idea specification
 ├── notebooks/
 │   ├── plan_Md.ipynb           # Research plan
@@ -144,7 +144,7 @@ python src/cli/submit.py idea.yaml --github-org YourOrgName
 export GITHUB_ORG=YourOrgName
 ```
 
-If you specify an organization but don't have access to create repos there, idea-explorer will automatically fall back to your personal account with a warning.
+If you specify an organization but don't have access to create repos there, neurico will automatically fall back to your personal account with a warning.
 
 ### Public vs Private Repos
 
@@ -194,7 +194,7 @@ cp .env.example .env
 
 **Cause**: Your token doesn't have permission to create repos in the organization.
 
-This is handled automatically — idea-explorer will fall back to your personal account with a warning. If you want to use the organization:
+This is handled automatically — neurico will fall back to your personal account with a warning. If you want to use the organization:
 
 1. Ask the organization admin to invite you
 2. Ensure your token has `repo` scope
@@ -429,7 +429,7 @@ A: Repository name is derived from idea_id. To change it, modify the idea_id.
 For issues:
 1. Check this guide
 2. Review logs in `workspace/<repo-name>/logs/`
-3. Open issue on main Idea Explorer repo
+3. Open issue on main NeuriCo repo
 4. Check GitHub API status: https://www.githubstatus.com/
 
 ---

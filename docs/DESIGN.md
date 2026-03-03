@@ -1,8 +1,8 @@
-# Idea Explorer: Generalized Autonomous Research Framework
+# NeuriCo: Generalized Autonomous Research Framework
 
 ## Executive Summary
 
-Idea Explorer is a generalized autonomous research framework that enables AI agents to conduct scientific experiments across diverse domains. Built on the foundation of `mechinterp_playground` and `scribe`, this system accepts research ideas as structured specifications and orchestrates AI agents to design, execute, analyze, and document experiments autonomously.
+NeuriCo is a generalized autonomous research framework that enables AI agents to conduct scientific experiments across diverse domains. Built on the foundation of `mechinterp_playground` and `scribe`, this system accepts research ideas as structured specifications and orchestrates AI agents to design, execute, analyze, and document experiments autonomously.
 
 **Key Innovation**: Transform domain-specific research automation (mechanistic interpretability) into a universal system that works across machine learning, data science, systems programming, theoretical research, and beyond.
 
@@ -120,7 +120,7 @@ Create a framework where researchers can:
 ### Directory Structure
 
 ```
-idea-explorer/
+neurico/
 ├── docs/                          # Documentation
 │   ├── DESIGN.md                  # This document
 │   ├── API.md                     # API reference
@@ -306,7 +306,7 @@ class CriticSystem:
 
 **Version 1.1 Update (2025-11-04):**
 
-The Idea Explorer follows a "research-first, pragmatic execution" philosophy:
+The NeuriCo follows a "research-first, pragmatic execution" philosophy:
 
 1. **Minimal Specifications Accepted**: Users can submit ideas with just a title, domain, and research question. Detailed experimental design is optional.
 
@@ -2062,7 +2062,7 @@ cat runs/quick_ml_test_001_*/evaluation/summary.md
 
 ## Conclusion
 
-Idea Explorer transforms autonomous research from domain-specific automation to a universal framework. By separating research methodology (templates) from research content (ideas), we create a flexible system that scales across disciplines while maintaining rigor and reproducibility.
+NeuriCo transforms autonomous research from domain-specific automation to a universal framework. By separating research methodology (templates) from research content (ideas), we create a flexible system that scales across disciplines while maintaining rigor and reproducibility.
 
 **Key Innovations:**
 

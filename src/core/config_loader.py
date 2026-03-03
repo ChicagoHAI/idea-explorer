@@ -181,20 +181,20 @@ class ConfigLoader:
         Get the workspace parent directory path.
 
         Priority (highest to lowest):
-        1. IDEA_EXPLORER_WORKSPACE environment variable (for Docker override)
+        1. NEURICO_WORKSPACE environment variable (for Docker override)
         2. Config file value (workspace.yaml)
         3. Default: 'workspaces' relative to project root
 
         Config file supports:
         - Absolute paths: /data/hypogenicai/workspaces
         - Relative paths: workspaces (relative to project root)
-        - Environment variable syntax: ${IDEA_EXPLORER_WORKSPACE}
+        - Environment variable syntax: ${NEURICO_WORKSPACE}
 
         Returns:
             Resolved Path object for workspace parent directory
         """
         # Check for environment variable override first (used in Docker containers)
-        env_workspace = os.getenv('IDEA_EXPLORER_WORKSPACE')
+        env_workspace = os.getenv('NEURICO_WORKSPACE')
         if env_workspace:
             return Path(env_workspace)
 

@@ -48,7 +48,7 @@ For example:
 ═══════════════════════════════════════════════════════════════════════════════
 
 You MUST create a fresh isolated environment for this project FIRST.
-DO NOT use the idea-explorer environment or any existing environment.
+DO NOT use the neurico environment or any existing environment.
 
 REQUIRED STEPS (at the START of your session):
 
@@ -72,7 +72,7 @@ REQUIRED STEPS (at the START of your session):
    EOF
 
    CRITICAL: This ensures uv won't search parent directories for pyproject.toml
-   and contaminate the idea-explorer environment!
+   and contaminate the neurico environment!
 
 3. Activate the environment:
    source .venv/bin/activate
@@ -97,7 +97,7 @@ REQUIRED STEPS (at the START of your session):
 
 WHY THIS MATTERS:
 - The experiment runner phase runs AFTER you and will use this same venv
-- Without an isolated environment, you could pollute the idea-explorer installation
+- Without an isolated environment, you could pollute the neurico installation
 - The pyproject.toml prevents uv from modifying parent directories
 - Dependencies you install will be documented automatically
 

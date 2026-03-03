@@ -3,7 +3,7 @@
 CRITICAL: Environment Setup
 ────────────────────────────────────────────────────────────────────────────────
 You MUST use an isolated environment for this project. DO NOT use the
-idea-explorer environment or any existing system environment.
+neurico environment or any existing system environment.
 
 REQUIRED STEPS (in order):
 
@@ -36,7 +36,7 @@ REQUIRED STEPS (in order):
    EOF
 
    CRITICAL: This ensures uv won't search parent directories for pyproject.toml
-   and contaminate the idea-explorer environment!
+   and contaminate the neurico environment!
 
 3. Activate the environment:
    source .venv/bin/activate
@@ -68,7 +68,7 @@ REQUIRED STEPS (in order):
    - This ensures reproducibility of the research environment
 
 WHY: Using an isolated environment ensures:
-- No pollution of the idea-explorer environment
+- No pollution of the neurico environment
 - Fast package installation with uv (10-100x faster than pip)
 - Automatic dependency tracking with pyproject.toml
 - Clean, reproducible research setup

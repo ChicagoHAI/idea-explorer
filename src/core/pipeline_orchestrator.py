@@ -25,7 +25,7 @@ class PipelineState:
 
     def __init__(self, work_dir: Path):
         self.work_dir = Path(work_dir)
-        self.state_file = self.work_dir / ".idea-explorer" / "pipeline_state.json"
+        self.state_file = self.work_dir / ".neurico" / "pipeline_state.json"
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
 
         # Initialize or load state
@@ -226,7 +226,7 @@ class ResearchPipelineOrchestrator:
 
         finally:
             # Save final results
-            results_file = self.work_dir / ".idea-explorer" / "pipeline_results.json"
+            results_file = self.work_dir / ".neurico" / "pipeline_results.json"
             with open(results_file, 'w') as f:
                 json.dump(results, f, indent=2)
 

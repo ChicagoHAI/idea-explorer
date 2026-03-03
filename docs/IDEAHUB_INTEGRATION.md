@@ -1,12 +1,12 @@
 # IdeaHub Integration Guide
 
-Idea Explorer can automatically fetch research ideas from [IdeaHub](https://hypogenic.ai/ideahub/) and convert them into minimal YAML format (v1.1).
+NeuriCo can automatically fetch research ideas from [IdeaHub](https://hypogenic.ai/ideahub/) and convert them into minimal YAML format (v1.1).
 
 ## Overview
 
 IdeaHub is a platform for sharing and discovering research ideas. This integration allows you to:
 1. **Fetch** ideas from IdeaHub URLs
-2. **Convert** them to minimal Idea Explorer format (preserves only provided info)
+2. **Convert** them to minimal NeuriCo format (preserves only provided info)
 3. **Submit** them directly - agent will research missing details
 4. **Run** autonomous experiments with agent-driven resource discovery
 
@@ -45,14 +45,14 @@ python src/cli/fetch_from_ideahub.py https://hypogenic.ai/ideahub/idea/HGVv4Z0AL
 **Example output:**
 ```
 ================================================================================
-IdeaHub to Idea Explorer Converter
+IdeaHub to NeuriCo Converter
 ================================================================================
 📥 Fetching idea from IdeaHub...
    URL: https://hypogenic.ai/ideahub/idea/HGVv4Z0ALWVHZ9YsstWT
 
 ✓ Found idea: Do LLMs differentiate epistemic belief from non-epistemic belief?
 
-🤖 Converting to Idea Explorer format using GPT-4...
+🤖 Converting to NeuriCo format using GPT-4...
    Calling GPT-4 API...
    ✓ Conversion complete
 
@@ -77,14 +77,14 @@ python src/cli/fetch_from_ideahub.py https://hypogenic.ai/ideahub/idea/HGVv4Z0AL
 This will:
 1. Fetch and convert the idea
 2. Validate it against the schema
-3. Submit it to Idea Explorer
+3. Submit it to NeuriCo
 4. Create a GitHub repository (if GitHub integration enabled)
 5. Return the idea ID for running
 
 **Example output:**
 ```
 ...
-📤 Submitting idea to Idea Explorer...
+📤 Submitting idea to NeuriCo...
 
 ✓ Idea submitted successfully: do_llms_differentiate_epistemic_belief_20250103_120000_abc123de
 
@@ -115,7 +115,7 @@ The script fetches the IdeaHub page and extracts:
 
 ### 2. GPT-4 Conversion
 
-GPT-4 is prompted to convert the IdeaHub content into structured YAML following the Idea Explorer schema:
+GPT-4 is prompted to convert the IdeaHub content into structured YAML following the NeuriCo schema:
 
 ```yaml
 idea:
@@ -368,7 +368,7 @@ Potential improvements to the IdeaHub integration:
 - [ ] Support for fetching multiple ideas at once
 - [ ] Integration with IdeaHub user accounts
 - [ ] Automatic tagging and categorization
-- [ ] Direct submission to IdeaHub from Idea Explorer results
+- [ ] Direct submission to IdeaHub from NeuriCo results
 - [ ] Community sharing of converted ideas
 
 ## FAQ

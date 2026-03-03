@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1.5
-# idea-explorer Docker Image
+# neurico Docker Image
 # Multi-stage build with NVIDIA CUDA for GPU-accelerated ML experiments
 #
 # User workflow:
-#   1. git clone idea-explorer
-#   2. ./idea-explorer build    <- Everything built INSIDE Docker
-#   3. ./idea-explorer run      <- Just works
+#   1. git clone neurico
+#   2. ./neurico build    <- Everything built INSIDE Docker
+#   3. ./neurico run      <- Just works
 
 ARG CUDA_VERSION=12.5.1
 ARG UBUNTU_VERSION=22.04
@@ -15,9 +15,9 @@ ARG UBUNTU_VERSION=22.04
 # =============================================================================
 FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu${UBUNTU_VERSION} AS builder
 
-LABEL org.opencontainers.image.title="idea-explorer"
+LABEL org.opencontainers.image.title="neurico"
 LABEL org.opencontainers.image.description="Autonomous research framework with AI agents"
-LABEL org.opencontainers.image.source="https://github.com/ChicagoHAI/idea-explorer"
+LABEL org.opencontainers.image.source="https://github.com/ChicagoHAI/neurico"
 LABEL maintainer="ChicagoHAI"
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -77,7 +77,7 @@ RUN npm install -g @anthropic-ai/claude-code \
 WORKDIR /app
 COPY . .
 
-# Build idea-explorer virtual environment
+# Build neurico virtual environment
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv venv /app/.venv \
     && uv sync --frozen --no-dev
@@ -175,8 +175,8 @@ USER researcher
 WORKDIR /app
 
 # Configure git for the researcher user
-RUN git config --global user.email "researcher@idea-explorer" \
-    && git config --global user.name "Idea Explorer" \
+RUN git config --global user.email "noreply@neurico.dev" \
+    && git config --global user.name "NeuriCo" \
     && git config --global init.defaultBranch main
 
 # Create CLI tool configuration directories
@@ -184,7 +184,7 @@ RUN git config --global user.email "researcher@idea-explorer" \
 RUN mkdir -p ~/.claude ~/.codex ~/.gemini ~/.cache/uv
 
 # Set environment variable for workspace location
-ENV IDEA_EXPLORER_WORKSPACE=/workspaces
+ENV NEURICO_WORKSPACE=/workspaces
 
 VOLUME ["/workspaces"]
 WORKDIR /workspaces

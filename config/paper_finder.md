@@ -14,7 +14,7 @@ For writing academic papers, comprehensive literature review is essential:
 
 ### Option A: Docker (Recommended)
 
-Paper-finder is built into the idea-explorer Docker image. Just add the required API keys to your `.env` file:
+Paper-finder is built into the neurico Docker image. Just add the required API keys to your `.env` file:
 
 ```bash
 # In your .env file:
@@ -23,7 +23,7 @@ OPENAI_API_KEY=your-openai-key          # Required (used for GPT-4.1)
 COHERE_API_KEY=your-cohere-key          # Optional: improves ranking by ~7%
 ```
 
-When you run `./idea-explorer build` and start the container, paper-finder automatically starts if `S2_API_KEY` and `OPENAI_API_KEY` are configured.
+When you run `./neurico build` and start the container, paper-finder automatically starts if `S2_API_KEY` and `OPENAI_API_KEY` are configured.
 
 **That's it!** The container handles everything else.
 
@@ -45,7 +45,7 @@ The service runs at `http://localhost:8000`.
 
 ## How It Works
 
-When running idea-explorer, skills are copied to `.claude/skills/` in the workspace. Agents call the helper script to search for papers:
+When running neurico, skills are copied to `.claude/skills/` in the workspace. Agents call the helper script to search for papers:
 
 ```bash
 python .claude/skills/paper-finder/scripts/find_papers.py "your research topic"
@@ -56,7 +56,7 @@ python .claude/skills/paper-finder/scripts/find_papers.py "hypothesis generation
 
 | Tier | Keys Needed | Features |
 |------|-------------|----------|
-| **Basic** | 1 AI key (Anthropic/OpenAI/Google) | Full idea-explorer, manual paper search |
+| **Basic** | 1 AI key (Anthropic/OpenAI/Google) | Full neurico, manual paper search |
 | **Standard** | + S2_API_KEY + OPENAI_API_KEY | Paper-finder with 92.5% quality |
 | **Full** | + COHERE_API_KEY | Paper-finder with full reranking |
 
@@ -69,7 +69,7 @@ python .claude/skills/paper-finder/scripts/find_papers.py "hypothesis generation
 ## Troubleshooting
 
 ### Connection Refused
-- **Docker**: Check container logs with `docker compose logs idea-explorer`
+- **Docker**: Check container logs with `docker compose logs neurico`
 - **Native**: Ensure paper-finder is running: `curl http://localhost:8000/health`
 
 ### API Key Errors

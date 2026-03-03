@@ -2,11 +2,11 @@
 # This schema defines the structure for research idea submissions
 
 $schema: "http://json-schema.org/draft-07/schema#"
-$id: "https://idea-explorer.io/schemas/idea-v1.yaml"
+$id: "https://neurico.io/schemas/idea-v1.yaml"
 
 title: Research Idea Specification
 description: |
-  Structured format for submitting research ideas to the Idea Explorer framework.
+  Structured format for submitting research ideas to the NeuriCo framework.
 
   IMPORTANT: Most fields are optional. The AI research agent will automatically:
   - Search for relevant datasets and evaluation methods from literature

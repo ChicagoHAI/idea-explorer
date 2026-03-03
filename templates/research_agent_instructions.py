@@ -59,7 +59,7 @@ def generate_instructions(prompt: str, work_dir: str, use_scribe: bool = False,
         # Backwards compatibility: old Docker images don't support 'domain' parameter
         print(
             "WARNING: Docker image is outdated and does not support domain-specific "
-            "templates. Run './idea-explorer build' or pull the latest image to update.",
+            "templates. Run './neurico build' or pull the latest image to update.",
             file=sys.stderr
         )
         return generator.generate_session_instructions(prompt, work_dir, use_scribe)

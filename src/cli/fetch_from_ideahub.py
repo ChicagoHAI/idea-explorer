@@ -1,5 +1,5 @@
 """
-Fetch research ideas from IdeaHub and convert to Idea Explorer YAML format.
+Fetch research ideas from IdeaHub and convert to NeuriCo YAML format.
 
 Usage:
     python fetch_from_ideahub.py <ideahub_url>
@@ -179,7 +179,7 @@ def _infer_domain(title: str, description: str, tags: list) -> str:
 
 def _convert_without_llm(ideahub_content: dict) -> dict:
     """
-    Convert IdeaHub content to Idea Explorer YAML format without using an LLM.
+    Convert IdeaHub content to NeuriCo YAML format without using an LLM.
 
     Produces a minimal but valid YAML structure using the scraped content directly.
     The result will have title, domain, hypothesis (required fields) plus background
@@ -241,15 +241,15 @@ def _convert_without_llm(ideahub_content: dict) -> dict:
 
 def convert_to_yaml(ideahub_content: dict) -> dict:
     """
-    Use GPT to convert IdeaHub content to Idea Explorer YAML format.
+    Use GPT to convert IdeaHub content to NeuriCo YAML format.
 
     Args:
         ideahub_content: Dictionary with IdeaHub content
 
     Returns:
-        Dictionary in Idea Explorer format
+        Dictionary in NeuriCo format
     """
-    print("\n🤖 Converting to Idea Explorer format using GPT...")
+    print("\n🤖 Converting to NeuriCo format using GPT...")
 
     # Check for OpenAI API key
     api_key = os.getenv('OPENAI_API_KEY')
@@ -469,7 +469,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Fetch research ideas from IdeaHub and convert to Idea Explorer YAML format"
+        description="Fetch research ideas from IdeaHub and convert to NeuriCo YAML format"
     )
     parser.add_argument(
         "url",
@@ -559,7 +559,7 @@ def main():
         sys.exit(1)
 
     print("=" * 80)
-    print("IdeaHub to Idea Explorer Converter")
+    print("IdeaHub to NeuriCo Converter")
     print("=" * 80)
 
     # Step 1: Fetch content
@@ -585,7 +585,7 @@ def main():
 
     # Step 4: Optionally submit
     if args.submit:
-        print("\n📤 Submitting idea to Idea Explorer...")
+        print("\n📤 Submitting idea to NeuriCo...")
         from core.idea_manager import IdeaManager
 
         manager = IdeaManager()

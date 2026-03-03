@@ -7,8 +7,8 @@ workspace:
   # Parent directory for all research workspaces
   # Can be:
   # - Absolute path: /home/user/research-workspaces
-  # - Relative to idea-explorer root: workspace
-  # - Environment variable: ${IDEA_EXPLORER_WORKSPACE}
+  # - Relative to neurico root: workspace
+  # - Environment variable: ${NEURICO_WORKSPACE}
   #
   # Default: workspaces (relative to project root, already gitignored)
   parent_dir: "workspaces"
