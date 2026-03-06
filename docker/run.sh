@@ -1110,16 +1110,9 @@ cmd_setup() {
 
 # Helper: interactive .env configuration
 setup_env_interactive() {
+    # ── GitHub credentials ──
     prompt_secret "GitHub Token" "GITHUB_TOKEN" "required" "ghp_" \
         "Get one at: https://github.com/settings/tokens (repo scope)" || true
-    echo ""
-
-    prompt_secret "OpenAI API Key" "OPENAI_API_KEY" "optional" "sk-" \
-        "Enables IdeaHub + LLM repo naming" || true
-    echo ""
-
-    prompt_secret "Semantic Scholar API Key" "S2_API_KEY" "optional" "" \
-        "Enables paper-finder literature search (https://www.semanticscholar.org/product/api)" || true
     echo ""
 
     # GitHub Organization
@@ -1139,6 +1132,7 @@ setup_env_interactive() {
     fi
     echo ""
 
+    # ── Workspace config ──
     # Workspace directory
     prompt_text "Workspace Directory" \
         "Where research workspaces are created. Relative to project root or absolute path." \
@@ -1154,6 +1148,15 @@ setup_env_interactive() {
     else
         echo -e "    ${DIM}[OK]${NC} Using default: ./workspaces"
     fi
+    echo ""
+
+    # ── API keys ──
+    prompt_secret "OpenAI API Key" "OPENAI_API_KEY" "optional" "sk-" \
+        "Enables IdeaHub + LLM repo naming" || true
+    echo ""
+
+    prompt_secret "Semantic Scholar API Key" "S2_API_KEY" "optional" "" \
+        "Enables paper-finder literature search (https://www.semanticscholar.org/product/api)" || true
     echo ""
 
     echo -e "    ${GREEN}[OK]${NC} Configuration complete"
