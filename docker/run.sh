@@ -141,7 +141,7 @@ check_docker() {
 # Get user ID flags to match host user (fixes permission issues with mounted volumes)
 # -----------------------------------------------------------------------------
 get_user_flags() {
-    echo "--user $(id -u):$(id -g)"
+    echo ""
 }
 
 # -----------------------------------------------------------------------------
@@ -614,26 +614,24 @@ cmd_login() {
     echo "After logging in, exit the shell. Your credentials will be saved."
     echo ""
 
-    # For login, we need write access to credential directories
-    # Create them on host if they don't exist
     mkdir -p "$HOME/.claude" "$HOME/.codex" "$HOME/.gemini"
 
-    local gpu_flags=$(get_gpu_flags)
-    local user_flags=$(get_user_flags)
+    # Skip login if credentials already exist
+    if [ -s "$HOME/.claude/.credentials.json" ]; then
+        echo -e "  ${GREEN}[OK]${NC} Already logged in to Claude (credentials found at ~/.claude/.credentials.json)"
+        echo -e "         To force re-login, delete that file and run this command again."
+        return 0
+    fi
 
-    # Use --user to match host UID so writes to mounted credential dirs succeed.
-    # The entrypoint detects the non-writable /home/neurico and sets HOME=/tmp,
-    # which makes CLI tools write to /tmp/.claude etc. (the mounted volumes).
-    # CLAUDE_CONFIG_DIR explicitly tells Claude Code where to store credentials.
+    local gpu_flags=$(get_gpu_flags)
+
     eval "docker run -it --rm \
         $gpu_flags \
-        $user_flags \
         --env-file \"$PROJECT_ROOT/.env\" \
-        -e CLAUDE_CONFIG_DIR=/tmp/.claude \
-        -v \"$HOME/.claude:/tmp/.claude\" \
-        -v \"$HOME/.codex:/tmp/.codex\" \
-        -v \"$HOME/.gemini:/tmp/.gemini\" \
-        -w /tmp \
+        -v \"$HOME/.claude:/home/neurico/.claude\" \
+        -v \"$HOME/.codex:/home/neurico/.codex\" \
+        -v \"$HOME/.gemini:/home/neurico/.gemini\" \
+        -w /home/neurico \
         \"$IMAGE_NAME\" \
         bash"
 }

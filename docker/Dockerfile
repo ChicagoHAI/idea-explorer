@@ -186,11 +186,9 @@ RUN git config --global user.email "noreply@neurico.dev" \
 
 # Create CLI tool configuration directories
 # Note: Claude uses ~/.claude, Codex uses ~/.codex, Gemini uses ~/.gemini
-RUN mkdir -p ~/.claude ~/.codex ~/.gemini ~/.cache/uv
+RUN mkdir -p ~/.claude ~/.codex ~/.gemini ~/.cache/uv \
+    && echo 'PS1="neurico:\w\$ "' >> ~/.bashrc
 
-# Set a clean prompt — overrides the default \u@\h which shows "I have no name!"
-# when running with --user $(host-uid) and that UID has no /etc/passwd entry.
-RUN echo 'PS1="neurico:\w\$ "' >> ~/.bashrc
 
 # Set environment variable for workspace location
 ENV NEURICO_WORKSPACE=/workspaces
