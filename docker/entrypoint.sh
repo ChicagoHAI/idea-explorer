@@ -250,5 +250,9 @@ echo ""
 
 show_help
 
+# Set a friendly prompt — running with --user $(id -u) means no /etc/passwd entry,
+# which causes bash to show "I have no name!". Override PS1 to always show "neurico".
+export PS1='neurico:\w\$ '
+
 # Execute the command passed to the container
 exec "$@"
