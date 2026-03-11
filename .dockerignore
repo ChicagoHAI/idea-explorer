@@ -52,7 +52,8 @@ logs/
 *.temp
 .cache
 
-# Generated research outputs
+# Generated research outputs and runtime directories
+ideas/
 runs/
 workspace/
 workspaces/

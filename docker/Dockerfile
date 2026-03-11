@@ -143,11 +143,15 @@ RUN ln -sf /usr/lib/node_modules/@openai/codex/bin/codex.js /usr/bin/codex \
 # Copy uv (agents may need to create their own environments)
 COPY --from=ghcr.io/astral-sh/uv:0.5.11 /uv /usr/local/bin/uv
 
+# Create non-root user (before COPY --chown)
+RUN useradd -u 1000 -m -s /bin/bash neurico
+
 # Copy Python installation from builder
 COPY --from=builder /python /python
 
 # Copy the entire /app from builder (includes code AND all venvs)
-COPY --from=builder /app /app
+# --chown sets ownership during copy, avoiding a slow separate chmod/chown pass
+COPY --from=builder --chown=neurico:neurico /app /app
 
 # Set up paths
 ENV PATH="/app/.venv/bin:/python/bin:/usr/local/bin:${PATH}"
@@ -159,36 +163,21 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV UV_COMPILE_BYTECODE=1
 ENV PYTHONPATH="/app:${PYTHONPATH}"
 
-# Create non-root user for security
-ARG UID=1000
-ARG GID=1000
-RUN groupadd -g ${GID} neurico \
-    && useradd -u ${UID} -g neurico -m -s /bin/bash neurico
-
-# Create workspace directory (will be mounted from host)
-RUN mkdir -p /workspaces && chown neurico:neurico /workspaces
-
-# Create necessary directories and fix permissions
-RUN mkdir -p /app/ideas/submitted /app/ideas/in_progress /app/ideas/completed \
-    /app/logs /app/runs \
-    && chown -R neurico:neurico /app \
-    && chmod -R a+rX /app \
-    && chmod -R 777 /app/services/paper-finder
+# Create directories
+RUN mkdir -p /workspaces \
+    /app/ideas/submitted /app/ideas/in_progress /app/ideas/completed \
+    /app/logs /app/runs
 
 # Switch to non-root user
 USER neurico
 WORKDIR /app
 
-# Configure git for the neurico user
+# Configure git and CLI dirs for neurico user
 RUN git config --global user.email "noreply@neurico.dev" \
     && git config --global user.name "NeuriCo" \
-    && git config --global init.defaultBranch main
-
-# Create CLI tool configuration directories
-# Note: Claude uses ~/.claude, Codex uses ~/.codex, Gemini uses ~/.gemini
-RUN mkdir -p ~/.claude ~/.codex ~/.gemini ~/.cache/uv \
+    && git config --global init.defaultBranch main \
+    && mkdir -p ~/.claude ~/.codex ~/.gemini ~/.cache/uv \
     && echo 'PS1="neurico:\w\$ "' >> ~/.bashrc
-
 
 # Set environment variable for workspace location
 ENV NEURICO_WORKSPACE=/workspaces

@@ -281,6 +281,11 @@ ensure_directories() {
     mkdir -p "$PROJECT_ROOT/ideas/submitted"
     mkdir -p "$PROJECT_ROOT/ideas/in_progress"
     mkdir -p "$PROJECT_ROOT/ideas/completed"
+    # Make all mounted directories world-accessible so any UID inside the container
+    # can read/write. This avoids UID mismatch issues with shared Docker images.
+    chmod -R a+rwX "$workspace_dir" "$PROJECT_ROOT/logs" "$PROJECT_ROOT/ideas" 2>/dev/null || true
+    # Config and templates are mounted read-only but still need to be readable
+    chmod -R a+rX "$PROJECT_ROOT/config" "$PROJECT_ROOT/templates" 2>/dev/null || true
 }
 
 # -----------------------------------------------------------------------------

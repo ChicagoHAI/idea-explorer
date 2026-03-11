@@ -137,11 +137,8 @@ start_paper_finder() {
                 # Create logs directory if needed
                 mkdir -p /app/logs
 
-                # Start paper-finder in background
-                cd /app/services/paper-finder/agents/mabool/api
-                nohup make start-dev >> /app/logs/paper-finder.log 2>&1 &
-                PAPER_FINDER_PID=$!
-                cd /workspaces
+                # Start paper-finder in background (subshell to preserve cwd)
+                (cd /app/services/paper-finder/agents/mabool/api && nohup make start-dev >> /app/logs/paper-finder.log 2>&1 &)
 
                 # Wait for paper-finder to be healthy (max 60 seconds)
                 for i in {1..60}; do
