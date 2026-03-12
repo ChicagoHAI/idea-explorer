@@ -305,7 +305,12 @@ ensure_directories() {
     chmod -R a+rwX "$PROJECT_ROOT" 2>/dev/null || true
     # Workspace may be outside PROJECT_ROOT (configurable in config/workspace.yaml)
     chmod -R a+rwX "$workspace_dir" 2>/dev/null || true
-    # Restrict .env to owner-only since it contains secrets (important on shared servers)
+    # Make CLI credential dirs readable/writable by any UID. The container user
+    # (neurico, uid 1000) may differ from the host user. Without this, the
+    # container cannot read existing credentials or write new ones during login.
+    # These contain OAuth tokens (not raw API keys), so the risk is lower than .env.
+    chmod -R a+rwX "$HOME/.claude" "$HOME/.codex" "$HOME/.gemini" 2>/dev/null || true
+    # Restrict .env to owner-only since it contains raw API keys (important on shared servers)
     chmod 600 "$PROJECT_ROOT/.env" 2>/dev/null || true
 }
 
@@ -745,6 +750,8 @@ cmd_login() {
     echo ""
 
     mkdir -p "$HOME/.claude" "$HOME/.codex" "$HOME/.gemini"
+    # Ensure container user (uid 1000) can read/write credentials
+    chmod -R a+rwX "$HOME/.claude" "$HOME/.codex" "$HOME/.gemini" 2>/dev/null || true
 
     # Skip login if credentials already exist
     if [ -s "$HOME/.claude/.credentials.json" ]; then
@@ -1094,6 +1101,8 @@ setup_login_provider() {
     fi
 
     mkdir -p "$host_dir"
+    # Ensure container user (uid 1000) can read/write to save credentials during login
+    chmod -R a+rwX "$host_dir" 2>/dev/null || true
     echo ""
     echo -e "    ${BOLD}${YELLOW}═══════════════════════════════════════════════════════════${NC}"
     echo -e "    ${BOLD}${YELLOW}  Setting up: $display_name${NC}"
