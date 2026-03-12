@@ -454,7 +454,7 @@ cmd_bump_version() {
 warn_if_outdated() {
     # Skip check if no network or registry is unreachable (don't slow down the user)
     local local_digest=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE_NAME" 2>/dev/null | sed 's/.*@//')
-    local remote_digest=$(docker manifest inspect "$REGISTRY_IMAGE" 2>/dev/null | grep -o '"digest": "sha256:[a-f0-9]*"' | head -1 | cut -d'"' -f4)
+    local remote_digest=$(get_remote_digest "$REGISTRY_IMAGE")
 
     if [ -n "$local_digest" ] && [ -n "$remote_digest" ] && [ "$local_digest" != "$remote_digest" ]; then
         echo -e "${YELLOW}Update available: a newer Docker image exists on the registry.${NC}"
